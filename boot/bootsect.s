@@ -20,18 +20,20 @@ start:
 	movw $0x184f, %dx
 	int  $0x10
 
-	movw $0xb800, %ax
+	# function 1.
+	# ds:si -> es:di (0:0x7c00 -> 0x8000:0x7c00)
+	cld
+	movw $0x100,  %cx
+	movw $0x7c00, %si
+	movw $0x8000, %ax
 	movw %ax,     %es
-	movw $msg,    %bx # $tag indicates address
-	xorw %si,     %si
-	movw $0xc,    %cx
-	movb $0x0f,   %ah # white font black background
-move:
-	movb (%bx),   %al
-	movw %ax,     %es:(%si)
-	incw %bx
-	addw $2,      %si
-	loop move
+	movw $0x7c00, %di
+	rep movsw
+
+go:
+	ljmp $0x8000, $go
+
+	######
 
 	jmp .
 msg:

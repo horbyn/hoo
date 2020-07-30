@@ -9,11 +9,11 @@ nop: image bochs
 
 image: boot/bootsect
 	@if [ ! -f "fd1_44M.img" ]; then \
-		/usr/bin/bximage; \
+		dd if=/dev/zero of=hd1_44M.img bs=1474560 count=1; \
 	fi
 
 bochs:
-	dd if=boot/bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
+	dd if=boot/bootsect of=hd1_44M.img bs=512 count=1 conv=notrunc
 	DISPLAY=:0 /usr/bin/bochs
 
 clean:

@@ -3,10 +3,10 @@ megs: 			32
 romimage:		file=$BXSHARE/BIOS-bochs-latest
 vgaromimage:		file=$BXSHARE/VGABIOS-lgpl-latest
 
-boot:			disk
-ata0-master:            type=disk, path="hd1_44M.img", mode=flat
-#boot:			floppy
-#floppya:		image="fd1_44M.img", status=inserted
+#boot:			disk
+#ata0-master:           type=disk, path="hd1_44M.img", mode=flat
+boot:			floppy
+floppya:		image="fd1_44M.img", status=inserted
 
 log:			bochs.out
 

@@ -66,7 +66,10 @@ cf0:
 
 	## function 3.
 	## 16bit/8bit less than 65535/255
-read_sect:
+	movw $0x1000,     %ax
+	movw %ax,         %es
+	xorw %bx,         %bx # load to 0x1000:0
+load_sect:
 	movw lba_base,    %ax
 	movb $SEC_144M,   %bl
 	divb %bl
@@ -86,13 +89,16 @@ head0:
 	movb %al,         %ch # track number--ch bit-0~5
 	andb $0x3f,       %cl # track number--cl bit-6~7 (track number less than 80)
 	movb $0,          %dl # floppya driver number is 0
-	movw $0x1000,     %ax
-	movw %ax,         %es
-	xorw %bx,         %bx # load to 0x1000:0
 	movb $0x02,       %ah
-	movb $1,          %al ################ whether change to load one by one?
+	movb $1,          %al # load 1 sector every time
 	int  $0x13
 
+	addw $0x200,      %bx
+	################## judge whether equal of SEC_NR
+	addw $0x1,        lba_base
+	jmp load_sect
+	################## judge whether fail
+	
 	## jump to 0x10000:0 ljmp $0x1000,$0
 	jmp .
 

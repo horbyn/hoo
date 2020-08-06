@@ -17,7 +17,7 @@ bochs:
 	DISPLAY=:0 /usr/bin/bochs
 
 clean:
-	rm -f $(S_OBJ) boot/bootsect
+	rm -f $(S_OBJ) boot/bootsect fd1_44M.img
 
 boot/bootsect: boot/bootsect.o
 	$(LD) --oformat binary -e start -Ttext 0x7c00 -m elf_i386 $< -o $@

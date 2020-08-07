@@ -76,10 +76,10 @@ load_sect:
 	addb $1,          %ah
 	movb %ah,         %cl # sector number (cl bit-0~5)
 	andb $1,          %al # judge odd/even
-	je head0 # judge zf1? (odd & 1 yields 1, zf0; even & 1 yields 0, zf1)
+	je   head0 # judge zf1? (odd & 1 yields 1, zf0; even & 1 yields 0, zf1)
 head1:
 	movb $1,          %dh # head number
-	jmp 1f
+	jmp  1f
 head0:
 	movb $0,          %dh # head number
 1:
@@ -96,7 +96,7 @@ head0:
 	addw $0x200,      %bx
 	################## judge whether equal of SEC_NR
 	addw $0x1,        lba_base
-	jmp load_sect
+	jmp  load_sect
 	################## judge whether fail
 	
 	## jump to 0x10000:0 ljmp $0x1000,$0

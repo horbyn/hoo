@@ -12,7 +12,7 @@
 
 	.set MEM_NR,       0   # ARDS amount
 	.set MEM_ST,       4   # ARDS struct base address
-	.set SEC_NR,       896 # the amount of sector to be loaded (≈448KB)
+	.set SEC_NR,       2   # 896 # the amount of sector to be loaded (≈448KB)
 	.set SEC_144M,     18  # the specification for sector of 1.44M floppy
 	.set TRK_144M,     80  # the specification for track of 1.44M floppy
 	.set HEAD_144M,    2   # the specification for head of 1.44M floppy
@@ -88,16 +88,22 @@ head0:
 	divb %bl
 	movb %al,         %ch # track number--ch bit-0~5
 	andb $0x3f,       %cl # track number--cl bit-6~7 (track number less than 80)
+after_reset:
 	movb $0,          %dl # floppya driver number is 0
 	movb $0x02,       %ah
 	movb $1,          %al # load 1 sector every time
 	int  $0x13
 
+	jnb  2f # judge cf0
+	movb $0,          %dl
+	movw $0,          %ax
+	int  $0x13 # reset floppy driver due to fail
+	jmp  after_reset
+2:
 	addw $0x200,      %bx
-	################## judge whether equal of SEC_NR
 	addw $0x1,        lba_base
-	jmp  load_sect
-	################## judge whether fail
+	cmpw $SEC_NR,     lba_base
+	jb   load_sect # judge cf1 (i.e. $SEC_NR > lba_base)
 	
 	## jump to 0x10000:0 ljmp $0x1000,$0
 	jmp .

@@ -71,8 +71,8 @@ cf0:
 	xorw %bx,         %bx # load to 0x1000:0
 load_sect:
 	movw lba_base,    %ax
-	movb $SEC_144M,   %bl
-	divb %bl
+	movb $SEC_144M,   %dl
+	divb %dl
 	addb $1,          %ah
 	movb %ah,         %cl # sector number (cl bit-0~5)
 	andb $1,          %al # judge odd/even
@@ -84,8 +84,8 @@ head0:
 	movb $0,          %dh # head number
 1:
 	movw lba_base,    %ax
-	movb $SEC_144M<<1,%bl
-	divb %bl
+	movb $SEC_144M<<1,%dl
+	divb %dl
 	movb %al,         %ch # track number--ch bit-0~5
 	andb $0x3f,       %cl # track number--cl bit-6~7 (track number less than 80)
 after_reset:
@@ -94,21 +94,25 @@ after_reset:
 	movb $1,          %al # load 1 sector every time
 	int  $0x13
 
-	jnb  2f # judge cf0
+	jnb  2f # judge cf0 (No error happened)
 	movb $0,          %dl
 	movw $0,          %ax
 	int  $0x13 # reset floppy driver due to fail
 	jmp  after_reset
 2:
+	cmpw $SEC_NR,     lba_base
+	jb   3f # judge cf1 (i.e. $SEC_NR > lba_base)
+	jmp  load_sect_ok # othervise completed (lba_base >= $SEC_NR)
+3:
 	addw $0x200,      %bx
 	addw $0x1,        lba_base
-	cmpw $SEC_NR,     lba_base
-	jb   load_sect # judge cf1 (i.e. $SEC_NR > lba_base)
-	
+	jmp  load_sect
+load_sect_ok:
 	## jump to 0x10000:0 ljmp $0x1000,$0
 	jmp .
 
 lba_base:
 	.word 0x1 # loading from no.2 sector (i.e., LBA is no.1)
+
 .org	0x1fe, 0x90
 .word	0xaa55

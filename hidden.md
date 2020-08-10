@@ -41,3 +41,40 @@ ld -e start -Ttext 0x7c00 -m elf_x86_64 --oformat elf64-x86-64 -o boot/bootsect 
 file boot/bootsect  
 &#8195;&#8195;boot/bootsect: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, not stripped  
 &#8195;&#8195;&#8195;&#8195;3\ & 5\ ===> 输入目标文件ELF64，输出架构x86_64一致，输出目标文件就是--oformat所指定的  
+
+
+
+
+
+
+
+
+
+6\  
+as --32 boot/bootsect.s -o boot/bootsect.o
+file boot/bootsect.o //输入目标文件格式ELF32，对应输出架构i386，对应指定的目标文件输入格式  
+&#8195;&#8195;boot/bootsect.o: ELF 32-bit LSB relocatable, Intel 80386, version 1 (SYSV), not stripped  
+ld -e start -Ttext 0x7c00 -m elf_i386 -b elf32-i386 boot/bootsect.o -o boot/bootsect  
+file boot/bootsect  
+&#8195;&#8195;boot/bootsect: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, not 
+stripped  
+
+7\  
+as --32 boot/bootsect.s -o boot/bootsect.o
+file boot/bootsect.o //输入目标文件格式ELF32，对应输出架构i386，对应指定的目标文件不同架构的输入格式  
+&#8195;&#8195;boot/bootsect.o: ELF 32-bit LSB relocatable, Intel 80386, version 1 (SYSV), not stripped  
+ld -e start -Ttext 0x7c00 -m elf_i386 -b elf32-x86-64 boot/bootsect.o -o boot/bootsect  
+file boot/bootsect  
+&#8195;&#8195;boot/bootsect: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, not 
+stripped  
+&#8195;&#8195;&#8195;&#8195; 6\ & 7\ ===> 要么elf32-x86-64或elf32-i386都同样对应ELF 32-bit；要么在输入目标文件中不存在-b指定的格式(这里视elf32-i386和elf32-x86-64为不同格式)时，-b参数不起作用(作为验证后者，试试换成-b elf64-x86-64)  
+
+8\  
+as --32 boot/bootsect.s -o boot/bootsect.o
+file boot/bootsect.o //对比7\，只改变指定的目标文件输入格式  
+&#8195;&#8195;boot/bootsect.o: ELF 32-bit LSB relocatable, Intel 80386, version 1 (SYSV), not stripped  
+ld -e start -Ttext 0x7c00 -m elf_i386 -b elf64-x86-64 boot/bootsect.o -o boot/bootsect  
+file boot/bootsect  
+&#8195;&#8195;boot/bootsect: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, not 
+stripped  
+&#8195;&#8195;&#8195;&#8195;7\ & 8\ ===>应该可以说明当在输入目标文件中不存在-b指定的格式时，-b参数不起作用  

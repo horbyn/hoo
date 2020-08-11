@@ -11,3 +11,20 @@
 # 1. Move the whole kernel from 0x10000 to 0
 # 2. Enable Protect Mode
 # 3. Jump into the real kernel
+
+	.text
+	.globl start
+	.code16
+
+	## function 1.
+	cld
+	movw $0x1000, %ax
+	movw %ax,     %ds
+	movw $0,      %ax
+	movw %ax,     %es
+	xorw %si,     %si
+	xorw %di,     %di
+	movw $512>>1, %cx
+	rep  movsl
+
+	jmp  .

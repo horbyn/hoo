@@ -5,7 +5,7 @@ SECTIONS
 	. = ALIGN(4);
 	.text :
 	{
-		head.o(.text)
+		init/head.o(.text)
 		*(.text)
 	}
 

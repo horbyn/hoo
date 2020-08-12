@@ -108,8 +108,7 @@ after_reset:
 	addw $0x1,        lba_base
 	jmp  load_sect
 load_sect_ok:
-	## jump to 0x10000:0 ljmp $0x1000,$0
-	jmp .
+	ljmp $0x1000,     $0
 
 lba_base:
 	.word 0x1 # loading from no.2 sector (i.e., LBA is no.1)

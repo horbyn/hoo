@@ -1,6 +1,10 @@
 fd1_44M.img
 hd1_44M.img
 
+kernel
+
+system
+
 bochs.out
 
 bootsect

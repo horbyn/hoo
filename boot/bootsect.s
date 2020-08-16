@@ -5,6 +5,10 @@
 # 1. Move to high address itself
 # 2. Detect memory
 # 3. Load kernel from disk
+# 4. Move gdt to system buffer
+# 5. Move the whole kernel from 0x10000 to 0
+# 6. Enable Protect Mode
+# 7. "Jump" into the REAL KERNEL
 
 	.text
 	.globl start
@@ -34,12 +38,12 @@ start:
 	## function 1.
 	## ds:si -> es:di (0:0x7c00 -> 0x8000:0x7c00)
 	cld
-	movw $0x100,      %cx
-	movw $0x7c00,     %si
 	movw $0x8000,     %ax
 	movw %ax,         %es
-	movw $0x7c00,     %di
-	rep movsw
+	movl $0x7c00,     %esi
+	movl $0x7c00,     %edi
+	movl $0x100,      %ecx
+	rep  movsw
 
 	ljmp $0x8000,     $go
 go:
@@ -57,12 +61,12 @@ detect_mem:
 	int  $0x15
 	## check
 	jnb cf0 # judge cf1? (1 i.e. error)
-	jmp . # error happened
+	jmp  . # error happened
 cf0:
 	incl MEM_NR
 	addw $0x14,       %di
 	cmp  $0,          %ebx
-	jne detect_mem # judge zf1? (1 i.e. detect completed)
+	jne  detect_mem # judge zf1? (1 i.e. detect completed)
 
 	## function 3.
 	## 16bit/8bit less than 65535/255
@@ -107,11 +111,71 @@ after_reset:
 	addw $0x200,      %bx
 	addw $0x1,        lba_base
 	jmp  load_sect
+
 load_sect_ok:
-	ljmp $0x1000,     $0
+	## function 4.
+	## move gdt to 0x90000
+	cld
+	movw $0x9000,     %ax
+	movw %ax,         %es
+	movl $gdt,        %esi
+	xorl %edi,        %edi
+	movl $0xa,        %ecx
+	rep  movsl
+
+	## function 5.
+	## move the whole kernel from 0x10000 to 0
+	movw $0x1000,     %ax
+	movw %ax,         %ds
+	movw $0,          %ax
+	movw %ax,         %es
+	xorl %esi,        %esi
+	xorl %edi,        %edi
+	movl $SEC_NR<<7,  %ecx
+	rep  movsl
+	movw $0,          %ax # reset ds because the refresh pipeline
+	movw %ax,         %ds #     needs to use this file label
+
+	## function 6.
+	## enable PM
+	cli
+	inb  $0x92,       %al
+	orb  $2,          %al
+	outb %al,         $0x92
+
+	lgdt gdt_48 
+
+	movl %cr0,        %eax
+	orl  $1,          %eax
+	movl %eax,        %cr0
+	
+	ljmp $0x08,       $pm_go
+	
+	.code32
+pm_go:
+	movw $0x10,       %ax
+	movw %ax,         %ds
+	movw %ax,         %es
+	movw %ax,         %fs
+	movw %ax,         %gs
+	movw %ax,         %ss
+	movl $0x90000,    %esp # kernel stack: 0x90000
+	
+	## function 7.
+	## forge a stack environment to call lret
+	jmp  . 
 
 lba_base:
 	.word 0x1 # loading from no.2 sector (i.e., LBA is no.1)
+gdt:
+	.quad 0x0000000000000000
+	.quad 0x00cf9a000000ffff # exe, no-readable, no-conform
+	.quad 0x00cf92000000ffff # no-exe, no-writable, down
+	.quad 0x0000000000000000
+	.quad 0x0000000000000000
+gdt_48:
+	.word .-gdt
+	.long 0x90000 # gdt base
 
 .org	0x1fe, 0x90
 .word	0xaa55

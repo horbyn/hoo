@@ -22,7 +22,7 @@ bochs: boot/bootsect kernel
 	DISPLAY=:0 /usr/bin/bochs
 
 clean:
-	rm -f $(S_OBJ_A) boot/bootsect fd1_44M.img system kernel
+	rm -f $(S_OBJ_A) $(C_OBJ) boot/bootsect fd1_44M.img system kernel
 
 boot/bootsect: boot/bootsect.o
 	$(LD) --oformat binary -e start -Ttext 0x7c00 -m elf_i386 $< -o $@

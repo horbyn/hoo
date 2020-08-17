@@ -161,16 +161,17 @@ pm_go:
 	movw %ax,         %ss
 	movl $0x90000,    %esp # kernel stack: 0x90000
 	
-	## function 7.
-	## forge a stack environment to call lret
-	pushl $0x08 # push "cs"
-	pushl kernel_go # push "ip"
-	lret # jump to where the offset is kernel_enter
+	# ## function 7.
+	# ## forge a stack environment to call lret
+	# pushl $0x08 # push "cs"
+	# pushl kernel_go # push "ip"
+	# lret # jump to where the offset is kernel_enter
+	ljmp $0x08,       $0
 died:
 	jmp  .
 
-kernel_go:
-	.long kernel_enter
+# kernel_go:
+# 	.long kernel_enter
 
 lba_base:
 	.word 0x1 # loading from no.2 sector (i.e., LBA is no.1)

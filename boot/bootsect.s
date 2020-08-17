@@ -163,7 +163,14 @@ pm_go:
 	
 	## function 7.
 	## forge a stack environment to call lret
-	jmp  . 
+	pushl $0x08 # push "cs"
+	pushl kernel_go # push "ip"
+	lret # jump to where the offset is kernel_enter
+died:
+	jmp  .
+
+kernel_go:
+	.long kernel_enter
 
 lba_base:
 	.word 0x1 # loading from no.2 sector (i.e., LBA is no.1)

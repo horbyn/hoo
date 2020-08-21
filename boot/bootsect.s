@@ -166,6 +166,10 @@ pm_go:
 	# pushl $0x08 # push "cs"
 	# pushl kernel_go # push "ip"
 	# lret # jump to where the offset is kernel_enter
+	movl $0x80000,    %eax
+	addl $died,       %eax
+	pushl $0x08
+	pushl %eax
 	ljmp $0x08,       $0
 died:
 	jmp  .

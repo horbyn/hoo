@@ -1,7 +1,7 @@
 SECTIONS
 {
 	. = ALIGN(4);
-	. = 0x0;
+	. = 0x10000;
 	.text :
 	{
 		*(.text)

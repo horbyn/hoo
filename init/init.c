@@ -1,6 +1,6 @@
 int kernel_enter(void)
 {
-	int *p = 0xb8000;
+	unsigned char *p = 0xb8000;
 
 	*p++ = 'H';
 	*p++ = 0x0f;
@@ -23,6 +23,8 @@ int kernel_enter(void)
 	*p++ = 'l';
 	*p++ = 0x0f;
 	*p++ = 'd';
+	*p++ = 0x0f;
+	*p++ = '!';
 	*p++ = 0x0f;
 
 	return 0;

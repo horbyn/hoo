@@ -161,11 +161,8 @@ pm_go:
 	movw %ax,         %ss
 	movl $0x90000,    %esp # kernel stack: 0x90000
 	
-	# ## function 7.
-	# ## forge a stack environment to call lret
-	# pushl $0x08 # push "cs"
-	# pushl kernel_go # push "ip"
-	# lret # jump to where the offset is kernel_enter
+	## function 7.
+	## forge a stack environment to call lret
 	movl $0x80000,    %eax
 	addl $died,       %eax
 	pushl $0x08

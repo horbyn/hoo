@@ -1,9 +1,10 @@
 SECTIONS
 {
 	. = ALIGN(4);
-	. = 0x10000;
+	. = 0x0000;
 	.text :
 	{
+		init/init.o(.text)
 		*(.text)
 	}
 

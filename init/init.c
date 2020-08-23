@@ -1,6 +1,11 @@
+#include "types.h"
+#include "display.h"
+
 int kernel_enter(void)
 {
-	unsigned char *p = 0xb8000;
+	uint8_t *p = (uint8_t *)0xb8000;
+
+	clear_screen();
 
 	*p++ = 'H';
 	*p++ = 0x0f;

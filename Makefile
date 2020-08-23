@@ -28,7 +28,7 @@ boot/bootsect: boot/bootsect.o
 	$(LD) --oformat binary -e start -Ttext 0x7c00 -m elf_i386 $< -o $@
 
 kernel: $(S_OBJ_F) $(C_OBJ)
-	$(LD) -T kernel.lds -m elf_i386 $< -o system
+	$(LD) -T kernel.lds -m elf_i386 $^ -o system
 	objcopy -I elf32-i386 -S -R ".eh_frame" -R ".comment" -O binary system $@
 
 $(S_OBJ_A): %.o: %.s

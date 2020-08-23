@@ -8,7 +8,8 @@
 # 4. Move gdt to system buffer
 # 5. Move the whole kernel from 0x10000 to 0
 # 6. Enable Protect Mode
-# 7. "Jump" into the REAL KERNEL
+# 7. System parameters initialization
+# 8. "Jump" into the REAL KERNEL
 
 	.text
 	.globl start
@@ -27,14 +28,7 @@ start:
 	movw $0x8000,     %ax
 	movw %ax,         %ss
 	movw $0x7c00,     %sp # stack is set to 0x87c00
-
-	## clear screen
-	movw $0x600,      %ax
-	movw $0,          %bx
-	movw $0,          %cx
-	movw $0x184f,     %dx
-	int  $0x10
-
+	
 	## function 1.
 	## ds:si -> es:di (0:0x7c00 -> 0x8000:0x7c00)
 	cld
@@ -49,6 +43,7 @@ start:
 go:
 
 	## function 2.
+	## Memory detection
 	movw $0x8000,     %ax
 	movw %ax,         %ds
 	movl $0,          %ebx
@@ -69,7 +64,7 @@ cf0:
 	jne  detect_mem # judge zf1? (1 i.e. detect completed)
 
 	## function 3.
-	## 16bit/8bit less than 65535/255
+	## kernel loading from disk to memory(0x10000)
 	movw $0x1000,     %ax
 	movw %ax,         %es
 	xorw %bx,         %bx # load to 0x1000:0
@@ -114,7 +109,7 @@ after_reset:
 
 load_sect_ok:
 	## function 4.
-	## move gdt to 0x90000
+	## Move gdt to 0x90000
 	cld
 	movw $0x9000,     %ax
 	movw %ax,         %es
@@ -124,7 +119,7 @@ load_sect_ok:
 	rep  movsl
 
 	## function 5.
-	## move the whole kernel from 0x10000 to 0
+	## Move the whole kernel from 0x10000 to 0
 	movw $0x1000,     %ax
 	movw %ax,         %ds
 	movw $0,          %ax
@@ -137,7 +132,7 @@ load_sect_ok:
 	movw %ax,         %ds #     needs to use this file label
 
 	## function 6.
-	## enable PM
+	## Enable PM
 	cli
 	inb  $0x92,       %al
 	orb  $2,          %al
@@ -160,9 +155,13 @@ pm_go:
 	movw %ax,         %gs
 	movw %ax,         %ss
 	movl $0x90000,    %esp # kernel stack: 0x90000
-	
+
 	## function 7.
-	## forge a stack environment to call lret
+	## System parameters initialization
+	movl $0,          0x80100 # global cursor
+	
+	## function 8.
+	## Forge a stack environment to call lret
 	movl $0x80000,    %eax
 	addl $died,       %eax
 	pushl $0x08
@@ -170,9 +169,6 @@ pm_go:
 	ljmp $0x08,       $0
 died:
 	jmp  .
-
-# kernel_go:
-# 	.long kernel_enter
 
 lba_base:
 	.word 0x1 # loading from no.2 sector (i.e., LBA is no.1)

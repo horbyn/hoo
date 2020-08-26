@@ -1,7 +1,8 @@
 #include "types.h"
 #include "display.h"
 
-int kernel_enter(void)
+int 
+kernel_enter(void)
 {
 	uint8_t *p = (uint8_t *)0xb8000;
 

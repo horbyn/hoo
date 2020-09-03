@@ -4,6 +4,12 @@
 static uint8_t *g_Cursor = (uint8_t *)0x80100;
 
 void 
+set_cursor(void)
+{
+	;
+}
+
+void 
 clear_screen(void)
 {
 	uint8_t *p = (uint8_t *)0xb8000;

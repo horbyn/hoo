@@ -17,4 +17,8 @@ typedef          short int16_t;
 typedef unsigned char  uint8_t;
 typedef          char  int8_t;
 
+#define BYTE  uint8_t
+#define WORD  uint16_t
+#define DWORD uint32_t
+
 #endif

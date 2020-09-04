@@ -33,5 +33,7 @@ kernel_enter(void)
 	*p++ = '!';
 	*p++ = 0x0f;
 
+	get_cursor();
+
 	return 0;
 }

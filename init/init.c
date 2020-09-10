@@ -4,36 +4,27 @@
 int 
 kernel_enter(void)
 {
-	uint8_t *p = (uint8_t *)0xb8000;
-
 	clear_screen();
 
-	*p++ = 'H';
-	*p++ = 0x0f;
-	*p++ = 'e';
-	*p++ = 0x0f;
-	*p++ = 'l';
-	*p++ = 0x0f;
-	*p++ = 'l';
-	*p++ = 0x0f;
-	*p++ = 'o';
-	*p++ = 0x0f;
-	*p++ = ' ';
-	*p++ = 0x0f;
-	*p++ = 'w';
-	*p++ = 0x0f;
-	*p++ = 'o';
-	*p++ = 0x0f;
-	*p++ = 'r';
-	*p++ = 0x0f;
-	*p++ = 'l';
-	*p++ = 0x0f;
-	*p++ = 'd';
-	*p++ = 0x0f;
-	*p++ = '!';
-	*p++ = 0x0f;
+	print_char('H');
+	print_char('e');
+	print_char('l');
+	print_char('l');
+	print_char('o');
+	print_char(' ');
+	print_char('w');
+	print_char('o');
+	print_char('r');
+	print_char('l');
+	print_char('d');
+	print_char('!');
 
-	get_cursor();
+	print_num(329, 10);
+
+	//get_cursor();
+
+	//set_cursor(80);
+	//get_cursor();
 
 	return 0;
 }

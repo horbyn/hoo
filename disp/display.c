@@ -55,6 +55,17 @@ print_char(char ch)
 }
 
 void 
+scroll_screen(void)
+{
+	uint16_t *p = (uint16_t *)0xb8000;
+
+	for (int i = 160; i <= 3998; i += 2)
+	{
+		*(p + i - 160) = *(p + i);
+	}
+}
+
+void 
 trans(unsigned int n, int base)
 {
 	unsigned int remainder;

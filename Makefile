@@ -18,7 +18,7 @@ image:
 
 bochs: boot/bootsect kernel
 	dd if=boot/bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
-	dd if=kernel of=fd1_44M.img bs=512 count=2 seek=1 conv=notrunc
+	dd if=kernel of=fd1_44M.img bs=512 count=3 seek=1 conv=notrunc
 	DISPLAY=:0 /usr/bin/bochs
 
 clean:

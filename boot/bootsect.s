@@ -17,7 +17,7 @@
 
 	.set MEM_NR,       0   # ARDS amount
 	.set MEM_ST,       4   # ARDS struct base address
-	.set SEC_NR,       2   # 896 # the amount of sector to be loaded (≈448KB)
+	.set SEC_NR,       3   # 896 # the amount of sector to be loaded (≈448KB)
 	.set SEC_144M,     18  # the specification for sector of 1.44M floppy
 	.set TRK_144M,     80  # the specification for track of 1.44M floppy
 	.set HEAD_144M,    2   # the specification for head of 1.44M floppy

@@ -1,12 +1,25 @@
 #include "types.h"
 #include "display.h"
+#include "alg.h"
 
 int 
 kernel_enter(void)
 {
-	clear_screen();
+	char ch[2000] = { 0 };
+	uint8_t *p = (uint8_t *)0xb8000;
 
-	print_char('H');
+	clear_screen();
+	generate_char(ch);
+
+	for (int i = 0; i < 4000; i += 2)
+	{
+		*(p + i) = ch[i / 2];
+		*(p + i + 1) = 0xf;
+	}
+
+	scroll_screen();
+
+	/*print_char('H');
 	print_char('e');
 	print_char('l');
 	print_char('l');
@@ -19,7 +32,7 @@ kernel_enter(void)
 	print_char('d');
 	print_char('!');
 
-	print_num(329, 10);
+	print_num(329, 10);*/
 
 	//get_cursor();
 

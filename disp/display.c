@@ -59,9 +59,14 @@ scroll_screen(void)
 {
 	uint16_t *p = (uint16_t *)0xb8000;
 
-	for (int i = 160; i <= 3998; i += 2)
+	for (int i = 80; i < 25 * 80; i++)
 	{
-		*(p + i - 160) = *(p + i);
+		*(p + i - 80) = *(p + i);
+	}
+	for (int i = 24 * 80; i < 25 * 80; i++)
+	{
+		/* 0x20 is space */
+		*(p + i) = 0x0f00 | 0x20;
 	}
 }
 

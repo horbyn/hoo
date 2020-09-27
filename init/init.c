@@ -15,8 +15,13 @@ kernel_enter(void)
 		*(p + i) = j;
 		*(p + i + 1) = 0xf;
 	}
+	for (int i = 3840; i < 4000; i += 2)
+	{
+		*(p + i) = '0';
+		*(p + i + 1) = 0xf;
+	}
 
-	//scroll_screen();
+	scroll_screen();
 
 	/*print_char('H');
 	print_char('e');

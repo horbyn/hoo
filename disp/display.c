@@ -41,33 +41,56 @@ clear_screen(void)
 }
 
 void 
-print_char(char ch)
-{
-	uint8_t *pos = (uint8_t *)(0xb8000 + *g_Cursor * 2);
-	BYTE attr = 0x0f;
-
-	*pos++ = ch;
-	*pos = attr;
-
-	// Update cursor
-	*g_Cursor += 1;
-	set_cursor(*g_Cursor);
-}
-
-void 
 scroll_screen(void)
 {
 	uint16_t *p = (uint16_t *)0xb8000;
 
-	for (int i = 80; i < 25 * 80; i++)
+	for (int i = 80; i < 25 * 80; ++i)
 	{
 		*(p + i - 80) = *(p + i);
 	}
-	for (int i = 24 * 80; i < 25 * 80; i++)
+	for (int i = 24 * 80; i < 25 * 80; ++i)
 	{
 		/* 0x20 is space */
 		*(p + i) = 0x0f00 | 0x20;
 	}
+}
+
+void 
+print_char(char ch)
+{
+	uint8_t *pos = (uint8_t *)(0xb8000 + *g_Cursor * 2);
+	WORD new_cursor;
+	BYTE attr = 0x0f;
+
+	//*pos++ = ch;
+	//*pos = attr;
+	switch(ch)
+	{
+		case '\b':break;
+		case '\n':
+			  if (*g_Cursor < 24 * 80)
+			  {
+			  	new_cursor = *g_Cursor / 80 + 1;
+				new_cursor *= 80;
+				set_cursor(new_cursor - 1);
+			  }
+			  else
+			  {
+			  	new_cursor = *g_Cursor / 80 * 80;
+				set_cursor(new_cursor - 1);
+				scroll_screen();
+			  }
+			  break;
+		default:
+			  *pos++ = ch;
+			  *pos = attr;
+			  break;
+	}
+
+	// Update cursor
+	*g_Cursor += 1;
+	set_cursor(*g_Cursor);
 }
 
 void 

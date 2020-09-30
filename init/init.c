@@ -8,13 +8,13 @@ kernel_enter(void)
 
 	clear_screen();
 
-	for (int i = 0; i < 15 * 80 + 1; ++i)
+	for (int i = 0; i < 15 * 80 + 35; ++i)
 	{
 		if (j == 58)    j = '0';
 		print_char(j++);
 	}
 
-	print_char('\n');
+	print_char('\b');
 
 	return 0;
 }

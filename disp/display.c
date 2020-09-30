@@ -67,7 +67,11 @@ print_char(char ch)
 	//*pos = attr;
 	switch(ch)
 	{
-		case '\b':break;
+		case '\b':
+			  *g_Cursor--;
+			  //print_char(' ');
+			  //set_cursor(*g_Cursor);
+			  break;
 		case '\n':
 			  if (*g_Cursor < 24 * 80)
 			  {
@@ -85,12 +89,10 @@ print_char(char ch)
 		default:
 			  *pos++ = ch;
 			  *pos = attr;
+			  *g_Cursor++;
+			  set_cursor(*g_Cursor);
 			  break;
 	}
-
-	// Update cursor
-	*g_Cursor += 1;
-	set_cursor(*g_Cursor);
 }
 
 void 

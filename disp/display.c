@@ -59,7 +59,7 @@ scroll_screen(void)
 void 
 print_char(char ch)
 {
-	uint8_t *pos = (uint8_t *)(0xb8000 + *g_Cursor * 2);
+	uint8_t *pos;// = (uint8_t *)(0xb8000 + *g_Cursor * 2);
 	WORD new_cursor;
 	BYTE attr = 0x0f;
 
@@ -68,9 +68,11 @@ print_char(char ch)
 	switch(ch)
 	{
 		case '\b':
-			  *g_Cursor--;
-			  //print_char(' ');
-			  //set_cursor(*g_Cursor);
+			  (*g_Cursor)--;
+			  pos = (uint8_t *)(0xb8000 + *g_Cursor * 2);
+			  *pos++ = ' ';
+			  *pos = attr;
+			  set_cursor(*g_Cursor);
 			  break;
 		case '\n':
 			  if (*g_Cursor < 24 * 80)
@@ -87,12 +89,13 @@ print_char(char ch)
 			  }
 			  break;
 		default:
+			  pos = (uint8_t *)(0xb8000 + *g_Cursor * 2);
 			  *pos++ = ch;
 			  *pos = attr;
-			  *g_Cursor++;
+			  (*g_Cursor)++;
 			  set_cursor(*g_Cursor);
 			  break;
-	}
+	}//end switch
 }
 
 void 

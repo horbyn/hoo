@@ -14,6 +14,7 @@ kernel_enter(void)
 		print_char(j++);
 	}
 
+	print_char('\n');
 	print_char('\b');
 
 	return 0;

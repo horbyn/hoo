@@ -4,18 +4,11 @@
 int 
 kernel_enter(void)
 {
-	char j = '0';
-
 	clear_screen();
 
-	for (int i = 0; i < 15 * 80 + 35; ++i)
-	{
-		if (j == 58)    j = '0';
-		print_char(j++);
-	}
-
-	print_char('\n');
-	print_char('\b');
+	for (int i = 0; i < 24; ++i)    print_str("Hello world!\n");
+	print_str("Hello world!24");
+	print_str("He");
 
 	return 0;
 }

@@ -59,43 +59,46 @@ scroll_screen(void)
 void 
 print_char(char ch)
 {
-	uint8_t *pos;// = (uint8_t *)(0xb8000 + *g_Cursor * 2);
-	WORD new_cursor;
+	uint8_t *pos = (uint8_t *)0xb8000;
 	BYTE attr = 0x0f;
 
-	//*pos++ = ch;
-	//*pos = attr;
 	switch(ch)
 	{
 		case '\b':
 			  (*g_Cursor)--;
-			  pos = (uint8_t *)(0xb8000 + *g_Cursor * 2);
-			  *pos++ = ' ';
-			  *pos = attr;
+			  pos[*g_Cursor * 2]     = ' ';
+			  pos[*g_Cursor * 2 + 1] = attr;
 			  set_cursor(*g_Cursor);
 			  break;
 		case '\n':
 			  if (*g_Cursor < 24 * 80)
 			  {
-			  	new_cursor = *g_Cursor / 80 + 1;
-				new_cursor *= 80;
-				set_cursor(new_cursor - 1);
+				*g_Cursor = (*g_Cursor / 80 + 1) * 80;
+				set_cursor(*g_Cursor);
 			  }
 			  else
 			  {
-			  	new_cursor = *g_Cursor / 80 * 80;
-				set_cursor(new_cursor - 1);
+				*g_Cursor = *g_Cursor / 80 * 80;
+				set_cursor(*g_Cursor);
 				scroll_screen();
 			  }
 			  break;
 		default:
-			  pos = (uint8_t *)(0xb8000 + *g_Cursor * 2);
-			  *pos++ = ch;
-			  *pos = attr;
+			  pos[*g_Cursor * 2]     = ch;
+			  pos[*g_Cursor * 2 + 1] = attr;
 			  (*g_Cursor)++;
 			  set_cursor(*g_Cursor);
 			  break;
 	}//end switch
+}
+
+void 
+print_str(char *str)
+{
+	while(*str)
+	{
+		print_char(*str++);
+	}
 }
 
 void 

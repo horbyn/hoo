@@ -1,38 +1,26 @@
-S_SRC   = $(shell find . -name "*.s")
-S_OBJ_A = $(patsubst %.s, %.o, $(S_SRC))
-S_OBJ_F = $(subst ./boot/bootsect.o, , $(S_OBJ_A))
-C_SRC   = $(shell find . -name "*.c")
-C_OBJ   = $(patsubst %.c, %.o, $(C_SRC))
-
 AS=as
 LD=ld
-CC=gcc
+OBJS=bootsect.o
 
-nop: $(S_OBJ_A) $(C_OBJ) image bochs
-	
-
-image: 
-	@if [ ! -f "fd1_44M.img" ]; then \
-		dd if=/dev/zero of=fd1_44M.img bs=1474560 count=1; \
-	fi
-
-bochs: boot/bootsect kernel
-	dd if=boot/bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
-	dd if=kernel of=fd1_44M.img bs=512 count=3 seek=1 conv=notrunc
+# 第一条命令请保持依赖为 img，这样默认 make 就能执行
+# DISPLAY=:0，由于启动 bochs 需要 GUI，所以启动需要加上这个
+nop: fd1_44M.img
 	DISPLAY=:0 /usr/bin/bochs
 
+fd1_44M.img: bootsect
+	dd if=bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
+
 clean:
-	rm -f $(S_OBJ_A) $(C_OBJ) boot/bootsect fd1_44M.img system kernel
+	rm $(OBJS)
 
-boot/bootsect: boot/bootsect.o
-	$(LD) --oformat binary -e start -Ttext 0x7c00 -m elf_i386 $< -o $@
+# --oformat: 输出格式为纯二进制
+# -e: bootsect 入口点为 _start
+# -Ttext: 链接地址总是加上这个数值
+# -m: 模拟一个编译环境，当需要在 64 位机器上编译 32 位代码时需要模拟 32 位编译环境
+#     详见 https://stackoverflow.com/questions/19200333/architecture-of-i386-input-file-is-incompatible-with-i386x86-64
+bootsect: bootsect.o
+	$(LD) --oformat binary -e _start -Ttext 0x7c00 -m elf_i386 $< -o bootsect
 
-kernel: $(S_OBJ_F) $(C_OBJ)
-	$(LD) -T kernel.lds -m elf_i386 $^ -o system
-	objcopy -I elf32-i386 -S -R ".eh_frame" -R ".comment" -O binary system $@
-
-$(S_OBJ_A): %.o: %.s
+# --32: https://sourceware.org/binutils/docs/as/i386_002dOptions.html#i386_002dOptions
+$(OBJS): %.o: %.s
 	$(AS) --32 $< -o $@
-
-$(C_OBJ): %.o: %.c
-	$(CC) -c -I inc -Wall -m32 -nostdinc -fno-builtin $< -o $@

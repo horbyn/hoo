@@ -436,3 +436,162 @@ ENTRY(symbol)
 <br></br>
 
 ### 为内存区起别名
+
+能够用 `MEMORY` 命令为已创建的内存区增加别名。每个名字对应至多一个内存区
+
+```lds
+REGION_ALIAS(alias, region)
+```
+
+`REGION_ALIAS(alias, region)` 函数为 `region` 这个内存区创建了一个 `alias` 的别名，这允许更灵活地将输出 `section` 映射到内存区。下面是一个例子：
+
+试想我们有一个嵌入式系统的应用，该系统用于许多内存储存种类。它们都有一个易失性内存 `RAM`，允许代码执行或数据存储；有些可能只有只读、非易失性的 `ROM`，只允许代码执行和只读数据的访问；最后一种也是只读的非易失性，但是另一种变体，`ROM2`，具有只读数据的访问而没有代码执行的能力。则此时我们有以下 4 种输出 `section`：
+
+- `.text` 程序代码
+- `.rodata` 只读数据
+- `.data` 可读可写的已初始化数据
+- `.bss` 可读可写的初始化为零的数据
+
+我们的目标是提供一个链接器脚本文件，该文件包含定义输出 `section` 和系统独立部分，以及将输出 `section` 映射到系统上可用内存区域的部分。我们将这个带 3 个不同内存区的嵌入式系统设置为 `A`、`B` 和 `C`：
+
+|section|变种 A|变种 B|变种 C|
+|--|--|--|--|
+|`.text`|`RAM`|`ROM`|`ROM`|
+|`.rodata`|`RAM`|`ROM`|`ROM2`|
+|`.data`|`RAM`|`RAM/ROM`|`RAM/ROM2`|
+|`.bss`|`RAM`|`RAM`|`RAM`|
+
+`RAM/ROM` 和 `RAM/ROM2` 意味着这个 `section` 分别加载到 `ROM` 或 `ROM2`。注意 `.data` 的加载地址在所有三种变体种都起始于 `.rodata` 末尾
+
+下面是处理输出 `section` 的基础脚本，包含系统依赖的 `linkcmds.memory` 文件，用以描述内存布局：
+
+```lds
+INCLUDE linkcmds.memory
+
+SECTIONS
+{
+  .text :
+    {
+      *(.text)
+    } > REGION_TEXT
+  .rodata :
+    {
+      *(.rodata)
+      rodata_end = .;
+    } > REGION_RODATA
+  .data : AT (rodata_end)
+    {
+      data_start = .;
+      *(.data)
+    } > REGION_DATA
+  data_size = SIZEOF(.data);
+  data_load_start = LOADADDR(.data);
+  .bss :
+    {
+      *(.bss)
+    } > REGION_BSS
+}
+```
+
+现在我们需要三个不同的 `linkcmds.memory` 文件来定义你内存区和别名。下面是这三个变体 `A`、`B` 和 `C` 的 `linkcmds.memory` 文本内容：
+
+- `A`
+  这里所有段都是 `RAM`  
+  ```lds
+  MEMORY
+  {
+    RAM : ORIGIN = 0, LENGTH = 4M
+  }
+
+  REGION_ALIAS("REGION_TEXT", RAM);
+  REGION_ALIAS("REGION_RODATA", RAM);
+  REGION_ALIAS("REGION_DATA", RAM);
+  REGION_ALIAS("REGION_BSS", RAM);
+  ```
+- `B`
+  程序代码和只读数据设置为 `ROM`，可读可写数据设置为 `RAM`。已初始化数据的镜像一开始加载到 `ROM`，系统运行伊始就拷贝到 `RAM`  
+  ```lds
+  MEMORY
+  {
+    ROM : ORIGIN = 0, LENGTH = 3M
+    RAM : ORIGIN = 0x10000000, LENGTH = 1M
+  }
+
+  REGION_ALIAS("REGION_TEXT", ROM);
+  REGION_ALIAS("REGION_RODATA", ROM);
+  REGION_ALIAS("REGION_DATA", RAM);
+  REGION_ALIAS("REGION_BSS", RAM);
+  ```
+- `C`
+  程序代码设置为 `ROM`，只读数据为 `ROM2`，可读可写数据为 `RAM`。已初始化数据的镜像一开始加载到 `ROM2`，系统运行伊始就拷贝到 `RAM`  
+  ```lds
+  MEMORY
+  {
+    ROM : ORIGIN = 0, LENGTH = 2M
+    ROM2 : ORIGIN = 0x10000000, LENGTH = 1M
+    RAM : ORIGIN = 0x20000000, LENGTH = 1M
+  }
+
+  REGION_ALIAS("REGION_TEXT", ROM);
+  REGION_ALIAS("REGION_RODATA", ROM2);
+  REGION_ALIAS("REGION_DATA", RAM);
+  REGION_ALIAS("REGION_BSS", RAM);
+  ```
+
+如果需要的话可以写一个通用的系统初始化例程，用以将 `.data` 从 `ROM` 或 `ROM2` 拷贝到 `RAM`：
+
+```c
+#include <string.h>
+
+extern char data_start [];
+extern char data_size [];
+extern char data_load_start [];
+
+void copy_data(void)
+{
+  if (data_start != data_load_start)
+    {
+      memcpy(data_start, data_load_start, (size_t) data_size);
+    }
+}
+```
+
+<br></br>
+
+### 其他链接器脚本命令
+
+这里还有一些其他的链接器脚本命令
+
+- `ASSERT(exp, message)`
+  确保 `exp` 非零。如果为零，退出链接器并返回一个错误码以及打印 `message`  
+  注意是在链接的最后阶段发生之前才会去检查断言。这意味着如果用户没有为这些符号设置值，则该符号相关的表达式将失败。唯一的例外是仅引用点的符号，因此一个断言看起来像这样：  
+  ```lds
+  .stack :
+  {
+    PROVIDE (__stack = .);
+    PROVIDE (__stack_size = 0x100);
+    ASSERT ((__stack > (_end + __stack_size)), "Error: No room left for the stack");
+  }
+  ```
+  如果到处都找不到 `__stack_size` 的定义就失败。  
+  在 `section` 外定义的符号会被更早地检索到，因此它们可用于在断言种，即：  
+  ```lds
+  PROVIDE (__stack_size = 0x100);
+  .stack :
+  {
+    PROVIDE (__stack = .);
+    ASSERT ((__stack > (_end + __stack_size)), "Error: No room left for the stack");
+  }
+  ```
+  就可以工作
+- `EXTERN(symbol symbol …)`
+  强制将要进入输出文件的 `symbol` 变成一个未定义符号。例如，这样做可能会触发标准库中附加模块的链接。你可以在每个 `EXTERN` 命令种列举多个 `symbol`，也可以多次使用 `EXTERN`。这个命令与命令行选项 `-u` 完全相同
+- `FORCE_COMMON_ALLOCATION`
+  这个命令与命令行选项 `-d` 完全相同，用来使 `ld` 为普通符号分配空格，就像一个可重定向的输出文件被指定了 `-r`
+- `INHIBIT_COMMON_ALLOCATION`
+  这个命令与命令行选项 `--no-define-common` 完全相同，用来使 `ld` 删除普通符号地址上的赋值，即使这是一个非可重定向的输出文件
+- `FORCE_GROUP_ALLOCATION`
+  这个命令与命令行选项 `--force-group-allocation` 完全相同，用来使 `ld` 像普通输入 `section` 那样设置 `section` 组，然后删除`section` 组，即使指定了可重定向的输出文件
+- `INSERT [ AFTER | BEFORE ] output_section`
+  
+

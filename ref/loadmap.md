@@ -593,5 +593,16 @@ void copy_data(void)
 - `FORCE_GROUP_ALLOCATION`
   这个命令与命令行选项 `--force-group-allocation` 完全相同，用来使 `ld` 像普通输入 `section` 那样设置 `section` 组，然后删除`section` 组，即使指定了可重定向的输出文件
 - `INSERT [ AFTER | BEFORE ] output_section`
-  
-
+  此命令通常在由 `-T` 命令行选项使用，以增加默认的 `SECTIONS`，例如覆盖。它在 `output_section` 之后（或之前）插入所有先前的连接器脚本语句，之后会导致 `-T` 选项不重写默认的链接器脚本。确切的插入点与 `orphan section` 相同，详见 [位置计数器](https://sourceware.org/binutils/docs/ld/Location-Counter.html)。插入发生在链接器将输入 `section` 映射至输出 `section` 完成之后。在插入之前，由于 `-T` 默认在链接器脚本之前解析，因此 `-T` 中的语句出现在脚本的内部链接器中的默认链接器脚本语句之前。特别地，输入`section` 赋值语句将会在 `-T` 输出 `section` 赋值语句之前。这里是一个 `-T` 使用 `INSERT` 怎么工作的例子：
+  ```lds
+  SECTIONS
+  {
+    OVERLAY :
+    {
+      .ov1 { ov1*(.text) }
+      .ov2 { ov2*(.text) }
+    }
+  }
+  INSERT AFTER .text;
+  ```
+- `NOCROSSREFS(section section …)`

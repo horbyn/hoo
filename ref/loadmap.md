@@ -606,3 +606,74 @@ void copy_data(void)
   INSERT AFTER .text;
   ```
 - `NOCROSSREFS(section section …)`
+  这个命令可用来告诉 `ld` 提出一个在某输出 `section` 中关于任何引用符号的错误  
+  在某些类型的程序中，特别是在嵌入式系统中用到覆盖的程序时，当一个 `section` 加载到内存时，就不会再加载另一个 `section` 了。在两个 `section` 之间任何直接的引用符号都会出错。比如，如果一个 `section` 的代码调用其他 `section` 的函数就会出错  
+  `NOCROSSREFS` 命令参数是一系列输出 `section` 名字。如果 `ld` 在这些段之间检测到任何交叉引用，就会提出错误，然后返回一个非零退出状态。注意 `NOCROSSREFS` 命令使用的是输出 `section` 名而不是输入名  
+- `NOCROSSREFS_TO(tosection fromsection …)`
+  此命令可用于告诉 `ld` 提出错误关于一个 `section` 中的任何引用，这个 `section` 来自一系列其他 `section`  
+  `NOCROSSREFS` 命令用来确保两个或更多输出 `section` 是完全独立的，但某些情况下需要单向依赖。比如，在一个多核应用中有一些共享代码是从其他核心处调用的，但出于安全考虑不允许回调  
+  `NOCROSSREFS_TO` 命令参数也是一系列输出 `section` 名字。第一个 `section` 不能被其他任何 `section` 中引用。如果 `ld` 检测到任何第一个 `section` 的引用来自其他 `section`，则报告一个错误，然后返回一个非零退出状态。注意 `NOCROSSREFS_TO` 命令使用的是输出 `section` 名而不是输入名
+- `OUTPUT_ARCH(bfdarch)`
+  指定一个特定的输出机器的架构，参数是 `BFD` 库（详见 [BFD](https://sourceware.org/binutils/docs/ld/BFD.html) ）使用名字的其中一个。你可以通过 `objdump -f` 选项看到一个目标文件的架构
+- `LD_FEATURE(string)`
+  这个命令用来更改 `ld` 行为。如果 *`string`* 是 "SANE_EXPR" 则脚本里的绝对符号和数字在任何地方都会被简单地视为数字。详见 [表达式 `Section`](https://sourceware.org/binutils/docs/ld/Expression-Section.html)
+
+<br></br>
+
+## 向符号赋值
+
+在链接器脚本中你可以向符号赋值，这即为定义一个符号，并且该值会加入全局符号表
+
+---
+
+### 简单赋值
+
+你可以使用任何 C 的赋值运算符来赋值一个符号
+
+```c
+symbol = expression ;
+symbol += expression ;
+symbol -= expression ;
+symbol *= expression ;
+symbol /= expression ;
+symbol <<= expression ;
+symbol >>= expression ;
+symbol &= expression ;
+symbol |= expression ;
+```
+
+第一种行会定义符号为 `expression` 的值，其他行 `symbol` 必须要先定义，然后才会相应调整表达式的值
+
+一个特殊的符号，`.`，指示着位置计数器，你可以在 `SECTIONS` 命令中只使用这个符号，详见 [位置计数器](https://sourceware.org/binutils/docs/ld/Location-Counter.html)
+
+注意在 `expression` 后面的分号是必须的
+
+下面定义的是表达式，详见 [表达式](https://sourceware.org/binutils/docs/ld/Expressions.html)
+
+你可以将符号赋值写成命令，或 `SECTIONS` 命令里的语句，或 `SECTIONS` 命令里的输出 `section` 描述中的一部分
+
+符号 `section` 将从表达式 `section` 设置，详见 [表达式 `Section`](https://sourceware.org/binutils/docs/ld/Expression-Section.html)
+
+这里是一个例子在三个不同地方展示如何使用符号赋值：
+
+```lds
+floating_point = 0;
+SECTIONS
+{
+  .text :
+    {
+      *(.text)
+      _etext = .;
+    }
+  _bdata = (. + 3) & ~ 3;
+  .data : { *(.data) }
+}
+```
+
+在这个例子中，符号 `floating_point` 会定义为 0，`_etext` 会定义为最后一个 `.text` 输入 `section` 随后的地址，`_bdata` 会定义为 `.text` 输出 `section` 向上对齐 4 字节边界的地址
+
+<br></br>
+
+### 隐藏符号
+
+[1](https://sourceware.org/binutils/docs/ld/HIDDEN.html)

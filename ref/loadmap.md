@@ -676,4 +676,213 @@ SECTIONS
 
 ### 隐藏符号
 
-[1](https://sourceware.org/binutils/docs/ld/HIDDEN.html)
+对于 `ELF` 目标端口，定义一个将隐藏且不会导出的符号的语法是 `HIDDEN(symbol = expression)`
+
+这里是一个来自 [简单赋值](https://sourceware.org/binutils/docs/ld/Simple-Assignments.html) 的例子，现在用 `HIDDEN` 重写：
+
+```lds
+HIDDEN(floating_point = 0);
+SECTIONS
+{
+  .text :
+    {
+      *(.text)
+      HIDDEN(_etext = .);
+    }
+  HIDDEN(_bdata = (. + 3) & ~ 3);
+  .data : { *(.data) }
+}
+```
+
+此时该模块中三个符合没有一个可以被外部程序使用
+
+<br></br>
+
+### PROVIDE
+
+在某些情况下，我们希望链接器脚本仅在符号被引用且未由其他任何对象定义时才定义符号。比如，传统的链接器定义 `.etext`。然而，`ANSI C` 要求用户能够使用 `.etext` 作为一个函数名而不会遇到错误。`PROVIDE` 关键字用在它被引用且无定义时，才定义一个符号，如 `.etext`。语法是 `PROVIDE(symbol = expression)`
+
+这里是一个用 `PROVIDE` 定义 `.etext` 的例子：
+
+```lds
+SECTIONS
+{
+  .text :
+    {
+      *(.text)
+      _etext = .;
+      PROVIDE(etext = .);
+    }
+}
+```
+
+这个例子中，如果程序定义了 `_etext`（带前缀下划线），则链接器会给出重定义提示。另一方面，如果程序定义了 `etext`（没有前缀下划线），则链接器才使用程序的定义。如果程序引用 `etext` 但没有定义，则链接器会使用链接器脚本里的定义
+
+*注意* - `PROVIDE` 指令将一个常用符号视为将要定义，即使这样一个符号能够用 `PROVIDE` 创建的符号合并。当考虑构造和析构列表符号时特别重要，比如 `__CTOR_LIST__` 这些符号通常被定义为常用符号
+
+<br></br>
+
+### PROVIDE_HIDDEN
+
+和 `PROVIDE` 相似，对于 `ELF` 目标端口，符号将会被隐藏并且不会导出
+
+<br></br>
+
+### 源码引用符号
+
+从源码中访问链接器脚本定义的变量并不直观，特别是链接器脚本里的符号和高级语言中的变量定义并不等同，实际上该符号是并没有值
+
+在继续之前，要明白很重要的一点是，编译器总是将源码里的变量名转换为符号表里的不同名字。比如，`Fortran` 编译器通常优先考虑或主动添加一个下划线，`C++` 执行广泛的 `name mangling`。因此可能在源码中变量使用的名字和定义在链接器脚本中的同一个变量的名字有差异。比如在 C 语言里链接器脚本变量像下面这样引用：
+
+```c
+extern int foo;
+```
+
+但在链接器脚本中是这样定义的
+
+```lds
+_foo = 1000;
+```
+
+不过现在假设接下来我们讨论的例子中不出现变量名转换
+
+当在高级语言比如 C 里声明一个符号实际上发生了两件事。第一是编译器保留了足够的内存空间以保存符号的值；第二是编译器在符号表里创建了一个条目，这个表保存了符号的地址，即保存的是这个符号对应那个内存块的地址。所以对于下面这个例子：
+
+```c
+int foo = 1000;
+```
+
+从文件范围来看，在符号表上创建了一个称为 `foo` 的条目，该条目对应一个 `int` 型变量的大小的内存块以初始化储存数值 `1000`
+
+当程序引用一个编译器生成的符号时，首先访问的是符号表，从中找到符号底下那个内存块的地址，然后才从该内存块里读取数值，所以：
+
+```c
+foo = 1;
+```
+
+会在符号表里寻找符号 `foo`，获取这个符号对应的地址，然后将 `1` 写入这个地址。但是。
+
+```c
+int *a = &foo;
+```
+
+在符号表里寻找符号 `foo`，获取其地址，然后拷贝这个地址到变量 `a` 关联的那个内存块上
+
+相比之下，链接器脚本的符号声明在符号表里创建一个条目但不分配内存。因此它们是一个没有值的地址。下面示例给出了链接器脚本的符号定义：
+
+```lds
+foo = 1000;
+```
+
+在符号表里创建了一个叫做 `foo` 的条目，用以保存内存地址 1000，但这个地址上并没什么东西存在。这意味着你不能访问链接器脚本定义的符号的值（因为没有值），你只能访问链接器脚本定义的这个符号的地址
+
+因此当你在源码里使用链接器脚本定义的符号时，你应该总是取地址而不要尝试使用该地址上的值。比如下面这个例子中，你想要拷贝 `.ROM` 这个内存段的内容到 `.FLASH` 段，并且链接器脚本包含这些声明：
+
+```lds
+start_of_ROM   = .ROM;
+end_of_ROM     = .ROM + sizeof (.ROM);
+start_of_FLASH = .FLASH;
+```
+
+那么在 C 源码里执行拷贝会是：
+
+```c
+extern char start_of_ROM, end_of_ROM, start_of_FLASH;
+
+memcpy (&start_of_FLASH, &start_of_ROM, &end_of_ROM - &start_of_ROM);
+```
+
+注意 `&` 的使用，上面这样做才是对的。或者像下面这样，将符号视为 `vector` 或数组名也可以：
+
+```c
+extern char start_of_ROM[], end_of_ROM[], start_of_FLASH[];
+
+memcpy (start_of_FLASH, start_of_ROM, end_of_ROM - start_of_ROM);
+```
+
+这样使用就不需要 `&` 了
+
+<br></br>
+
+## SECTIONS 命令
+
+`SECTIONS` 命令告诉链接器怎样将输入 `section` 映射为输出 `section`，以及在内存中怎样安排输出 `section`
+
+`SECTIONS` 命令格式为：
+
+```lds
+SECTIONS
+{
+  sections-command
+  sections-command
+  …
+}
+```
+
+每个 `sections-command` 可以是以下情况之一：
+
+- 一个 `ENTRY` 命令（详见 [`Entry` 命令](https://sourceware.org/binutils/docs/ld/Entry-Point.html)）
+- 一个符号赋值（详见 [赋值](https://sourceware.org/binutils/docs/ld/Assignments.html)）
+- 一个输出 `section` 描述
+- 一个描述的覆盖
+
+为了方便在这些命令中使用位置计数器，允许在 `SECTIONS` 命令中使用 `ENTRY`
+命令和符号赋值。这也使得链接器脚本更容易理解，因为你可以在输出文件的内存布局上，在某些需要的位置上使用
+
+下面是输出 `section` 描述和覆盖描述
+
+如果你在链接器脚本中不使用 `SECTIONS` 命令，则链接器将按照在输入文件中第一次遇到这些 `section` 的顺序将每个输入 `section` 放入一个名称相同的输出 `section` 中。比如，如果所有输入 `section` 都出现在第一个文件中，则输出文件中 `section` 的顺序和第一个输入文件一致。第一个 `section` 起始于地址 0 处
+
+---
+
+### 输出段描述
+
+输出 `section` 的完整描述看起来像这样：
+
+```lds
+section [address] [(type)] :
+  [AT(lma)]
+  [ALIGN(section_align) | ALIGN_WITH_INPUT]
+  [SUBALIGN(subsection_align)]
+  [constraint]
+  {
+    output-section-command
+    output-section-command
+    …
+  } [>region] [AT>lma_region] [:phdr :phdr …] [=fillexp] [,]
+```
+
+实际上上面这些属性很多都不使用
+
+`section` 后面的空白符是必须的，以便 `section` 名清楚明白，冒号和方括号也是必须的。如果用了 `fillexp` 并且下一个 `sections-command` 看起来像是表达式的延续，那么最后的逗号也是必须的。而换行符和其他的空白符则是可选的
+
+每个 `output-section-command` 可能是下面列举的其中一种情况：
+
+- 一个符号赋值（详见 [赋值](https://sourceware.org/binutils/docs/ld/Assignments.html) ）
+- 一个输入 `section` 描述（详见 [输入 `Section`](https://sourceware.org/binutils/docs/ld/Input-Section.html) ）
+- 要直接包含的数据值（详见 [输出 `Section` 数据](https://sourceware.org/binutils/docs/ld/Output-Section-Data.html) ）
+- 一个特殊的输出 `section` 关键字（详见 [输出 `section` 关键字](https://sourceware.org/binutils/docs/ld/Output-Section-Keywords.html) ）
+
+<br></br>
+
+### 输出段名字
+
+输出段的名字, *`section`*，它起名有输出格式的限制。在仅支持有限数量的 `section` 的格式中，如 `a.out`，名称必须是该格式支持的名称之一（如 `a.out` 只允许 `.text`、`.data` 或 `.bss`）。如果输出格式支持任意数量，但带有数字而不是名称（像 `Oasys` 的情况），则名称中的数字应加上引号。一个 `section` 名可能由任意字符序列组成，但一个包含任意反常字符如逗号等的名字则应加上引号
+
+`/DISCARD/` 这个输出 `section` 名是特殊的，详见 [丢弃的输出 `Section`](https://sourceware.org/binutils/docs/ld/Output-Section-Discarding.html)
+
+<br></br>
+
+### 输出段地址
+
+*`address`* 是一个用于输出 `section` `VMA`（虚拟内存地址）的表达式。这个地址是可选的，但如果提供了则将会指定一个确切的输出地址
+
+如果输出地址没有指定则基于以下情况为输出段选择一个。该地址会调整以适应输出 `section` 的要求。对齐是输出 `section` 中包含的输入 `section` 的严格对齐
+
+输出 `section` 地址选择顺序如下：
+
+- 如果为这个 `section` 设置了一个输出内存区 *`region`*，那么它将被添加到该区域，其地址是该区域的下一个空闲区域
+- 如果已经用了 `MEMORY` 命令来创建一系列内存区，则第一个与该 `section` 属性兼容的区域会被选中。
+
+[3: Output Section Address](https://sourceware.org/binutils/docs/ld/SECTIONS.html)
+

@@ -835,7 +835,7 @@ SECTIONS
 
 ---
 
-### 输出段描述
+### 输出段的描述
 
 输出 `section` 的完整描述看起来像这样：
 
@@ -881,8 +881,148 @@ section [address] [(type)] :
 
 输出 `section` 地址选择顺序如下：
 
-- 如果为这个 `section` 设置了一个输出内存区 *`region`*，那么它将被添加到该区域，其地址是该区域的下一个空闲区域
-- 如果已经用了 `MEMORY` 命令来创建一系列内存区，则第一个与该 `section` 属性兼容的区域会被选中。
+- 如果为这个 `section` 设置了一个输出内存区 *`region`*，那么它将被添加到该区域，其地址是该区域的下一个空闲地址
+- 如果已经用了 `MEMORY` 命令来创建一系列内存区，则第一个与该 `section` 属性兼容的区域会被选中。段的输出地址将会是该区域内下一个空闲地址。详见 [MEMORY](https://sourceware.org/binutils/docs/ld/MEMORY.html)
+- 如果没有指定内存区，或者没有匹配的段，则输出地址会基于当前位置计数器的值
 
-[3: Output Section Address](https://sourceware.org/binutils/docs/ld/SECTIONS.html)
+举个例子：
 
+```lds
+.text . : { *(.text) }
+```
+
+和
+
+```lds
+.text : { *(.text) }
+```
+
+有一些不同。第一个将 `.text` 输出段地址设置为当前位置计数器的值。第二个设置为与位置计数器的当前值，严格对齐任何 `.text` 输入段的值
+
+*`address`* 可以是一个单独的表达式，详见 [表达式](https://sourceware.org/binutils/docs/ld/Expressions.html)。比如，如果你想将一个段对齐 `0x10`，以便该段地址最低 4 个比特是零，那么你可以像下面这样做：
+
+```lds
+.text ALIGN(0x10) : { *(.text) }
+```
+
+这使得 `ALIGN` 返回向上对齐指定的值
+
+为一个段指定 *`address`* 将改变位置计数器的值，前提是这个段非空（空的段会被忽略）
+
+<br></br>
+
+### 输入段的描述
+
+最常用的输出端命令是输入段描述
+
+输入段描述是最基础的链接器脚本操作。你使用输出端去告诉链接器怎样为你的程序安排内存区，使用输入段描述去告诉链接器怎样将输入文件映射为你的内存布局
+
+---
+
+#### 输入段基础
+
+一个输入段描述由一个文件名组成，当然可以选择在文件名后面用括号给出一个段名列表
+
+文件名和段名可以是通配符模式，下面会进一步描述（详见 [输入段通配符](https://sourceware.org/binutils/docs/ld/Input-Section-Wildcards.html)）
+
+最常用的输入段描述是在输出段里，用一个特定的名称包含所有输入段。比如，为了包含所有文件的 `.text` 段，你需要这样写：
+
+```lds
+*(.text)
+```
+
+这里 `*` 就是通配符，用来匹配任何文件名。为了排除一些来自通配符的文件名，`EXCLUDE_FILE` 可用来匹配所有文件除了在它列表上指定的，比如：
+
+```lds
+EXCLUDE_FILE (*crtend.o *otherfile.o) *(.ctors)
+```
+
+这会导致除了 `crtend.o` 和 `otherfile.o`，其他所有来自文件的 `.ctors` 段都会被包含进去。`EXCLUDE_FILE` 也可以在段列表里面设置，比如：
+
+```lds
+*(EXCLUDE_FILE (*crtend.o *otherfile.o) .ctors)
+```
+
+这个例子的结果与前面的完全一致。如果段列表包含超过一个段，那么这两种 `EXCLUDE_FILE` 语法是非常有用的，比如下面这样
+
+这里有两种方式去包含超过一个段：
+
+```lds
+*(.text .rdata)
+*(.text) *(.rdata)
+```
+
+这两句脚本区别是 `.text` 和 `.rdata` 这两个输入段出现在输出段上的顺序。第一行，它们混合一起，以链接器搜索时的输入顺序出现在输出文件中；第二行，所有 `.text` 输入段出现在前面，之后紧跟的才是 `.rdata`
+
+当在超过一个段上使用 `EXCLUDE_FILE` 时，并且这种排除行为发生在段列表上，则只发生在紧跟的段上面，举个例子：
+
+```lds
+*(EXCLUDE_FILE (*somefile.o) .text .rdata)
+```
+
+会导致除了 `somefile.o` 外其余所有 `.text` 段被包含，而 `.rdata` 段（包括里面的 `somefile.o`）也会被包含。为了排除 `.rdata` 里的 `somefile.o` 上面的例子应该改为：
+
+```lds
+*(EXCLUDE_FILE (*somefile.o) .text EXCLUDE_FILE (*somefile.o) .rdata)
+```
+
+另一种方法是，将 `EXCLUDE_FILE` 设置在段列表外面，或者说是在输入文件前面，这才会应用在所有段上，因此前面的例子可以写成：
+
+```lds
+EXCLUDE_FILE (*somefile.o) *(.text .rdata)
+```
+
+如果你的一个或更多文件的包含需要位于内存中特定位置的特殊数据，你可以指定一个文件名去包含来自特定文件的段。比如：
+
+```lds
+data.o(.data)
+```
+
+为了根据输入段的标志细化要包含的段，可以使用  `INPUT_SECTION_FLAGS`
+
+这里是一个使用 `ELF` 段首标记（`Section header flags`）的简单例子：
+
+```lds
+SECTIONS {
+  .text : { INPUT_SECTION_FLAGS (SHF_MERGE & SHF_STRINGS) *(.text) }
+  .text2 :  { INPUT_SECTION_FLAGS (!SHF_WRITE) *(.text) }
+}
+```
+
+这个例子中，输出段 `.text` 由一些匹配 `*(.text)` 名字的输入段组成，这些名字带 `SHF_MERGE` 和 `SHF_STRINGS` 标记。而输出段 `.text2` 匹配的名字不带 `SHF_WRITE` 标记
+
+你也可以指定不同归档文件，语法是：先是一个匹配存档的模式，然后是一个冒号，最后是匹配文件的模式。注意冒号前后没有空白符
+
+```lds
+‘archive:file’
+```
+
+匹配相应存档的文件
+
+```lds
+‘archive:’
+```
+
+匹配全部存档
+
+```lds
+‘:file’
+```
+
+匹配不在存档中的文件
+
+包含 `shell` 通配符的 `'archive'` 和 `'file'` ，要么一个要么两个。在基于 `DOS` 的文件系统上，链接器保证单个小写字母后跟一个冒号是这种规范，所以 `'c:myfile.o'` 是一个很简单的规范，而不会解释为名为 `'c'` 的存档里的 `'mufile.o'`。`'archive:file'` 的文件规范也可以用在 `EXCLUDE_FILE` 列表中，但可能不会出现在其他链接器脚本的内容上。比如，你不能在 `INPUT` 命令中，通过 `'archive:file'` 提取一个来自存档的文件
+
+如果你使用一个不带段列表的文件名，则输入文件中的所有段都会被包含到输出文件中。这并不常见，但有时可能有用，比如：
+
+```lds
+data.o
+```
+
+当你使用一个既不是 `'archive:file'` 规格，也没有安和通配符字符的文件名时，链接器首先会在命令行或 `INPUT` 命令中检查你是否指定了文件名。如果没有，则尝试将文件作为输入文件打开，就好像它出现在命令行上一样。注意这和 `INPUT` 命令不同，因为链接器不会在存档搜索路径中搜索文件
+
+<br></br>
+
+#### 输入段通配符模式
+
+[1](https://sourceware.org/binutils/docs/ld/Input-Section-Wildcards.html)

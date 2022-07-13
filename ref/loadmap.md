@@ -1025,6 +1025,8 @@ data.o
 
 #### 输入段通配符模式
 
+> [原文链接](https://sourceware.org/binutils/docs/ld/Input-Section-Wildcards.html)
+
 在一个输入端描述中，通配符可用于文件名、段名或两者上
 
 在许多例子中见到的 `'*'` 文件名只是一个很简单的文件名通配符模式
@@ -1066,6 +1068,171 @@ data.o
 
 当链接器脚本中有嵌套的段排序命令时，至多只能有 1 层
 
-1. 
+1. `SORT_BY_NAME`（嵌套 `SORT_BY_ALIGNMENT`）：这首先会通过名字排序输入段，如果两个段名相同再通过对齐值排序
+2. `SORT_BY_ALIGNMENT`（嵌套 `SORT_BY_NAME`）：这首先会通过对齐值排序输入段，如果两个段有相同对齐值才用文件名排序
+3. `SORT_BY_NAME`（嵌套 `SORT_BY_NAME`）：与不嵌套的 `SORT_BY_NAME` 效果相同
+4. `SORT_BY_ALIGNMENT`（嵌套 `SORT_BY_ALIGNMENT`）：与不嵌套的 `SORT_BY_ALIGNMENT` 效果相同
+5. 所有其他嵌套段的排序均无效
 
-[1](https://sourceware.org/binutils/docs/ld/Input-Section-Wildcards.html)
+当均使用了命令行段排序选项和链接器脚本段排序命令时，段排序命令总是优先于命令行选项
+
+如果链接器脚本里的段排序命令没有嵌套，则命令行选项会被段排序命令被视为嵌套
+
+1. 脚本的 `SORT_BY_NAME` 带 `--sort-section alignment` 选项，等价于 `SORT_BY_NAME`（嵌套 `SORT_BY_ALIGNMENT`）
+2. 脚本的 `SORT_BY_ALIGNMENT` 带 `--sort-section name` 选项，等价于 `SORT_BY_ALIGNMENT`（嵌套 `SORT_BY_NAME`）
+
+如果链接器脚本里的段排序命令是嵌套的，则命令行选项会被忽略
+
+`SORT_NONE` 通过忽略命令行段排序选项而禁止排序
+
+如果你仍困惑输入段在什么地方，可以用 `-M` 链接器选项生成映射文件（**译者注：`.map` 文件**）。映射文件精确地给出输入段怎样映射为输出段
+
+这个例子给出了怎么用通配符模式对文件进行分区。脚本让链接器将所有 `.text` 段放入 `.text` 段；将所有 `.bss` 段放入 `.bss` 段；将所有以大写字母开头的文件的 `.data` 段放入 `.DATA` 段，而其余文件的 `.data` 段放入 `.data` 段
+
+```lds
+SECTIONS {
+  .text : { *(.text) }
+  .DATA : { [A-Z]*(.data) }
+  .data : { *(.data) }
+  .bss : { *(.bss) }
+}
+```
+
+<br></br>
+
+#### 常见符号的输入段
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Input-Section-Common.html)
+
+常见符号需要一个特殊的符号，因为再许多目标文件格式中，常见符号并没有特定的输入段。链接器将常见符号视为位于 `'COMMON'` 输入段
+
+**You may use file names with the `'COMMON'` section just as with any other input sections.** 这可用来将特定输入文件中的常见符号放在某个段中，而将其他输入文件的常见符号放在另一个段
+
+在大部分情况里，输入文件里的常见符号会放入输出文件的 `.bss` 段，比如：
+
+```lds
+.bss { *(.bss) *(COMMON) }
+```
+
+一些目标文件格式有超过一种常见符号类型。比如，`MIPS ELF` 目标文件格式严格区分标准常见符号和不常用常见符号。这种情况下，链接器会使用一个不同的特别的段名存放其他常见符号类型。对于 `MIPS ELF` 的情况，链接器将 `'COMMON'` 对应标准常见符号；而 `'.scommon'` 对应不常用常见符号。这允许你将不同常见符号类型映射至不同的内存区
+
+你有时可能会再老式脚本里看到 `'[COMMON]'`，这个符号等价于 `'*(COMMON)'`，但现在视为过时
+
+<br></br>
+
+#### 输入段和垃圾回收
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Input-Section-Keep.html)
+
+当在链接阶段使用了垃圾回收（`'--gc-sections'`），标记不应删除的段时通常很有用。语法是用 `KEEP()` 括起来输入段的通配符条目，比如 `KEEP(*(.init))` 或者 `KEEP(SORT_BY_NAME(*)(.ctors))`
+
+<br></br>
+
+#### 输入段例子
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Input-Section-Example.html)
+
+接下来的例子是一个完整的链接器脚本。它告诉链接器读取所有来自 `all.o` 文件的段，并放入输出段 `'outputa'` 开头处，而 `'outputa'` 起始地址为 `'0x1_0000'`。紧接着的是来自 `foo.o` 文件的所有 `'.input1'` 段，也放入同一个输出段。所有来自 `foo.o` 的 `'input2'` 段放入输出段 `'outputb'`，后面跟着来自 `foo1.o` 的 `'.input1'`。剩余来自任何文件的所有 `'.input1'` 和 `'.input2'` 段均写入输出段 `'outputc'`
+
+```lds
+SECTIONS {
+  outputa 0x10000 :
+    {
+    all.o
+    foo.o (.input1)
+    }
+  outputb :
+    {
+    foo.o (.input2)
+    foo1.o (.input1)
+    }
+  outputc :
+    {
+    *(.input1)
+    *(.input2)
+    }
+}
+```
+
+如果一个输出段的名字和输入段的名字相同，并且可表示为 `C` 的标识符，则链接器会自动定义（详见 [PROVIDE](https://sourceware.org/binutils/docs/ld/PROVIDE.html)）两个符号：`__start_SECNAME` 和 `__stop_SECNAME`，其中，`SECNAME` 是段名。它们分别指出输出段的起始和结束地址。注意：大多段名都不可表示为 `C` 的标识符，因为有 `.` 字符
+
+<br></br>
+
+### 输出段的数据
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Data.html)
+
+你可以在一个输出段里通过使用 `BYTE`、`SHORT`、`LONG`、`QUAD` 或 `SQUAD` 来指定数据确切的字节数，就像使用一个输出段命令一样。每个关键字后跟一个用括号括起的表达式，表达式里需要提供要储存的值（详见 [表达式](https://sourceware.org/binutils/docs/ld/Expressions.html)）。表达式的值储存在当前位置计数器那个位置
+
+`BYTE`、`SHORT`、`LONG` 和 `QUAD` 分别储存一个、两个、四个和八个字节。储存完后，位置计数器还会加上增加了的字节数
+
+比如，下面这个例子会储存字节 1，紧跟着的是四字节的符号 `'addr'` 的值
+
+```lds
+BYTE(1)
+LONG(addr)
+```
+
+当使用一个 64 为主机名或目标地址，`QUAD` 和 `SQUAD` 都是一样效果，都是储存八个字节（64 位）的值。而当主机名和目标地址都是 32 位时，表达式会计算为 32 位。这时 `QUAD` 储存一个由 32 位零扩展为 64 位的值，而 `SQUAD` 储存一个符号扩展的 64 位值
+
+如果输出文件的目标文件格式具有显式字节序（通常都是这样的），则该值将储存在这种字节序下。否则，该值储存在第一个输入目标文件的字节序中，如 `S 记录`
+
+注意，这些命令只在一个段描述里面起作用，而不是在段描述之间，所以接下来的例子会产生一个链接器的错误
+
+```lds
+SECTIONS { .text : { *(.text) } LONG(1) .data : { *(.data) } } 
+```
+
+作为对比，下面这个才是正确的
+
+```lds
+SECTIONS { .text : { *(.text) ; LONG(1) } .data : { *(.data) } } 
+```
+
+你可以位当前段使用 `FILE` 命令来设置填充，语法是后跟一个括号括起来的表达式。段内任何其他未指定的内存区（比如由于输入段的对齐而留下的间隙）都将填充未表达式的值，并按需重复。一个 `FILE` 语句覆盖了它在段里出现点后的内存区，通过包含多个 `FILE` 语句，可以在输出段的不同部分填充不同东西
+
+下面例子展示了怎么对未指定的内存区填充为 `'0x90'`：
+
+```lds
+FILL(0x90909090)
+```
+
+`FILE` 命令和输出段属性 `'=fillexp'` 是相似的，只是它只影响紧跟 `FILE` 的那部分，而不是整个段。如果都是用，则优先使用 `FILE` 命令，详见 [输出段填充](https://sourceware.org/binutils/docs/ld/Output-Section-Fill.html) 关于填充表达式的内容
+
+<br></br>
+
+### 输出段关键字
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Keywords.html)
+
+有些可以作为输出段命令出现的关键字
+
+- `CREATE_OBJECT_SYMBOLS`
+  这个命令告诉链接器为每个输入文件创建一个符号，其符号名对应着输入文件。每个符号对应段将放入 `CREATE_OBJECT_SYMBOLS` 命令出现的输出段  
+  对于 `a.out` 目标文件格式来说，这种安排是约定俗成的，但对于其他目标文件格式则不是
+- `CONSTRUCTORS`
+  使用 `a.out` 目标文件格式进行链接时，链接器使用不常见的集合结构来支持 `C++` 全局构造函数和析构函数。是链接一些不支持任意段的目标文件格式时（比如 `ECOFF` 和 `XCOFF`），链接器自动根据名字来区分 `C++` 全局构造函数和全局析构函数。对于这些目标文件格式来说，`CONSTRUCTORS` 命令用来告诉链接器将构造函数信息放入该命令出现处。其他目标文件格式忽略这个命令  
+  符号 `__CTOR_LIST__` 标记全局构造函数的开始，`__CTOR_END__` 标记结束。类似的，`__DTOR_LIST__` 和 `__DTOR_END__` 标记了全局析构函数的开始和结束。列表中的第一个字是条目数，然后是每个构造函数或析构函数的地址，然后是零。编译器必须定义实际运行的代码。对于这些目标文件，`GNU C++` 通常调用子例程 `__main()` 的构造函数，它的调用会自动插入到 `main()` 开始处。`GNU C++` 自动运行析构函数，要么调用 `atexit()`，要么直接调用 `exit()`  
+  对于支持任意段名的目标文件格式如 `COFF` 或 `ELF` ，`GNU C++` 通常将全局构造和析构函数的地址放入 `.ctors` 和 `.dtors` 段。讲以下序列放入链接器脚本，将构建 `GNU C++` 运行时的看起来那样的代码：  
+  ```lds
+  __CTOR_LIST__ = .;
+  LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2)
+  *(.ctors)
+  LONG(0)
+  __CTOR_END__ = .;
+  __DTOR_LIST__ = .;
+  LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2)
+  *(.dtors)
+  LONG(0)
+  __DTOR_END__ = .;
+  ```  
+  如果你使用 `GNU C++` 来支持初始化优先级，它提供了对全局构造函数运行顺序的一些控制，你必须在链接时对构造函数进行排序，以确保它们以正确的顺序执行。当用了 `CONSTRUCTORS` 命令，请改用 `'SORT_BY_NAME(CONSTRUCTORS)'`。使用 `.ctors` 和 `.dtors` 段时，使用 `'*(SORT_BY_NAME(.ctors))'` 和 `'*(SORT_BY_NAME(.dtors))'` 而不仅仅是 `'*(.ctors)'` 和 `'*(.dtors)'`  
+  通常编译器和链接器会自动处理这些问题，你不需要关心。但是，如果你用着 `C++` 并且写着你自己的链接器脚本，那还是要考虑的
+
+<br></br>
+
+### 弃用的输出段
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Discarding.html)
+
+

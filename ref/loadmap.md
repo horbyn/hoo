@@ -1025,4 +1025,47 @@ data.o
 
 #### 输入段通配符模式
 
+在一个输入端描述中，通配符可用于文件名、段名或两者上
+
+在许多例子中见到的 `'*'` 文件名只是一个很简单的文件名通配符模式
+
+通配符看起来和 `Unix shell` 是差不多的
+
+`'*'`
+
+匹配任何数量的字符
+
+`'?'`
+
+匹配任何单个的字符
+
+`'[chars]'`
+
+匹配任何字符的单个形式，`'-'` 用于指定字符范围，如 `'[a-z]'` 匹配任和小写字符
+
+`'\'`
+
+引用其后的字符
+
+文件名通配符只匹配命令行或 `INPUT` 命令显式指定的文件。链接器不会搜索目录以扩展通配符
+
+如果一个文件名匹配超过一个通配符，或者如果一个文件名显式出现，且被某个通配符匹配，那么链接器会使用链接器脚本上的第一个匹配规则。举个例子，这个输入段列表描述可能是错的，因为不会使用 `data.o` 规则：
+
+```lds
+.data : { *(.data) }
+.data1 : { data.o(.data) }
+```
+
+通常，链接器会将匹配通配符的文件或段，以链接阶段被发现的顺序来设置。你可以通过 `SORT_BY_NAME` 关键字来改变这种设置，该关键字在括号里的通配符模式之前出现（如 `SORT_BY_NAME(.text*)`）。当使用了 `SORT_BY_NAME` 关键字，链接器将文件或段按名称升序排序，然后将它们放入输出文件
+
+`SORT_BY_ALIGNMENT` 和 `SORT_BY_NAME` 差不多。`SORT_BY_ALIGNMENT` 对段进行对齐的降序排序，然后将它们放入输出文件。将大对齐放在小对齐前面可以减少填充的数量
+
+`SORT_BY_INIT_PRIORITY` 也和 `SORT_BY_NAME` 差不多。`SORT_BY_INIT_PRIORITY` 的排序方式和段名有关，段名会按 `GCC` `init_priority` 属性进行编码，然后对段名编码的数值进行升序排序，之后才将它们放入输出文件。在 `.init_array.NNNNN` 和 `.fini_array.NNNNN` 中，`NNNNN` 就是 `init_priority` 属性。在 `.ctors.NNNNN` 和 `.dtors.NNNNN` 中, `NNNNN` 是 65535 减去 `init_priority`
+
+`SORT` 是 `SORT_BY_NAME` 的别名
+
+当链接器脚本中有嵌套的段排序命令时，至多只能有 1 层
+
+1. 
+
 [1](https://sourceware.org/binutils/docs/ld/Input-Section-Wildcards.html)

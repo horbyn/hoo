@@ -1235,4 +1235,74 @@ FILL(0x90909090)
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Discarding.html)
 
+链接器通常不会创建没有内容的输出文件，这是为了方便可能存在或不存在于任何输入文件中的输入段的检测，举个例子：
+
+```lds
+.foo : { *(.foo) }
+```
+
+只有在至少一个输入文件中有 `.foo` 段并且输入段不全为空时，才会在输出文件里创建一个 `.foo` 段。其他在一个输出段上分配空间的链接脚本指令也会创建输出段。**So too will assignments to dot even if the assignment does not create space, except for ‘. = 0’, ‘. = . + 0’, ‘. = sym’, ‘. = . + sym’ and ‘. = ALIGN (. != 0, expr, 1)’ when ‘sym’ is an absolute symbol of value 0 defined in the script.** 这使你可用 `'. = .'` 强制输出一个空段
+
+链接器会忽略弃用输出段上的地址赋值（详见 [输出段地址](https://sourceware.org/binutils/docs/ld/Output-Section-Address.html)），除了当链接器脚本在输出段上定义了符号。这种情况下链接器会遵循地址赋值，**possibly advancing dot even though the section is discarded.**
+
+特殊的输出段名 `'/DISCARD/'` 可用来丢弃输入段。一些赋值给 `'/DISCARD/'` 命名的输出段的输入段不会被最终的输出文件包含
+
+这可用来丢弃用 `SHF_GNU_RETAIN` 这个 `ELF` 标识标记的输入段，否则这些部分会从链接器垃圾回收中保存
+
+注意，匹配 `'/DISCARD/'` 的段会被丢弃，即使它们在一个不丢弃其他成员的 `ELF` 段组中。这是谨慎的，丢弃优先于分组
+
+<br></br>
+
+### 输出段属性
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Attributes.html#Output-Section-Attributes)
+
+之前我们已经给出了一个输出段的完整描述，像下面这样：
+
+```lds
+section [address] [(type)] :
+  [AT(lma)]
+  [ALIGN(section_align) | ALIGN_WITH_INPUT]
+  [SUBALIGN(subsection_align)]
+  [constraint]
+  {
+    output-section-command
+    output-section-command
+    …
+  } [>region] [AT>lma_region] [:phdr :phdr …] [=fillexp]
+```
+
+我们已经描述了 *`section`*、*`address`* 和 *`output-section-command`*，这里将描述剩下的段属性
+
+---
+
+#### 输出段类型
+
+每个输出段可能都有一种类型，类型是一个括号括起来的关键字。下面这里类型是已经定义了的：
+
+- `NOLOAD`
+  标记某个段为不可加载的（*not loadable*），以便程序运行时该段不可以被加载
+- `READONLY`
+  标记某个段为只读
+- `DSECT`
+- `COPY`
+- `INFO`
+- `OVERLAY`
+  上面这些关键字均支持向后兼容，并且都已经在使用了。它们都是同样的效果：标记某个段为不可分配的（*not allocatable*），以便当程序运行时不为这个段分配内存
+
+链接器通常根据映射到输出段的输入段，设置输出段的属性。你可以用段类型来覆盖，比如，下面这个例子种，`ROM` 段起始于地址 `'0'` 处，并且程序运行时不需要加载
+
+```lds
+SECTIONS {
+  ROM 0 (NOLOAD) : { … }
+  …
+}
+```
+
+<br></br>
+
+#### 输出段 LMA
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)
+
 

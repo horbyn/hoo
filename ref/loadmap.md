@@ -1305,4 +1305,120 @@ SECTIONS {
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)
 
+每个段都有一个虚拟地址（VMA）和一个加载地址（LMA），详见 [脚本基本概念](https://sourceware.org/binutils/docs/ld/Basic-Script-Concepts.html)。虚拟地址由先前描述的 [输出段地址](https://sourceware.org/binutils/docs/ld/Output-Section-Address.html) 来指定。加载地址由 `AT` 或 `AT>` 关键字指定，指定加载地址是可选的
 
+`AT` 关键字带上一个表达式作为参数，这指定了段的一个精确的加载地址。`AT>` 关键字带上一个内存区名作为参数，详见 [MEMORY](https://sourceware.org/binutils/docs/ld/MEMORY.html)。段的加载地址被设置为该内存区内下一个空闲地址，该地址对齐到所指定的对齐值上
+
+如果一个可分配段（`allocatable section`）设置了要么 `AT` 要么 `AT>`，则链接器会遵循以下顺序来确定加载地址：
+
+- 如果段指定了一个 `VMA` 地址，则这个地址也会用作 `LMA`
+- 如果一个段是不可分配的（`not allocatable`），则其 `LMA` 地址会用来设置 `VMA`
+- 否则，如果可以找到与当前段兼容的内存区，并且这个区域包含至少一个段，则 `LMA` 会被设置。此时 `VMA` 和 `LMA` 之间的差异与定位区中最后一个段的 `VMA` 和 `LMA` 之间的差异相同
+- 如果没有已声明的内存区，则默认的内存区会在前一步使用，这个内存区覆盖了全部的地址空间
+- 如没有找到合适的内存区，或者前面没有段可用，则 `LMA` 会设置为和 `VMA` 相等
+
+这些特性被设计为更容易去搭建一个 `ROM` 镜像。比如，下面这个链接器脚本创建了三个输出段：一个起始地址为 `0x1000` 的 `.text`；一个是 `.mdata`，虽然它的 `VMA` 是 `0x2000`，但却是加载到 `.text` 后面；最后一个 `.bss` 用来在 `0x3000` 保存未初始化数据.符号 `_data` 用值 `0x2000` 定义，表示位置计数器保存的是 `VMA` 值而不是 `LMA` 值
+
+```lds
+SECTIONS
+  {
+  .text 0x1000 : { *(.text) _etext = . ; }
+  .mdata 0x2000 :
+    AT ( ADDR (.text) + SIZEOF (.text) )
+    { _data = . ; *(.data); _edata = . ;  }
+  .bss 0x3000 :
+    { _bstart = . ;  *(.bss) *(COMMON) ; _bend = . ;}
+}
+```
+
+与使用此链接器脚本生成的程序一起使用的运行时初始化代码将包括下面的内容，以将初始化数据从 `ROM` 镜像复制到其运行时地址。注意这份代码是怎样利用链接器脚本定义的符号的
+
+```lds
+extern char _etext, _data, _edata, _bstart, _bend;
+char *src = &_etext;
+char *dst = &_data;
+
+/* ROM has data at end of text; copy it.  */
+while (dst < &_edata)
+  *dst++ = *src++;
+
+/* Zero bss.  */
+for (dst = &_bstart; dst< &_bend; dst++)
+  *dst = 0;
+```
+
+<br></br>
+
+#### 3.6.8.3 强制输出段对齐
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Forced-Output-Alignment.html#Forced-Output-Alignment)
+
+你可以利用 `ALIGN` 来增加一个输出段的对齐值。另一个替代方案是，利用 `ALIGN_WITH_INPUT` 属性来强制在整个输出段中保持 `VMA` 和 `LMA` 之间的差异不变
+
+<br></br>
+
+#### 3.6.8.4 强制输入段对齐
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Forced-Input-Alignment.html#Forced-Input-Alignment)
+
+你可以利用 `SUBALIGN` 来强制在输出段里面的输入段对齐，指定的值会覆盖输入段给定的任何对齐值，无论更大或是更小
+
+<br></br>
+
+#### 3.6.8.5 输出段约束
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Constraint.html#Output-Section-Constraint)
+
+你可以指定一个输出段，如果它的所有输入段分别只能通过 `ONLY_IF_RO` 和 `ONLY_IF_RW` 来设置只读和可读可写属性，则这种情况下才能创建该输出段
+
+<br></br>
+
+#### 3.6.8.6 输出段区域
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Region.html#Output-Section-Region)
+
+你可以将一个段赋值为前一个被 `>region` 定义的内存区，详见 [MEMORY](https://sourceware.org/binutils/docs/ld/MEMORY.html)
+
+这里是一个简单的例子：
+
+```lds
+MEMORY { rom : ORIGIN = 0x1000, LENGTH = 0x1000 }
+SECTIONS { ROM : { *(.text) } >rom }
+```
+
+<br></br>
+
+#### 3.6.8.7 输出段 `Phdr`
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Phdr.html#Output-Section-Phdr)
+
+你可以将一个段赋值为前一个被 `':phdr;` 定义的程序段，详见 [PHDRS](https://sourceware.org/binutils/docs/ld/PHDRS.html)。如果一个段被赋值为一个或更多的段，则所有后续分配的段，也将被赋值给这些段，除非它们明确使用 `:phdr`。你可以用 `:NONE` 来告诉链接器不要在任何最终段里（`segment`）设置段（`section`）
+
+这里是一个简单例子
+
+```lds
+PHDRS { text PT_LOAD ; }
+SECTIONS { .text : { *(.text) } :text }
+```
+
+<br></br>
+
+#### 3.6.8.8 输出段填充
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Fill.html#Output-Section-Fill)
+
+你可以用 `'=fillexp'` 为一个完整的段设置填充模式，`fillexp` 是一个表达式（详见 [表达式](https://sourceware.org/binutils/docs/ld/Expressions.html)）。否则在输出段里面任何未指定的内存区（比如由于输入段对齐而遗留的间隙）都会按需重复要填充的值。如果填充表达式是一个简单的十六进制数字（即一个以 `'0x'` 打头的数字字符串且不以 `'k'`、`'M'` 结尾），则一个任意长的十六进制数字序列会用来填充指定的填充模式，并且前导零也成为模式的一部分。其余所有情况，包括额外的括号或者一元运算符 `+`，填充模式是表达式值的四个最低有效字节。所有情况下，数字都是大端字节序
+
+你也可以用 `FILL` 改变在输出段里的填充值，详见 [输出段数据](https://sourceware.org/binutils/docs/ld/Output-Section-Data.html)
+
+这里是一个简单例子：
+
+```lds
+SECTIONS { .text : { *(.text) } =0x90909090 }
+```
+
+<br></br>
+
+### 3.6.9 覆盖描述
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Overlay-Description.html#Overlay-Description)

@@ -1422,3 +1422,326 @@ SECTIONS { .text : { *(.text) } =0x90909090 }
 ### 3.6.9 覆盖描述
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Overlay-Description.html#Overlay-Description)
+
+覆盖描述提供了一种更简单的方法来描述这种段：在相同的内存地址上加载单独的内存影响。在运行阶段，某种覆盖管理器将根据需要将覆盖段拷贝到运行时的内存地址，或从运行时的内存地址拷贝回来，这些操作可能只是简单地操作寻址位。当某个内存区比另一个更快时这种覆盖方法往往很有用
+
+覆盖用 `OVERLAY` 描述，在 `SECTIONS` 命令中使用，和输出段描述一样。`OVERLAY` 整个语法如下：
+
+```lds
+OVERLAY [start] : [NOCROSSREFS] [AT ( ldaddr )]
+  {
+    secname1
+      {
+        output-section-command
+        output-section-command
+        …
+      } [:phdr…] [=fill]
+    secname2
+      {
+        output-section-command
+        output-section-command
+        …
+      } [:phdr…] [=fill]
+    …
+  } [>region] [:phdr…] [=fill] [,]
+```
+
+除了 `OVERLAY` 以外其他所有都是可选的，同时每个段都必须要有一个名字（如上面 *`secname1`* 和 *`secname2`*）。在 `OVERLAY` 结构里面的段定义和普通 `SECTIONS` 结构（详见 [SECTIONS](https://sourceware.org/binutils/docs/ld/SECTIONS.html)）里面的段定义相同，只是 `OVERLAY` 里面不会为段定义地址和内存区
+
+如果用了 *`fill`*，并且下一个 *`sections-command`* 看起来好像和前面的是连续的表达式时，则结尾处需要一个逗号
+
+每个段都定义为同一个起始地址。段的加载地址在内存中是连续的，从用于整个 `OVERLAY` 的加载地址开始（与正常的段定义一样，加载地址是可选的，默认为起始地址；起始地址也是可选的，默认为位置计数器的当前值）
+
+如果用了 `NOCROSSREFS`，并且在段里面有任何引用，则链接器会报告错误。因为段都运行在同一个地址，所以一个段直接引用另一个段通常没有意义（详见 [NOCROSSREFS](https://sourceware.org/binutils/docs/ld/Miscellaneous-Commands.html)）
+
+对于每个在 `OVERLAY` 里面的段，链接器会自动提供两个符号。符号 `__load_start_secname` 定义为段的起始加载地址，`__load_stop_secname` 则定义为段的最终加载地址。*`secname`* 里面的任何不符合 `C` 标识符规范的字符都会被移除。`C`（或者汇编）代码可能会在需要的时候使用这些符号来移动覆盖段
+
+在覆盖的最后，位置计数器的值会被设置为覆盖的起始地址加上最大的段的大小
+
+这里是一个实例，记住这要放在 `SECTIONS` 描述里面
+
+```lds
+OVERLAY 0x1000 : AT (0x4000)
+  {
+    .text0 { o1/*.o(.text) }
+    .text1 { o2/*.o(.text) }
+  }
+```
+
+这会将 `.text0` 和 `.text1` 都定义在地址 `0x1000` 处，`.text0` 会加载到 `0x4000`，而 `.text1` 加载地址紧随其后。以下的符号会在引用时定义： `__load_start_text0`、`__load_stop_text0`、`__load_start_text1` 和 `__load_stop_text1`
+
+将覆盖段 `.text1` 拷贝到覆盖区的 `C` 语言代码看起来可能是下面这个样子：
+
+```lds
+extern char __load_start_text1, __load_stop_text1;
+memcpy ((char *) 0x1000, &__load_start_text1,
+        &__load_stop_text1 - &__load_start_text1);
+```
+
+注意 `OVERLAY` 命令只是锦上添花，因为它所做的一切都可以使用更基本的命令来完成。上面这个例子也可以完全写成这样：
+
+```lds
+.text0 0x1000 : AT (0x4000) { o1/*.o(.text) }
+PROVIDE (__load_start_text0 = LOADADDR (.text0));
+PROVIDE (__load_stop_text0 = LOADADDR (.text0) + SIZEOF (.text0));
+.text1 0x1000 : AT (0x4000 + SIZEOF (.text0)) { o2/*.o(.text) }
+PROVIDE (__load_start_text1 = LOADADDR (.text1));
+PROVIDE (__load_stop_text1 = LOADADDR (.text1) + SIZEOF (.text1));
+. = 0x1000 + MAX (SIZEOF (.text0), SIZEOF (.text1));
+```
+
+<br></br>
+
+## 3.7 MEMORY 命令
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/MEMORY.html)
+
+链接器默认配置允许分配所有可用内存，你可以通过 `MEMORY` 覆盖该默认配置
+
+`MEMORY` 命令描述了目标文件里内存的位置和块大小，你可以用 `MEMORY` 来指定链接器可以使用哪些内存区，避免使用哪些内存区，然后分配段到特定的内存区。链接器会设置基于内存区的段地址，报警空间即将用完的段。链接器不会优化段以适应可用内存区
+
+一个链接器脚本可能会包含许多 `MEMORY` 命令，但是，所有定义的内存块都被视为在单个 `MEMORY` 命令中指定。`MEMORY` 语法如下：
+
+```lds
+MEMORY
+{
+  name [(attr)] : ORIGIN = origin, LENGTH = len
+  …
+}
+```
+
+`name` 是链接器脚本用来引用内存区的名字，离开脚本则该名字无意义。内存区名字储存在一个单独的名字空间，并且不会与其他符号名字、文件名字或段名冲突。每个内存区在 `MEMORY` 命令描述范围内必须有一个不同的名字，但是你也可以之后用 [`REGION_ALIAS`](https://sourceware.org/binutils/docs/ld/REGION_005fALIAS.html) 为一个已存在的内存区起别名
+
+`attr` 字符串是一个可选的属性列表，用来指定是否为一个输入段使用特定的内存区，这些输入段在链接器脚本里没有显式的映射。像 [SECTIONS](https://sourceware.org/binutils/docs/ld/SECTIONS.html) 里描述的那样，如果你不为某些输入段指定输出段，则链接器会用于输入段相同的名字来创建一个输出段。如果你定义了内存区属性，则链接器会使用这些属性，为它创建的输出段选择内存区
+
+`attr` 字符串只能由以下字符组成：
+
+- `R`
+  只读段
+- `W`
+  可读可写段
+- `X`
+  可执行段
+- `A`
+  可分配的（`Allocatable`）段
+- `I`
+  已初始化的（`Initialized`）段
+- `t`
+  和 `I` 相同
+- `!`
+  反转其后跟随的任何属性的含义
+
+如果一个无映射的段匹配除了 `!` 以外的其他任何属性，则该段会被放入内存区。`!` 会反转属性，所以只有当无映射段与后面列出的任何属性都不匹配时，这才会将无映射段放入内存区中。因此，`'RW!X'` 属性字符串将匹配具有至少一个 `'R'` 和 `'W'` 属性的任何无映射段，但前提是这个段不具有 `X` 属性
+
+`origin` 是一个针对内存区起始地址的数值表达式，该表达式在不调用任何符号的情况下，用来计算一个常数值。`ORIGIN` 关键字可以缩写为 `org` 或 `o`（但不能缩写为 `ORG`）
+
+`len` 是一个以字节为单位的关于内存区大小的表达式。与 `origin` 表达式一样，该表达式只能是数值，并且是用来计算常数值的。`LENGTH` 关键字可以缩写成 `len` 或 `l`
+
+在下面这个例子里，我们指定了两个可用与分配的内存区：一个在地址 `'0'` 处分配 `256 KB`，另一个在 `'0x0x40000000'` 处分配 `4 MB`。链接器会将无显式映射到内存区的每个段放入 `'ROM'`，属性为只读或可执行；而将其他无显式映射到内存区的所有段放入 `'RAM'`
+
+```lds
+MEMORY
+{
+  rom (rx)  : ORIGIN = 0, LENGTH = 256K
+  ram (!rx) : org = 0x40000000, l = 4M
+}
+```
+
+一旦你定义了一个内存区，你可以用 `'>region'` 输出段属性，指示链接器将特定的输出段放入这些内存区。比如，如果你有一个叫做 `'mem'` 的内存区，你可以在输出段定义里面用 `'>mem'`，详见 [输出段内存区](https://sourceware.org/binutils/docs/ld/Output-Section-Region.html)。如果没有为输出段指定地址，则链接器会在内存区内将当前地址设置为下一个可用地址。如果指向某个内存区的合并的输出段太大，链接器会报错
+
+可以在一个表达式里，通过 `ORIGIN(memory)` 和 `LENGTH(memory)` 函数访问一个内存区起始地址和长度：
+
+```lds
+_fstack = ORIGIN(ram) + LENGTH(ram) - 4;
+```
+
+<br></br>
+
+## 3.8 PHDRS 命令
+
+`ELF` 目标文件格式使用 *`程序头（program headers）`*，也称为 `segments`，程序头描述了程序应该怎样被加载到内存。你可以通过 `objdump -p` 打印程序头
+
+当你在原生 `ELF` 系统里运行一个 `ELF` 程序时，系统加载器会读取程序头以获悉怎样加载程序，当然前提是已经正确设置了程序头。但我们这份文档不会描述更多关于系统加载器解析程序头的细节，如果你想知道更多，可以参考 `ELF ABI`
+
+链接器默认会创建合适的程序头。但是某些情况下，你可能需要指定更精确的程序头，此时就需要 `PHDRS` 命令了。当链接器在脚本里看见 `PHDRS` 命令，则不会创建你指定那个除外的其他程序头
+
+当生成一个 `ELF` 输出文件时，链接器只关心 `PHDRS` 命令；不生成 `ELF` 时，链接器会简单忽略 `PHDRS`
+
+以下是语法，`PHDRS`、`FILEHDR`、`AT` 和 `FLAGS` 都是关键字
+
+```lds
+PHDRS
+{
+  name type [ FILEHDR ] [ PHDRS ] [ AT ( address ) ]
+        [ FLAGS ( flags ) ] ;
+}
+```
+
+`name` 仅用于链接器脚本里 `SECTIONS` 命令中的引用，不会被放入输出文件。程序头名字储存在一个单独的名字空间，且不与任何符号名、文件名或段名冲突。每个程序头名字必须不同。程序头会被顺序处理，通常是按加载地址升序的顺序映射到段
+
+某些程序头类型描述了系统加载器从文件中加载的内存段。在链接器脚本里，你可以通过在 `segment` 里放入可分配的输出段，来指定这些段的内容。你可以使用 `':phdr'` 输出段属性来将一个段放入一个特定的 `segment`，详见 [输出段 Phdr](https://sourceware.org/binutils/docs/ld/Output-Section-Phdr.html)
+
+
+将某个段放入超过一个 `segment` 是很常见的，这仅仅意味着一个内存段包含另一个。只要有一个包含其他段的段，你就可以用一次 `':phdr'`
+
+如果你在一个或多个 `segment` 中用 `':phdr'` 放入一个段，则链接器会在同一个 `segment` 中将随后那些没有指定 `':phdr'` 的段也放进来。这是十分方便的，因为通常一整个连续的段都是设置为单个 `segment`。你可以用 `:NONE` 来覆盖默认行为，并且告诉链接器不要将段放入任何 `segment` 中
+
+你可以在程序头类型后面，用 `FILEHDR` 和 `PHDRS` 关键字进一步描述 `segment` 的内容。`FILEHDR` 关键字意味着 `segment` 应该包含 `ELF` 文件头（`ELF file header`）；`PHDRS` 关键字意味着 `segment` 应该包含它们自身的 `ELF` 程序头（`ELF program header`）。如果先前描述的所有可加载的 `segment`（`loadable segments`）都应用到同一个可加载 `segment`（`PT_LOAD`）上，则必须使用这些关键词里其中一个
+
+`type` 可以是下面所示其中之一，数值指出了关键字的值：
+
+- `PT_NULL (0)`
+  指出一个不使用的程序头
+- `PT_LOAD (1)`
+  指出程序头描述了一个将从文件中加载的 `segment` 
+- `PT_DYNAMIC (2)`
+  指出一个 `segment` 能在哪里找到动态链接信息（`dynamic linking information`）
+- `PT_INTERP (3)`
+  指出一个 `segment` 能在哪里找到程序解析器的名字（`program interpreter`）
+- `PT_NOTE (4)`
+  指出一个保存注意信息（`note information`）的 `segment`
+- `PT_SHLIB (5)`
+  一个反转的程序头类型，由 `ELF ABI` 定义但不由它指定
+- `PT_PHDR (6)`
+  指出一个 `segment` 能在哪里找到程序头（`program header`）
+- `PT_TLS (7)`
+  指出一个包含线程本地储存（`thread local storage`）的 `segment`
+- `expression`
+  一个给出程序头数值类型的表达式，在非上面定义类型情况下使用
+
+你可以通过使用一个 `AT` 表达式，来指定一个 `segment` 应该被加载到内存的哪一个特定地址上，这和在一个输出段属性（详见 [输出段 LMA](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)）上使用 `AT` 命令是相同的。一个程序头的 `AT` 命令会覆盖输出段属性
+
+链接器通常会基于组成 `segment` 的所有段来设置段属性。你可以用 `FLAGS` 关键字来显式指定段属性，但 *`flags`* 的值必须是一个整型值（`int`），用来设置程序头的 `p_flags` 字段
+
+这里是一个 `PHDRS` 的例子，展示了一个在原生 `ELF` 系统上使用的，典型的程序头集合
+
+```lds
+PHDRS
+{
+  headers PT_PHDR PHDRS ;
+  interp PT_INTERP ;
+  text PT_LOAD FILEHDR PHDRS ;
+  data PT_LOAD ;
+  dynamic PT_DYNAMIC ;
+}
+
+SECTIONS
+{
+  . = SIZEOF_HEADERS;
+  .interp : { *(.interp) } :text :interp
+  .text : { *(.text) } :text
+  .rodata : { *(.rodata) } /* defaults to :text */
+  …
+  . = . + 0x1000; /* move to a new page in memory */
+  .data : { *(.data) } :data
+  .dynamic : { *(.dynamic) } :data :dynamic
+  …
+}
+```
+
+<br></br>
+
+## 3.9 VERSION 命令
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/VERSION.html)
+
+当使用 `ELF` 文件时，链接器支持符号的版本。当使用动态库的时候符号版本才有意义。当动态链接器运行一个程序时，可能程序会链接到动态库的一个早期的版本，这是动态链接器可以使用符号版本来选择特定的函数版本
+
+你可以直接在主要的链接器脚本里包含一个版本的脚本描述，或者隐式为链接器脚本提供版本的脚本描述，也可以用 `'--version-script'` 链接器选项
+
+`VERSION` 语法十分简单
+
+```lds
+VERSION { version-script-commands }
+```
+
+版本脚本命令的格式和 `Solaris 2.5` 上使用 `Sun` 的链接器是一样的，它定义了一个版本结点树，你需要在版本脚本里指定结点名和依赖。你可以指定哪个符号绑定到哪个版本结点，并且你可以减少一个本地的特定符号集合，以便它们在共享库范围外不作为全局变量来使用
+
+演示版本脚本的最简单方法是使用一些示例
+
+```lds
+VERS_1.1 {
+	 global:
+		 foo1;
+	 local:
+		 old*;
+		 original*;
+		 new*;
+};
+
+VERS_1.2 {
+		 foo2;
+} VERS_1.1;
+
+VERS_2.0 {
+		 bar1; bar2;
+	 extern "C++" {
+		 ns::*;
+		 "f(int, double)";
+	 };
+} VERS_1.2;
+```
+
+这个实例版本脚本定义了三个版本结点。第一个版本结点是 `'VERS_1.1'`，这个版本没有其他依赖。这个脚本将符号 `'foo1'` 绑定了 `'VERS_1.1'`。它将许多符号作用范围缩减为本地，以便在共享库之外不可见；这是使用通配符模式完成的，因此任何名称以 `'old'`、`'original'` 或 `'new'` 打头的符号都会匹配。可用的通配符模式和那些在 `shell` 上匹配文件名使用的模式是相同的。然而，如果你在双引号里指定了符号名，则这个名字会被视为字面值（`literal`）而不是全局模式
+
+第二个版本脚本定义了 `'VERS_1.2'` 结点，依赖于 `'VERS_1.1'`。脚本将符号 `'foo2'` 绑定了 `'VERS_1.2'` 结点
+
+最后的版本脚本定义了 `'VERS_2.0'` 结点，依赖于 `'VERS_1.2'`。脚本将符号 `'bar1'` 和 `'bar2'` 绑定到版本节点 `'VERS_2.0'`
+
+当链接器找到一个定义在库里的符号，没有指定应绑定哪一个版本结点时，则链接器会绑定该符号到一个未指定的基础库版本。你可以在版本脚本任意地方，用 `'global: *;'` 将所有其他未指定的符号绑定到给定的版本结点上。注意一般除了最后一个版本结点，其他结点的全局规范中都不会使用通配符。其他地方的全局通配符可能会意外地将符号添加到为旧版本导出的集合中。这是不对的，因为旧版本应该有另一组固定的符号
+
+版本结点名除了可读性外，没有其他特别的含义。`'2.0'` 也可以出现在 `'1.1'` 和 `'1.2'` 之间，只是真这么写可能会在写版本脚本时造成迷惑
+
+结点名可以删掉，前提是它是版本脚本中唯一的版本结点。这样一个版本脚本不会为符号分配任何版本，只会选择哪些符号是全局可见、哪些不可见
+
+```lds
+{ global: foo; bar; local: *; };
+```
+
+当你为一个应用链接一个拥有版本符号的动态库时，则应用本身知道每个符号要求的是哪个版本，并且也知道它链接的每个动态库需要的是哪个版本结点。因此在运行阶段，动态加载器会快速检查，以确保你已经链接的动态库实际上确实支持所有应用解析动态符号所需要的版本结点。通过这种方式，动态链接器可以确定它需要的所有外部符号都是可解析的，而无需搜索每个符号的引用
+
+符号更新版本实际上是一种更复杂的方式，`SunOS` 用这种方式来对次要版本进行检查。这里要解决的基础问题通常是，由于外部函数的引用是按需绑定的，所以应用启动时并非是全部都绑定好。如果一个共享库过时了，那么一个所需的接口就会丢失，当应用尝试使用这个接口时，就会执行失败。随着符号更新版本，当用户启动该他们的程序时，如果应用使用的动态库太旧，则用户会收到一个警告
+
+这里有一些 `GNU` 扩展，用以 `Sun` 版本更新。第一种方法是在定义符号的源文件中绑定符号到版本结点，而不是在更新脚本中。这么做主要是为了减轻动态库维护者的负担。你可以像下面这样
+
+```lds
+__asm__(".symver original_foo,foo@VERS_1.1");
+```
+
+写在 `C` 源文件中。这重命名了函数 `'original_foo'`，名字和绑定到版本结点 `'VERS_1.1'` 的 `'foo'` 别名一样。`'local:'` 指令可用于防止符号 `'original_foo'` 被导出。`'.symver'` 指令优先于版本脚本
+
+第二个 `GNU` 扩展是允许同一个函数的多个版本出现在给定的共享库中。通过这种方式，你可以在不增加共享库的主要版本号的情况下对接口进行不兼容的更改，同时仍然允许链接到旧接口的应用中继续执行
+
+你必须在源文件中用多个 `'.symver'` 指令，这里是一个实例：
+
+```lds
+__asm__(".symver original_foo,foo@");
+__asm__(".symver old_foo,foo@VERS_1.1");
+__asm__(".symver old_foo1,foo@VERS_1.2");
+__asm__(".symver new_foo,foo@@VERS_2.0");
+```
+
+这个例子里面，`'foo@'` 表示符号 `'foo'` 绑定到符号的一个未指定的基础版本。包含这个例子的源文件会定义 4 个 `C` 函数：`'original_foo'`、`'old_foo'`、`'old_foo1'` 和 `'new_foo'`
+
+当你的一个给定符号上有多个定义时，需要有某种方法来指定默认版本，该符号的外部引用将绑定到该版本。你可以用 `'.symver'` 指令的 `'foo@@VERS_2.0'` 类型。你只能以这种方式将符号的一个版本声明为默认版本，否则，你会对同一个符号产生重定义
+
+如果你希望绑定一个引用到共享库中的符号的特定版本，你可以用别名（即 `'old_foo'`），或者你可以用 `'.symver'` 指令专门绑定到相关函数的外部版本
+
+你也可以在版本脚本里指定语言：
+
+```lds
+VERSION extern "lang" { version-script-commands }
+```
+
+支持的 `'lang'` 是 `'C'`、`'C++'` 和 `'Java'`。链接器会在链接时迭代符号列表并根据 `'lang'` 对它们进行解构，然后将它们与 version-script-commands 中指定的模式匹配，默认的 `'LANG'` 是 `'C'`
+
+解构名字可能包含空格和其他特殊字符。像上面描述那样，你可以用一个全局模式来匹配解构后的名称，也可以用双引号字符串来精确地匹配字符串。后一种情况里，要注意版本脚本和解构器的输出之间微小的差异（比如不同的空格）也会导致不匹配。由于解构器生成的确切字符串将来可能会更改，即使损坏的名称没有更改，你也应该在升级时检查所有版本指令的行为是否符合你的预期
+
+<br></br>
+
+## 3.10 链接器脚本里的表达式
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Expressions.html)
+
+在连接器脚本里面表达式的语法和 `C` 表达式是一样的，除了在某些地方需要用空白字符来解决语法歧义
+

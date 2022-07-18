@@ -1810,8 +1810,117 @@ _fourk_4 = 10000o;
 
 ### 3.10.4 Orphan 段
 
+> [原文地址](https://sourceware.org/binutils/docs/ld/Orphan-Sections.html)
+
 `Orphan` 段放在输入段里，表示没有通过链接器脚本显式指定放入输出文件。链接器仍然会将这些段拷贝到输出文件，要么通过查找，要么创建一个合适的输出段来放置 `Orphan` 输入段
 
 如果一个 `Orphan` 输入段完全匹配一个已存在的输入段的名字，则该段会被放入这个输出段最后
 
-如果没有能匹配得上名字得输出段，则创建一个新输出段。每个新的
+如果没有能匹配得上名字得输出段，则创建一个新输出段。每个新的输出段将与放置在其中的 `Orphan` 段具有相同名字。如果有多个 `Orphan` 段有同样的名字，则会合并为一个新输出段
+
+如果新输出段是用来保存所有 `Orphan` 段的，那么链接器必须确定放置这些新输出段到哪个相关的已存在的输出段。**On most modern targets, the linker attempts to place orphan sections after sections of the same attribute, such as code vs data, loadable vs non-loadable, etc.** 如果没有找到匹配属性的段，或者你的目标平台缺乏这种支持，则 `Orphan` 段会放置在文件最后
+
+可以用命令行选项 `'--orphan-handling'` 和 `'--unique'`（详见 [命令行选项](https://sourceware.org/binutils/docs/ld/Options.html)）去控制哪一种输出段才是一个 `Orphan` 段应该放置其中的
+
+<br></br>
+
+### 3.10.5 位置计数器
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Location-Counter.html)
+
+特殊的链接器变量 `'.'` 总是保存当前的位置计数器。因为 `.` 总是指向一个输出段的位置，所以只能出现在 `SECTIONS` 命令里面的某个表达式上。`.` 可以出现在表达式中允许使用普通符号的任意地方
+
+向 `.` 赋值会导致位置计数器被清除，这用来在输出段上指定某个地址。位置计数器在一个输出段里不能往回移动，更不能往回移动至输出段之外，因为这样做会创建具有重叠 `LMA` 的区域
+
+```lds
+SECTIONS
+{
+  output :
+    {
+      file1(.text)
+      . = . + 1000;
+      file2(.text)
+      . += 1000;
+      file3(.text)
+    } = 0x12345678;
+}
+```
+
+前面这个例子中，`file1` 的 `'.text'` 段在输出段 `'output'` 的最开始。后面跟着 1000 字节间隙，然后是 `file2` 的 `'.text'` 段，后面也是跟着 1000 字节间隙，之后才是 `file3` 的 `'.text'` 段。符号 `'=0x12345678'` 表示间隙里面要写入什么数据（详见 [输出段填充](https://sourceware.org/binutils/docs/ld/Output-Section-Fill.html)）
+
+注意：`.` 实际上指向当前包含的对象开始的字节偏移。通常这是 `SECTIONS` 段，它的起始地址是 0，因此 `.` 可以是一个绝对地址。不过，如果 `.` 用在一个段描述里面，则它指向该段开始的字节偏移处而不是一个绝对地址。因此在下面这个脚本里：
+
+```lds
+SECTIONS
+{
+    . = 0x100
+    .text: {
+      *(.text)
+      . = 0x200
+    }
+    . = 0x500
+    .data: {
+      *(.data)
+      . += 0x600
+    }
+}
+```
+
+这里 `.text` 段会被分配一个 0x100 的起始地址和 0x200 字节的大小，即使 `'.text'` 输入段中没有足够的数据来填充该区域（如果有太多数据，则会产生错误，因为数据会向后偏移）。`'.data'` 段将从 0x500 开始，在 `'.data'` 输入段本身结束之前，将有一个 0x600 字节的空间
+
+设置位置计数器一个超出输出段的值时，如果链接器需要设置孤立的段时将会导致一个未定义的值。这里给出下面的例子：
+
+```lds
+SECTIONS
+{
+    start_of_text = . ;
+    .text: { *(.text) }
+    end_of_text = . ;
+
+    start_of_data = . ;
+    .data: { *(.data) }
+    end_of_data = . ;
+}
+```
+
+如果链接器需要放置一些输入段没有在脚本里描述的段如 `.rodata`，那么就有可能会找到 `.text` 和 `.data` 之间的地方来放置。你可能会觉得链接器应该将 `.rodata` 放在上述脚本中的空隙处，但空隙对链接器没有特别的标记。同样，链接器不会将上述符号名与它的段相关联。相反，链接器假定所有赋值或其他语句都属于前一个输出段，除了赋值给 `.` 的特殊情况，即链接器将放置孤立的 `.rodata` 段，就好像下面这个脚本写的那样：
+
+```lds
+SECTIONS
+{
+    start_of_text = . ;
+    .text: { *(.text) }
+    end_of_text = . ;
+
+    start_of_data = . ;
+    .rodata: { *(.rodata) }
+    .data: { *(.data) }
+    end_of_data = . ;
+}
+```
+
+这可能是也可能不是脚本作者对 `start_of_data` 的真正意图。改变孤立段放置的一种方法是将位置计数器赋值给自身，因为链接器会假定 `.` 是赋值给接下来的输出段的开始处，因此应该与接下来的段归为一组，所以上面的例子应该这么写：
+
+```lds
+SECTIONS
+{
+    start_of_text = . ;
+    .text: { *(.text) }
+    end_of_text = . ;
+
+    . = . ;
+    start_of_data = . ;
+    .data: { *(.data) }
+    end_of_data = . ;
+}
+```
+
+现在，孤立的 `.rodata` 段将不会放置在 `end_of_text` 和 `start_of_data` 之间了
+
+<br></br>
+
+### 3.10.6 操作符
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Operators.html)
+
+

@@ -1923,4 +1923,81 @@ SECTIONS
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Operators.html)
 
+链接器能通过标准绑定和优先级程度（`with the standard bindings and precedence levels`）识别标准 `C` 的算术操作符：
+
+```lds
+precedence      associativity   Operators                Notes
+(highest)
+1               left            !  -  ~                  (1)
+2               left            *  /  %
+3               left            +  -
+4               left            >>  <<
+5               left            ==  !=  >  <  <=  >=
+6               left            &
+7               left            |
+8               left            &&
+9               left            ||
+10              right           ? :
+11              right           &=  +=  -=  *=  /=       (2)
+(lowest)
+```
+
+注意两点：(1) 前缀操作符（**译者注：`i++` 和 `++i` 的情况**）；(2) 详见 [赋值](https://sourceware.org/binutils/docs/ld/Assignments.html)
+
+<br></br>
+
+### 3.10.7 （表达式）计算
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Evaluation.html)
+
+链接器计算表达式的值并不会太准确，只在绝对需要使用这个表达式时才计算它的值
+
+链接器需要一些信息，比如第一个 `section` 的起始地址，以及内存区的起始地址和长度，以便做一些链接工作。这些值在链接器从脚本中读取时会尽可能地计算
+
+然而，其他值（比如符号的值）是不知道的，或者说在分配内存之后才能知道。这些值在其他信息（比如输出段大小）在一个符号赋值表达式里可用时，才会开始计算
+
+`section` 的大小在分配内存之后才能知道，所以依赖于 `section` 大小的赋值会在分配之后才执行
+
+一些表达式（比如依赖位置计数器的那些）必须在 `section` 分配阶段才能计算
+
+如果需要一个表达式的结果，但是它的值在链接阶段还不可用，则会抛出一个错误结果。举个例子，像下面这样的脚本：
+
+```lds
+SECTIONS
+  {
+    .text 9+this_isnt_constant :
+      { *(.text) }
+  }
+```
+
+将会抛出一条错误消息 *'non constant expression for initial address'*
+
+<br></br>
+
+### 3.10.8 一个表达式的 `section`
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Expression-Section.html)
+
+**Addresses and symbols may be section relative, or absolute.** 一个 `section` 相关的符号是可重定位的（`relocatable`）。如果你使用 `-r` 选项请求可重定位输出，则会导致更复杂的链接操作，这又可能会改变一个 `section` 相关的符号的值。另一方面，一个绝对符号在任何更复杂的链接操作会一直保持相同的值
+
+链接器表达式里有一些条目是地址，只有在 `section` 相关的符号和返回一个地址的基础函数（如 `ADDR`、`LOADADDR`、`ORIGIN` 和 `SEGMENT_START`）才可用。其他条目都直接是数值，或者是一个返回非地址的基础函数（如 `LENGTH`）。但是数值和绝对符号的情况会变得很复杂，除非你设置了 `LD_FEATURE`（"SANE_EXPR"）（详见 [杂项命令](https://sourceware.org/binutils/docs/ld/Miscellaneous-Commands.html)），否则它们会根据位置而被区别对待，以便与旧版本的 `ld` 兼容。出现在输出 `section` 定义以外的表达式，其中的所有数值均被视为绝对地址；以内的表达式则视其中的绝对符合为数值。如果设置了 `LD_FEATURE`（"SANE_EXPR"），则任何绝对符合和数值都直接视为数值
+
+下面这个简单示例中：
+
+```lds
+SECTIONS
+  {
+    . = 0x100;
+    __executable_start = 0x100;
+    .data :
+    {
+      . = 0x10;
+      __data_start = 0x10;
+      *(.data)
+    }
+    …
+  }
+```
+
+
 

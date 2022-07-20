@@ -1999,5 +1999,169 @@ SECTIONS
   }
 ```
 
+在开头两个赋值语句中，`.` 和 `__executable_start` 都设置为绝对地址 0x100。之后的两个赋值语句里， `.` 和 `__data_start` 都设置为相对于 `.data` `section` 的 0x10 位置
 
+对于涉及数值的表达式，相对地址和绝对地址，`ld` 遵守以下的计算规则：
+
+- 在一个绝对地址或数值上的一元操作，以及两个绝对地址或两个数值或一个绝对地址一个数值上的二元操作，直接在数值上使用操作符
+- 在一个相对地址或数值上的一元操作，以及同一个 `section` 的两个相对地址、或一个相对地址一个数值的二元操作，在地址的偏移部分上使用操作符
+- 其他二元操作，即不在同一个 `section` 的两个相对地址、或者一个绝对地址一个相对地址，这些情况首先将任何非绝对的条目转化为绝对条目，然后才使用操作符
+
+每个子表达式的结果遵循下面规则：
+
+- 一个只涉及数值的操作会得到一个数值
+- 比较、`'&&'`（逻辑与）以及 `'||'`（逻辑或）的结果也是一个数值
+- 在同一个 `section` 的两个相对地址上的其他二元算术和逻辑运算、或者经上面转化后得到的两个绝对地址，其运算结果在设置了 `LD_FEATURE`（"SANE_EXPR"）后，或在输出 `section` 定义内也是一个数值；否则结果为绝对地址
+- 在相对地址、或一个相对地址一个数值的的其他操作结果，都是与相对操作数在同一个 `section` 上的相对地址
+- 在绝对地址上（经上面转化后）的其他操作结果都是一个绝对地址
+
+你可以使用内置函数 `ABSOLUTE` 在情况允许的时候，强制将一个表达式转化为绝对地址，否则为相对地址。比如，为了在输出 `section` `'.data'` 的结尾地址上创建一个绝对符号：
+
+```lds
+SECTIONS
+  {
+    .data : { *(.data) _edata = ABSOLUTE(.); }
+  }
+```
+
+如果 `'ABSOLUTE'` 没有使用，那么 `'_edata'` 是相对于 `'.data'` `section` 的一个相对地址
+
+因为 `LOADADDR` 这个特殊的内置函数返回一个绝对地址，所以也可以用来强制一个表达式变成绝对地址
+
+<br></br>
+
+### 3.10.9 内置函数
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Builtin-Functions.html)
+
+链接器脚本语言包含了一系列内置函数可用于表达式
+
+- `ABSOLUTE(exp)`
+  返回表达式 `exp` 的一个绝对地址（非可重定向的，因为可能是负数）。主要用来将一个绝对地址赋值给一个 `section` 内的符号，这个符号的值通常是相对于 `section` 的，详见 [一个表达式的 `section`](https://sourceware.org/binutils/docs/ld/Expression-Section.html)
+- `ADDR(section)`
+  返回名称为 *`section`* 的地址（`VMA`），前提是你的脚本必须前面已经定义了这个 `section` 的位置。在下面这个例子中，`start_of_output_1`，`symbol_1` 和 `symbol_2` 都被赋值为同一个值，除了 `symbol_1` 是相对于 `.output·` `section` 的值而其他两个是绝对的值：  
+  ```lds
+  SECTIONS { …
+    .output1 :
+      {
+      start_of_output_1 = ABSOLUTE(.);
+      …
+      }
+    .output :
+      {
+      symbol_1 = ADDR(.output1);
+      symbol_2 = start_of_output_1;
+      }
+  … }
+  ```
+- `ALIGN(align)`
+- `ALIGN(exp, align)`
+  返回位置计数器（`.`）或者一个单独的、对齐下一个 *`align`* 边界的表达式。单个操作数的 `ALIGN` 不会改变位置计数器的值，只用来计算。两个操作数的 `ALIGN` 允许任意向上对齐（`ALIGN(align)`）的表达式，等价于 `ALGIN(ABSOLUTE(.), align)`  
+  这里是一个示例，将输出 `section` `.data` 对齐到前一个 `section` 后的 0x200 字节边界处。并且在 `section` 内将一个变量设置为输入 `section` 后的 0x8000 边界处：
+  ```lds
+  SECTIONS { …
+    .data ALIGN(0x2000): {
+      *(.data)
+      variable = ALIGN(0x8000);
+    }
+  … }
+  ```
+  第一个 `ALIGN` 指出了一个 `section` 的位置，因为它用作一个 `section` 定义的可选 `address` 属性（详见 [输出 `section` 地址](https://sourceware.org/binutils/docs/ld/Output-Section-Address.html)）。第二个 `ALIGN` 用来定义符号的值  
+  内置函数 `NEXT` 与 `ALIGN` 密切相关
+- `ALIGNOF(section)`
+  返回名为 *`section`* 的以字节为单位的对齐值，前提是已分配该 `section`。否则链接器计算该 `section` 时会抛出错误。在下面这个例子中，`.output` 的对齐值储存在该段的第一个值里：
+  ```lds
+  SECTIONS{ …
+    .output {
+      LONG (ALIGNOF (.output))
+      …
+      }
+  … }
+  ```
+- `BLOCK(exp)`
+  `ALIGN` 的同义词，用于兼容旧版本的链接器脚本，常见于设置一个输出 `section` 的地址
+- `DATA_SEGMENT_ALIGN(maxpagesize, commonpagesize)`
+  这等价于
+  ```lds
+  (ALIGN(maxpagesize) + (. & (maxpagesize - 1)))
+  ```
+  或者
+  ```lds
+  (ALIGN(maxpagesize)
+  + ((. + commonpagesize - 1) & (maxpagesize - commonpagesize)))
+  ```
+  具体取决于用于数据 `segment` （此处 `segment` 是该表达式的结果和 `DATA_SEGMENT_END` 之间的区域）的页，两者使用的 `commonpagesize` 大小的页时，是否后者比前者更小。如果用了后一种形式，意味着运行阶段将节省 `commonpagesize` 字节大小的内存，但代价是磁盘文件中最多会浪费同样的大小  
+  该表达式只能用在 `SECTIONS` 命令中，而不能是其他任何输出 `section` 的描述里，并且只能在链接器脚本里出现一次。`commonpagesize` 应该小于等于 `maxpagesize`，并且当系统运行在最多 `maxpagesize` 大小的页时，对象想要优化的系统页大小。然而，需要注意的是，如果系统页大小超过了 `maxpagesize`，`'-z relro'` 选项就会降低效率，比如：
+  ```lds
+    . = DATA_SEGMENT_ALIGN(0x10000, 0x2000);
+  ```
+- `DATA_SEGMENT_END(exp)`
+  定义 `DATA_SEGMENT_END` 计算出的数据 `segment` 的结尾地址
+  ```lds
+    . = DATA_SEGMENT_END(.);
+  ```
+- `DATA_SEGMENT_RELRO_END(offset, exp)`
+  当设置了 `'-z relro'` 选项时，就会定义 `PT_GNU_RELRO` `segment` 的结尾地址，并且会填充 `DATA_SEGMENT_ALIGN` 以便 *`exp + offset`* 与 `commonpagesize` 对齐；否则，`DATA_SEGMENT_RELRO_END` 什么都没做。如果出现在链接器脚本上，则必须放在 `DATA_SEGMENT_ALIGN` 和 `DATA_SEGMENT_END` 之间。由于 `section` 的对齐，会计算第二个参数加上 `PT_GNU_RELRO` `segment` 末尾所需的填充
+  ```lds
+    . = DATA_SEGMENT_RELRO_END(24, .);
+  ```
+- `DEFINED(symbol)`
+  如果 *`symbol`* 在链接器全局符号表上有定义，并且定义在脚本里使用 `DEFINED` 的语句之前，则返回 1；否则返回 0。你可以用这个函数为符号提供默认值。比如，接下来的脚本块展示了怎样将全局符号 `'begin'` 设置为 `'.text'` `section` 的第一个位置（但如果叫做 `'begin'` 符号已经存在，那么这个全局符号 `'.begin'` 则会保持原来的值）：
+  ```lds
+  SECTIONS { …
+    .text : {
+      begin = DEFINED(begin) ? begin : . ;
+      …
+    }
+    …
+  }
+  ```
+- `LENGTH(memory)`
+  返回 *`memory`* 内存区的长度
+- `LOADADDR(section)`
+  返回 *`section`* 的绝对地址（详见 [输出 `section` 的 LMA](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)）
+- `LOG2CEIL(exp)`
+  返回 *`exp`* 向无穷大舍入的二进制对数，`LOG2CEIL(0)` 将返回 0
+- `MAX(exp1, exp2)`
+  返回 *`exp1`* 和 *`exp2`* 的最大值
+- `MIN(exp1, exp2)`
+  返回 *`exp1`* 和 *`exp2`* 的最小值
+- `NEXT(exp)`
+  返回下一个未分配的地址，它是 *`exp`* 的倍数。该函数和 `ALIGN(exp)` 密切相关，除非你用了 `MEMORY` 命令定义输出文件的不连续的内存，否则这两个函数是等价的
+- `ORIGIN(memory)`
+  返回 *`memory`* 内存的起始地址
+- `SEGMENT_START(segment, default)`
+  返回 *`segment`* 的基地址。如果本 `segment` 已经显式给出了一个值（通过 `'-T'` 选项），则这个值才会返回，否则这个值是默认值。目前，`'-T'` 选项只能用于设置 `".text"`、`".data"` 和 `".bss"` `section` 的基地址，但可以将 `SEGMENT_START` 与任何 `segment` 名一起使用
+- `SIZEOF(section)`
+  返回 *`section`* 的大小，以字节为单位，当然前提是该 `section` 已经分配。否则执行时链接会抛出错误。在下面这个例子里，`symbol_1` 和 `symbol_2` 均赋值同一个值：
+  ```lds
+  SECTIONS{ …
+    .output {
+      .start = . ;
+      …
+      .end = . ;
+      }
+    symbol_1 = .end - .start ;
+    symbol_2 = SIZEOF(.output);
+  … }
+  ```
+- `SIZEOF_HEADERS`
+  返回输出文件首部的大小，以字节为单位。这是出现在输出文件开头的信息。你可以用这个值设置第一个 `section` 的起始地址，以便分页
+  当产生一个 `ELF` 输出文件时，如果链接器脚本用了 `SIZEOF_HEADERS` 内置函数，则链接器必须在它确定所有 `section` 地址和大小之前，先计算程序头的数量。如果链接器之后发现需要额外的程序头，就会抛出 `'没有足够的程序头空间'`（`'not enough room for program headers'`）。为了避免这个错误，你必须避免使用 `SIZEOF_HEADERS`，或者你修改你的脚本让链接器避免使用额外的程序头，又或者用 `PHDRS` 命令（详见 [PHDRS](https://sourceware.org/binutils/docs/ld/PHDRS.html)）定义程序头
+
+<br></br>
+
+## 3.11 隐式的链接器脚本
+
+> [原文地址](https://sourceware.org/binutils/docs/ld/Implicit-Linker-Scripts.html)
+
+如果你指定了一个链接器不能识别到底是目标文件还是存档文件（`archive file`）的输入文件，则链接器会尝试将文件作为链接器脚本来读取。如果仍不能解析，就会抛出错误
+
+一个隐式的链接器脚本取代默认的脚本
+
+通常隐式脚本只包含符号赋值、`INPUT`，`GROUP` 或 `VERSION` 命令
+
+用作隐式脚本而读取到的任何输入文件，都会在命令行中读取位置处读取，这会对存档搜索造成影响
+
+<br></br>
 

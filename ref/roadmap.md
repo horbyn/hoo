@@ -1392,7 +1392,7 @@ for (dst = &_bstart; dst< &_bend; dst++)
 
 <br></br>
 
-#### 3.6.8.3 强制输出段对齐
+#### 3.6.8.3 强制输出段对齐（`[ALIGN]`）
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Forced-Output-Alignment.html#Forced-Output-Alignment)
 
@@ -1400,7 +1400,7 @@ for (dst = &_bstart; dst< &_bend; dst++)
 
 <br></br>
 
-#### 3.6.8.4 强制输入节对齐
+#### 3.6.8.4 强制输入节对齐（`[SUBALIGN]`）
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Forced-Input-Alignment.html#Forced-Input-Alignment)
 
@@ -1408,7 +1408,7 @@ for (dst = &_bstart; dst< &_bend; dst++)
 
 <br></br>
 
-#### 3.6.8.5 输出段约束
+#### 3.6.8.5 输出段约束（`[constraint]`）
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Constraint.html#Output-Section-Constraint)
 
@@ -1416,11 +1416,11 @@ for (dst = &_bstart; dst< &_bend; dst++)
 
 <br></br>
 
-#### 3.6.8.6 输出段区域
+#### 3.6.8.6 输出段内存区（`[>region]`）
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Region.html#Output-Section-Region)
 
-你可以将一个段赋值为前一个被 `>region` 定义的内存区，详见 [3.7 MEMORY](https://sourceware.org/binutils/docs/ld/MEMORY.html)
+你可以用 `>region` 为一个输出段分配一个内存区，该内存区需在前面被定义，详见 [3.7 MEMORY](https://sourceware.org/binutils/docs/ld/MEMORY.html)
 
 这里是一个简单的例子：
 
@@ -1431,11 +1431,11 @@ SECTIONS { ROM : { *(.text) } >rom }
 
 <br></br>
 
-#### 3.6.8.7 输出段 `Phdr`
+#### 3.6.8.7 输出段 `Phdr`（`[:phdr ...]`）
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Phdr.html#Output-Section-Phdr)
 
-你可以将一个段赋值为前一个被 `':phdr;` 定义的程序段，详见 [PHDRS](https://sourceware.org/binutils/docs/ld/PHDRS.html)。如果一个段被赋值为一个或更多的段，则所有后续分配的段，也将被赋值给这些段，除非它们明确使用 `:phdr`。你可以用 `:NONE` 来告诉链接器不要在任何最终段里（`segment`）设置段（`section`）
+你可以用 *`':phdr'`* 为一个输出段分配一个程序段（`program segment`），详见 [3.8 PHDRS](https://sourceware.org/binutils/docs/ld/PHDRS.html)。如果一个输出段被分配给一个或更多的程序段，除非它们明确使用 `:phdr`，否则所有后续输出段，也会被赋值给这些程序段。你可以用 `:NONE` 来告诉链接器不要将输出段分配给任何程序段
 
 这里是一个简单例子
 
@@ -1446,13 +1446,13 @@ SECTIONS { .text : { *(.text) } :text }
 
 <br></br>
 
-#### 3.6.8.8 输出段填充
+#### 3.6.8.8 输出段填充（`[=fillexp]`）
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Output-Section-Fill.html#Output-Section-Fill)
 
-你可以用 `'=fillexp'` 为一个完整的段设置填充模式，`fillexp` 是一个表达式（详见 [表达式](https://sourceware.org/binutils/docs/ld/Expressions.html)）。否则在输出段里面任何未指定的内存区（比如由于输入节对齐而遗留的间隙）都会按需重复要填充的值。如果填充表达式是一个简单的十六进制数字（即一个以 `'0x'` 打头的数字字符串且不以 `'k'`、`'M'` 结尾），则一个任意长的十六进制数字序列会用来填充指定的填充模式，并且前导零也成为模式的一部分。其余所有情况，包括额外的括号或者一元运算符 `+`，填充模式是表达式值的四个最低有效字节。所有情况下，数字都是大端字节序
+你可以用 `'=fillexp'` 为一个完整的输出段设置填充模式，`fillexp` 是一个表达式（详见 [3.10 表达式](https://sourceware.org/binutils/docs/ld/Expressions.html)）。否则在输出段里面任何未指定的内存区（比如由于输入节对齐而遗留的间隙）都会按需重复填充的指定值。如果填充表达式是一个简单的十六进制数字（即一个以 `'0x'` 打头的数字字符串且不以 `'k'`、`'M'` 结尾），则一个任意长的十六进制数字序列会用来填充指定的填充模式，并且前导零也成为模式的一部分。其余所有情况，包括额外的括号或者一元运算符 `+`，填充模式是表达式值的四个最低有效字节。所有情况下，数字都是大端字节序
 
-你也可以用 `FILL` 改变在输出段里的填充值，详见 [输出段数据](https://sourceware.org/binutils/docs/ld/Output-Section-Data.html)
+你也可以用 `FILL` 改变在输出段里的填充值，详见 [3.6.5 输出段数据](https://sourceware.org/binutils/docs/ld/Output-Section-Data.html)
 
 这里是一个简单例子：
 
@@ -1466,9 +1466,9 @@ SECTIONS { .text : { *(.text) } =0x90909090 }
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Overlay-Description.html#Overlay-Description)
 
-覆盖描述提供了一种更简单的方法来描述这种段：在相同的内存地址上加载单独的内存影响。在运行阶段，某种覆盖管理器将根据需要将覆盖段拷贝到运行时的内存地址，或从运行时的内存地址拷贝回来，这些操作可能只是简单地操作寻址位。当某个内存区比另一个更快时这种覆盖方法往往很有用
+覆盖描述提供了一种更简单的方法来描述以下输出段：作为单独的内存映像被加载；但却运行在同一个内存地址。在运行阶段，覆盖管理器将根据需要将覆盖段拷贝到运行时的内存地址，或从运行时的内存地址拷贝回来，这些操作可能只是简单地操作寻址位。一般覆盖使用场景是，某个内存区比另一个更快时，才在这个更快的内存区上使用
 
-覆盖用 `OVERLAY` 描述，在 `SECTIONS` 命令中使用，和输出段描述一样。`OVERLAY` 整个语法如下：
+覆盖用 `OVERLAY` 定义，在 `SECTIONS` 命令中使用，和输出段描述一样。`OVERLAY` 整个语法如下：
 
 ```lds
 OVERLAY [start] : [NOCROSSREFS] [AT ( ldaddr )]
@@ -1489,9 +1489,9 @@ OVERLAY [start] : [NOCROSSREFS] [AT ( ldaddr )]
   } [>region] [:phdr…] [=fill] [,]
 ```
 
-除了 `OVERLAY` 以外其他所有都是可选的，同时每个段都必须要有一个名字（如上面 *`secname1`* 和 *`secname2`*）。在 `OVERLAY` 结构里面的段定义和普通 `SECTIONS` 结构（详见 [SECTIONS](https://sourceware.org/binutils/docs/ld/SECTIONS.html)）里面的段定义相同，只是 `OVERLAY` 里面不会为段定义地址和内存区
+除了 `OVERLAY` 以外其他所有都是可选的，同时每个段都必须要有一个名字（如上面 *`secname1`* 和 *`secname2`*）。在 `OVERLAY` 描述里面的段定义和普通 `SECTIONS` 描述（详见 [3.6 SECTIONS](https://sourceware.org/binutils/docs/ld/SECTIONS.html)）里面的段定义相同，只是 `OVERLAY` 里面不会为输出段定义地址和内存区
 
-如果用了 *`fill`*，并且下一个 *`sections-command`* 看起来好像和前面的是连续的表达式时，则结尾处需要一个逗号
+如果用了 *`fill`*，并且下一个 *`sections-command`* 看起来好像和前面的是连续的表达式时，则结尾处需要加上一个逗号
 
 每个段都定义为同一个起始地址。段的加载地址在内存中是连续的，从用于整个 `OVERLAY` 的加载地址开始（与正常的段定义一样，加载地址是可选的，默认为起始地址；起始地址也是可选的，默认为位置计数器的当前值）
 
@@ -1501,7 +1501,7 @@ OVERLAY [start] : [NOCROSSREFS] [AT ( ldaddr )]
 
 在覆盖的最后，位置计数器的值会被设置为覆盖的起始地址加上最大的段的大小
 
-这里是一个实例，记住这要放在 `SECTIONS` 描述里面
+这里是一个示例，记住这要放在 `SECTIONS` 描述里面
 
 ```lds
 OVERLAY 0x1000 : AT (0x4000)
@@ -1541,7 +1541,7 @@ PROVIDE (__load_stop_text1 = LOADADDR (.text1) + SIZEOF (.text1));
 
 链接器默认配置允许分配所有可用内存，你可以通过 `MEMORY` 覆盖该默认配置
 
-`MEMORY` 命令描述了目标文件里内存的位置和块大小，你可以用 `MEMORY` 来指定链接器可以使用哪些内存区，避免使用哪些内存区，然后分配段到特定的内存区。链接器会设置基于内存区的段地址，报警空间即将用完的段。链接器不会优化段以适应可用内存区
+`MEMORY` 命令描述了目标文件里内存的位置和块大小，你可以用 `MEMORY` 来指定链接器可以使用哪些内存区，避免使用哪些内存区，然后分配段到特定的内存区。链接器会设置基于内存区的段地址，对输出段即将用完的内存区发出警告。链接器不会优化输出段以适应可用内存区
 
 一个链接器脚本可能会包含许多 `MEMORY` 命令，但是，所有定义的内存块都被视为在单个 `MEMORY` 命令中指定。`MEMORY` 语法如下：
 
@@ -1553,9 +1553,9 @@ MEMORY
 }
 ```
 
-`name` 是链接器脚本用来引用内存区的名字，离开脚本则该名字无意义。内存区名字储存在一个单独的名字空间，并且不会与其他符号名字、文件名字或段名冲突。每个内存区在 `MEMORY` 命令描述范围内必须有一个不同的名字，但是你也可以之后用 [`REGION_ALIAS`](https://sourceware.org/binutils/docs/ld/REGION_005fALIAS.html) 为一个已存在的内存区起别名
+`name` 是链接器脚本用来引用内存区的名字，离开脚本则该名字无意义。内存区名字储存在一个单独的名字空间，并且不会与其他符号名字、文件名字或段名冲突。每个内存区名字在 `MEMORY` 命令描述范围内必须不同，但是你也可以之后用 [3.4.4 REGION_ALIAS](https://sourceware.org/binutils/docs/ld/REGION_005fALIAS.html) 为一个已存在的内存区起别名
 
-`attr` 字符串是一个可选的属性列表，用来指定是否为一个输入节使用特定的内存区，这些输入节在链接器脚本里没有显式的映射。像 [SECTIONS](https://sourceware.org/binutils/docs/ld/SECTIONS.html) 里描述的那样，如果你不为某些输入节指定输出段，则链接器会用于输入节相同的名字来创建一个输出段。如果你定义了内存区属性，则链接器会使用这些属性，为它创建的输出段选择内存区
+`attr` 字符串是一个可选的属性列表，用来指定是否为一个输入节使用特定的内存区，这些输入节在链接器脚本里没有显式的映射。像 [3.6 SECTIONS](https://sourceware.org/binutils/docs/ld/SECTIONS.html) 里描述的那样，如果你不为某些输入节指定输出段，则链接器会用与输入节相同的名字来创建一个输出段。如果你定义了内存区属性，则链接器会使用这些属性，为它创建的输出段选择内存区
 
 `attr` 字符串只能由以下字符组成：
 
@@ -1574,13 +1574,13 @@ MEMORY
 - `!`
   反转其后跟随的任何属性的含义
 
-如果一个无映射的段匹配除了 `!` 以外的其他任何属性，则该段会被放入内存区。`!` 会反转属性，所以只有当无映射段与后面列出的任何属性都不匹配时，这才会将无映射段放入内存区中。因此，`'RW!X'` 属性字符串将匹配具有至少一个 `'R'` 和 `'W'` 属性的任何无映射段，但前提是这个段不具有 `X` 属性
+如果一个无映射的输入节匹配除了 `!` 以外的其他任何属性，则该节会被放入对应的那个内存区。`!` 会反转属性，所以只有当无映射节与后面列出的任何属性都不匹配时，这才会将无映射节放入内存区中。因此，`'RW!X'` 属性字符串将匹配具有至少一个 `'R'` 和 `'W'` 属性的任何无映射节，但前提是这个节不具有 `X` 属性
 
 `origin` 是一个针对内存区起始地址的数值表达式，该表达式在不调用任何符号的情况下，用来计算一个常数值。`ORIGIN` 关键字可以缩写为 `org` 或 `o`（但不能缩写为 `ORG`）
 
 `len` 是一个以字节为单位的关于内存区大小的表达式。与 `origin` 表达式一样，该表达式只能是数值，并且是用来计算常数值的。`LENGTH` 关键字可以缩写成 `len` 或 `l`
 
-在下面这个例子里，我们指定了两个可用与分配的内存区：一个在地址 `'0'` 处分配 `256 KB`，另一个在 `'0x0x40000000'` 处分配 `4 MB`。链接器会将无显式映射到内存区的每个段放入 `'ROM'`，属性为只读或可执行；而将其他无显式映射到内存区的所有段放入 `'RAM'`
+在下面这个例子里，我们指定了两个可用与分配的内存区：一个在地址 `'0'` 处分配 `256 KB`，另一个在 `'0x0x40000000'` 处分配 `4 MB`。链接器会将无显式映射的每个节放入 `'ROM'`，属性为只读或可执行；而将其他无显式映射的节放入 `'RAM'`
 
 ```lds
 MEMORY
@@ -1590,7 +1590,7 @@ MEMORY
 }
 ```
 
-一旦你定义了一个内存区，你可以用 `'>region'` 输出段属性，指示链接器将特定的输出段放入这些内存区。比如，如果你有一个叫做 `'mem'` 的内存区，你可以在输出段定义里面用 `'>mem'`，详见 [输出段内存区](https://sourceware.org/binutils/docs/ld/Output-Section-Region.html)。如果没有为输出段指定地址，则链接器会在内存区内将当前地址设置为下一个可用地址。如果指向某个内存区的合并的输出段太大，链接器会报错
+一旦你定义了一个内存区，你可以用 `'>region'` 输出段属性，指示链接器将特定的输出段放入这些内存区。比如，如果你有一个叫做 `'mem'` 的内存区，你可以在输出段定义里面用 `'>mem'`，详见 [3.6.8.6 输出段内存区](https://sourceware.org/binutils/docs/ld/Output-Section-Region.html)。如果没有为输出段指定地址，则链接器会在内存区内将当前地址设置为下一个可用地址。如果链接后，合并起来的输出段太大，而不足以被指定的内存区容纳，则链接器会报错
 
 可以在一个表达式里，通过 `ORIGIN(memory)` 和 `LENGTH(memory)` 函数访问一个内存区起始地址和长度：
 

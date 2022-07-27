@@ -610,7 +610,7 @@ void copy_data(void)
 - `FORCE_GROUP_ALLOCATION`
   这个命令与命令行选项 `--force-group-allocation` 完全相同，用来使 `ld` 像普通输入节那样设置分组，然后删除该分组，即使指定了可重定向的输出文件
 - `INSERT [ AFTER | BEFORE ] output_section`
-  此命令通常在由 `-T` 命令行选项使用，以增加默认的 `SECTIONS`，例如覆盖。它在 `output_section` 之后（或之前）插入所有先前的连接器脚本语句，之后会导致 `-T` 选项不重写默认的链接器脚本。确切的插入点与 `orphan section` 相同，详见 [3.10.5 位置计数器](https://sourceware.org/binutils/docs/ld/Location-Counter.html)。插入发生在链接器将输入节映射至输出段完成之后。在插入之前，由于 `-T` 默认在链接器脚本之前解析，因此 `-T` 中的语句出现在脚本的内部链接器中的默认链接器脚本语句之前。特别地，输入节赋值语句将会在 `-T` 输出段赋值语句之前。这里是一个 `-T` 使用 `INSERT` 怎么工作的例子：
+  此命令通常在由 `-T` 命令行选项使用，以增加默认的 `SECTIONS`，例如覆盖。它在 `output_section` 之后（或之前）插入所有先前的链接器脚本语句，之后会导致 `-T` 选项不重写默认的链接器脚本。确切的插入点与 `orphan section` 相同，详见 [3.10.5 位置计数器](https://sourceware.org/binutils/docs/ld/Location-Counter.html)。插入发生在链接器将输入节映射至输出段完成之后。在插入之前，由于 `-T` 默认在链接器脚本之前解析，因此 `-T` 中的语句出现在脚本的内部链接器中的默认链接器脚本语句之前。特别地，输入节赋值语句将会在 `-T` 输出段赋值语句之前。这里是一个 `-T` 使用 `INSERT` 怎么工作的例子：
   ```lds
   SECTIONS
   {
@@ -1602,11 +1602,11 @@ _fstack = ORIGIN(ram) + LENGTH(ram) - 4;
 
 ## 3.8 PHDRS 命令
 
-`ELF` 目标文件格式使用 *`程序头（program headers）`*，也称为 `segments`，程序头描述了程序应该怎样被加载到内存。你可以通过 `objdump -p` 打印程序头
+`ELF` 目标文件格式使用 *`程序头（program headers）`*，也称为段（`segments`），程序头描述了程序应该怎样被加载到内存。你可以通过 `objdump -p` 打印程序头
 
-当你在原生 `ELF` 系统里运行一个 `ELF` 程序时，系统加载器会读取程序头以获悉怎样加载程序，当然前提是已经正确设置了程序头。但我们这份文档不会描述更多关于系统加载器解析程序头的细节，如果你想知道更多，可以参考 `ELF ABI`
+当你在原生 `ELF` 系统（`native ELF system`）里运行一个 `ELF` 程序时，系统加载器会读取程序头以获悉怎样加载程序，当然前提是已经正确设置了程序头。但我们这份文档不会描述更多关于系统加载器解析程序头的细节，如果你想知道更多，可以参考 `ELF ABI`
 
-链接器默认会创建合适的程序头。但是某些情况下，你可能需要指定更精确的程序头，此时就需要 `PHDRS` 命令了。当链接器在脚本里看见 `PHDRS` 命令，则不会创建你指定那个除外的其他程序头
+链接器默认会创建合适的程序头。但是某些情况下，你可能需要指定更精确的程序头，此时就需要 `PHDRS` 命令了。当链接器在脚本里看见 `PHDRS` 命令，则除了你指定的，不会创建其他程序头
 
 当生成一个 `ELF` 输出文件时，链接器只关心 `PHDRS` 命令；不生成 `ELF` 时，链接器会简单忽略 `PHDRS`
 
@@ -1620,41 +1620,40 @@ PHDRS
 }
 ```
 
-`name` 仅用于链接器脚本里 `SECTIONS` 命令中的引用，不会被放入输出文件。程序头名字储存在一个单独的名字空间，且不与任何符号名、文件名或段名冲突。每个程序头名字必须不同。程序头会被顺序处理，通常是按加载地址升序的顺序映射到段
+`name` 仅用于链接器脚本里 `SECTIONS` 命令中被引用，不会被放入输出文件。程序头名字储存在一个单独的名字空间，且不与任何符号名、文件名或段名冲突。每个程序头名字必须不同。程序头会被顺序处理，通常是按加载地址升序的顺序映射到段
 
-某些程序头类型描述了系统加载器从文件中加载的内存段。在链接器脚本里，你可以通过在 `segment` 里放入可分配的输出段，来指定这些段的内容。你可以使用 `':phdr'` 输出段属性来将一个段放入一个特定的 `segment`，详见 [输出段 Phdr](https://sourceware.org/binutils/docs/ld/Output-Section-Phdr.html)
+某些程序头类型描述了系统加载器从文件中加载的内存段。在链接器脚本里，你可以通过将可分配的（`allocatable`）输出段放入这些程序头里。你可以使用 `':phdr'` 属性来将一个输出段放入一个特定的程序头，详见 [3.6.8.7 输出段 Phdr](https://sourceware.org/binutils/docs/ld/Output-Section-Phdr.html)
 
+将某个输出段放入超过一个程序头是很常见的，这仅仅意味着一个内存段包含另一个。只要有一个包含其他输出段的程序头，你就可以用一次 `':phdr'`
 
-将某个段放入超过一个 `segment` 是很常见的，这仅仅意味着一个内存段包含另一个。只要有一个包含其他段的段，你就可以用一次 `':phdr'`
+如果你在一个或多个程序头中用 `':phdr'` 放入一个输出段，则链接器会在同一个程序头中将随后那些没有指定 `':phdr'` 的输出段也放进来。这是十分方便的，因为通常连续的输出段都是放入一个程序头。你可以用 `:NONE` 来覆盖默认行为，并且告诉链接器不要将输出段放入任何程序头中
 
-如果你在一个或多个 `segment` 中用 `':phdr'` 放入一个段，则链接器会在同一个 `segment` 中将随后那些没有指定 `':phdr'` 的段也放进来。这是十分方便的，因为通常一整个连续的段都是设置为单个 `segment`。你可以用 `:NONE` 来覆盖默认行为，并且告诉链接器不要将段放入任何 `segment` 中
+你可以在程序头类型后面，用 `FILEHDR` 和 `PHDRS` 关键字进一步描述其内容。`FILEHDR` 关键字意味着该程序头应该包含 `ELF` 文件头（`ELF file header`）；`PHDRS` 关键字意味着该程序头应该包含它们自身的 `ELF` 程序头（`ELF program header`）。如果应用于可加载的程序头（`PT_LOAD`），则所有先前定义过的可加载的输出段都必须具有这些关键词里其中一个
 
-你可以在程序头类型后面，用 `FILEHDR` 和 `PHDRS` 关键字进一步描述 `segment` 的内容。`FILEHDR` 关键字意味着 `segment` 应该包含 `ELF` 文件头（`ELF file header`）；`PHDRS` 关键字意味着 `segment` 应该包含它们自身的 `ELF` 程序头（`ELF program header`）。如果先前描述的所有可加载的 `segment`（`loadable segments`）都应用到同一个可加载 `segment`（`PT_LOAD`）上，则必须使用这些关键词里其中一个
-
-`type` 可以是下面所示其中之一，数值指出了关键字的值：
+*`type`* 可以是下面所示其中之一，数值指出了关键字的值：
 
 - `PT_NULL (0)`
   指出一个不使用的程序头
 - `PT_LOAD (1)`
-  指出程序头描述了一个将从文件中加载的 `segment` 
+  指出程序头描述了一个将从文件中加载的程序头
 - `PT_DYNAMIC (2)`
-  指出一个 `segment` 能在哪里找到动态链接信息（`dynamic linking information`）
+  指出一个程序头能在哪里找到动态链接信息（`dynamic linking information`）
 - `PT_INTERP (3)`
-  指出一个 `segment` 能在哪里找到程序解析器的名字（`program interpreter`）
+  指出一个程序头能在哪里找到程序解析器的名字（`program interpreter`）
 - `PT_NOTE (4)`
-  指出一个保存注意信息（`note information`）的 `segment`
+  指出一个保存注意信息（`note information`）的程序头
 - `PT_SHLIB (5)`
   一个反转的程序头类型，由 `ELF ABI` 定义但不由它指定
 - `PT_PHDR (6)`
-  指出一个 `segment` 能在哪里找到程序头（`program header`）
+  指出能在哪里找到程序头（`program header`）的输出段
 - `PT_TLS (7)`
-  指出一个包含线程本地储存（`thread local storage`）的 `segment`
+  指出一个包含线程本地储存（`thread local storage`）的程序头
 - `expression`
   一个给出程序头数值类型的表达式，在非上面定义类型情况下使用
 
-你可以通过使用一个 `AT` 表达式，来指定一个 `segment` 应该被加载到内存的哪一个特定地址上，这和在一个输出段属性（详见 [输出段 LMA](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)）上使用 `AT` 命令是相同的。一个程序头的 `AT` 命令会覆盖输出段属性
+你可以通过使用一个 `AT` 表达式，来指定一个程序头应该被加载到内存的哪一个特定地址上，这和在一个输出段属性（详见 [3.6.8.2 输出段 LMA](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)）上使用 `AT` 命令是相同的。一个程序头的 `AT` 命令会覆盖输出段属性
 
-链接器通常会基于组成 `segment` 的所有段来设置段属性。你可以用 `FLAGS` 关键字来显式指定段属性，但 *`flags`* 的值必须是一个整型值（`int`），用来设置程序头的 `p_flags` 字段
+链接器通常会基于组成程序头的所有段来设置段属性。你可以用 `FLAGS` 关键字来显式指定段属性，但 *`flags`* 的值必须是一个整型值，用来设置程序头的 `p_flags` 字段
 
 这里是一个 `PHDRS` 的例子，展示了一个在原生 `ELF` 系统上使用的，典型的程序头集合
 
@@ -1688,7 +1687,7 @@ SECTIONS
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/VERSION.html)
 
-当使用 `ELF` 文件时，链接器支持符号的版本。当使用动态库的时候符号版本才有意义。当动态链接器运行一个程序时，可能程序会链接到动态库的一个早期的版本，这是动态链接器可以使用符号版本来选择特定的函数版本
+当使用 `ELF` 文件时，链接器支持符号的版本。当使用动态库的时候符号版本才有意义。当动态链接器运行一个程序时，可能程序会链接到动态库的一个早期的版本，这时动态链接器可以使用符号版本来选择特定的函数版本
 
 你可以直接在主要的链接器脚本里包含一个版本的脚本描述，或者隐式为链接器脚本提供版本的脚本描述，也可以用 `'--version-script'` 链接器选项
 
@@ -1786,7 +1785,7 @@ VERSION extern "lang" { version-script-commands }
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Expressions.html)
 
-在连接器脚本里面表达式的语法和 `C` 表达式是一样的，除了在某些地方需要用空白字符来解决语法歧义。所有表达式均评估为一个整型值、以及相同的大小（主机和目标主机都是 32 位而其他为 64 位）
+在链接器脚本里面表达式的语法和 `C` 表达式是一样的，除了在某些地方需要用空白字符来解决语法歧义。所有表达式均评估为一个整型值、以及相同的大小（主机和目标主机都是 32 位而其他为 64 位）
 
 你可以在表达式里使用并设置符号的值
 
@@ -1863,7 +1862,7 @@ _fourk_4 = 10000o;
 
 如果新输出段是用来保存所有 `Orphan` 段的，那么链接器必须确定放置这些新输出段到哪个相关的已存在的输出段。**On most modern targets, the linker attempts to place orphan sections after sections of the same attribute, such as code vs data, loadable vs non-loadable, etc.** 如果没有找到匹配属性的段，或者你的目标平台缺乏这种支持，则 `Orphan` 段会放置在文件最后
 
-可以用命令行选项 `'--orphan-handling'` 和 `'--unique'`（详见 [命令行选项](https://sourceware.org/binutils/docs/ld/Options.html)）去控制哪一种输出段才是一个 `Orphan` 段应该放置其中的
+可以用命令行选项 `'--orphan-handling'` 和 `'--unique'`（详见 [2.1 命令行选项](https://sourceware.org/binutils/docs/ld/Options.html)）去控制哪一种输出段才是一个 `Orphan` 段应该放置其中的
 
 <br></br>
 
@@ -1889,7 +1888,7 @@ SECTIONS
 }
 ```
 
-前面这个例子中，`file1` 的 `'.text'` 段在输出段 `'output'` 的最开始。后面跟着 1000 字节间隙，然后是 `file2` 的 `'.text'` 段，后面也是跟着 1000 字节间隙，之后才是 `file3` 的 `'.text'` 段。符号 `'=0x12345678'` 表示间隙里面要写入什么数据（详见 [输出段填充](https://sourceware.org/binutils/docs/ld/Output-Section-Fill.html)）
+前面这个例子中，`file1` 的 `'.text'` 段在输出段 `'output'` 的最开始。后面跟着 1000 字节间隙，然后是 `file2` 的 `'.text'` 段，后面也是跟着 1000 字节间隙，之后才是 `file3` 的 `'.text'` 段。符号 `'=0x12345678'` 表示间隙里面要写入什么数据（详见 [3.6.8.8 输出段填充](https://sourceware.org/binutils/docs/ld/Output-Section-Fill.html)）
 
 注意：`.` 实际上指向当前包含的对象开始的字节偏移。通常这是 `SECTIONS` 段，它的起始地址是 0，因此 `.` 可以是一个绝对地址。不过，如果 `.` 用在一个段描述里面，则它指向该段开始的字节偏移处而不是一个绝对地址。因此在下面这个脚本里：
 
@@ -1926,7 +1925,7 @@ SECTIONS
 }
 ```
 
-如果链接器需要放置一些输入节没有在脚本里描述的段如 `.rodata`，那么就有可能会找到 `.text` 和 `.data` 之间的地方来放置。你可能会觉得链接器应该将 `.rodata` 放在上述脚本中的空隙处，但空隙对链接器没有特别的标记。同样，链接器不会将上述符号名与它的段相关联。相反，链接器假定所有赋值或其他语句都属于前一个输出段，除了赋值给 `.` 的特殊情况，即链接器将放置孤立的 `.rodata` 段，就好像下面这个脚本写的那样：
+如果链接器需要放置一些没有在脚本里给出的输入节如 `.rodata`，那么就有可能会找到 `.text` 和 `.data` 之间的地方来放置。你可能会觉得链接器应该将 `.rodata` 放在上述脚本中的空隙处，但链接器并不知道空隙在哪里。同样，链接器不会将上述符号名与它的段相关联。相反，链接器假定所有赋值或其他语句都属于前一个输出段，除了赋值给 `.` 的特殊情况，即链接器将放置孤立的 `.rodata` 段，就好像下面这个脚本写的那样：
 
 ```lds
 SECTIONS
@@ -1985,7 +1984,7 @@ precedence      associativity   Operators                Notes
 (lowest)
 ```
 
-注意两点：(1) 前缀操作符（**译者注：`i++` 和 `++i` 的情况**）；(2) 详见 [赋值](https://sourceware.org/binutils/docs/ld/Assignments.html)
+注意两点：(1) 前缀操作符（**译者注：`i++` 和 `++i` 的情况**）；(2) 详见 [3.5 赋值](https://sourceware.org/binutils/docs/ld/Assignments.html)
 
 <br></br>
 
@@ -1995,13 +1994,13 @@ precedence      associativity   Operators                Notes
 
 链接器计算表达式的值并不会太准确，只在绝对需要使用这个表达式时才计算它的值
 
-链接器需要一些信息，比如第一个 `section` 的起始地址，以及内存区的起始地址和长度，以便做一些链接工作。这些值在链接器从脚本中读取时会尽可能地计算
+链接器需要一些信息，比如第一个输出段的起始地址，以及内存区的起始地址和长度，以便做一些链接工作。这些值在链接器从脚本中读取时会尽可能地计算
 
 然而，其他值（比如符号的值）是不知道的，或者说在分配内存之后才能知道。这些值在其他信息（比如输出段大小）在一个符号赋值表达式里可用时，才会开始计算
 
-`section` 的大小在分配内存之后才能知道，所以依赖于 `section` 大小的赋值会在分配之后才执行
+输出段的大小在分配内存之后才能知道，所以依赖于输出段大小的赋值会在分配之后才执行
 
-一些表达式（比如依赖位置计数器的那些）必须在 `section` 分配阶段才能计算
+一些表达式（比如依赖位置计数器的那些）必须在输出段分配阶段才能计算
 
 如果需要一个表达式的结果，但是它的值在链接阶段还不可用，则会抛出一个错误结果。举个例子，像下面这样的脚本：
 
@@ -2017,13 +2016,13 @@ SECTIONS
 
 <br></br>
 
-### 3.10.8 一个表达式的 `section`
+### 3.10.8 一个表达式的节
 
 > [原文地址](https://sourceware.org/binutils/docs/ld/Expression-Section.html)
 
-**Addresses and symbols may be section relative, or absolute.** 一个 `section` 相关的符号是可重定位的（`relocatable`）。如果你使用 `-r` 选项请求可重定位输出，则会导致更复杂的链接操作，这又可能会改变一个 `section` 相关的符号的值。另一方面，一个绝对符号在任何更复杂的链接操作会一直保持相同的值
+**Addresses and symbols may be section relative, or absolute.** 一个节相关的符号是可重定位的（`relocatable`）。如果你使用 `-r` 选项请求可重定位输出，则会导致更复杂的链接操作，这又可能会改变一个节相关的符号的值。另一方面，一个绝对符号在任何更复杂的链接操作会一直保持相同的值
 
-链接器表达式里有一些条目是地址，只有在 `section` 相关的符号和返回一个地址的基础函数（如 `ADDR`、`LOADADDR`、`ORIGIN` 和 `SEGMENT_START`）才可用。其他条目都直接是数值，或者是一个返回非地址的基础函数（如 `LENGTH`）。但是数值和绝对符号的情况会变得很复杂，除非你设置了 `LD_FEATURE`（"SANE_EXPR"）（详见 [杂项命令](https://sourceware.org/binutils/docs/ld/Miscellaneous-Commands.html)），否则它们会根据位置而被区别对待，以便与旧版本的 `ld` 兼容。出现在输出 `section` 定义以外的表达式，其中的所有数值均被视为绝对地址；以内的表达式则视其中的绝对符合为数值。如果设置了 `LD_FEATURE`（"SANE_EXPR"），则任何绝对符合和数值都直接视为数值
+链接器表达式里有一些条目是地址，只有在节相关的符号和返回一个地址的基础函数（如 `ADDR`、`LOADADDR`、`ORIGIN` 和 `SEGMENT_START`）才可用。其他条目都直接是数值，或者是一个返回非地址的基础函数（如 `LENGTH`）。但是数值和绝对符号的情况会变得很复杂，除非你设置了 `LD_FEATURE`（"SANE_EXPR"）（详见 [3.4.5 其他命令](https://sourceware.org/binutils/docs/ld/Miscellaneous-Commands.html)），否则它们会根据位置而被区别对待，以便与旧版本的 `ld` 兼容。出现在输出段定义以外的表达式，其中的所有数值均被视为绝对地址；以内的表达式则视其中的绝对符合为数值。如果设置了 `LD_FEATURE`（"SANE_EXPR"），则任何绝对符合和数值都直接视为数值
 
 下面这个简单示例中：
 
@@ -2042,23 +2041,23 @@ SECTIONS
   }
 ```
 
-在开头两个赋值语句中，`.` 和 `__executable_start` 都设置为绝对地址 0x100。之后的两个赋值语句里， `.` 和 `__data_start` 都设置为相对于 `.data` `section` 的 0x10 位置
+在开头两个赋值语句中，`.` 和 `__executable_start` 都设置为绝对地址 0x100。之后的两个赋值语句里， `.` 和 `__data_start` 都设置为相对于 `.data` 段的 0x10 位置
 
 对于涉及数值的表达式，相对地址和绝对地址，`ld` 遵守以下的计算规则：
 
 - 在一个绝对地址或数值上的一元操作，以及两个绝对地址或两个数值或一个绝对地址一个数值上的二元操作，直接在数值上使用操作符
-- 在一个相对地址或数值上的一元操作，以及同一个 `section` 的两个相对地址、或一个相对地址一个数值的二元操作，在地址的偏移部分上使用操作符
-- 其他二元操作，即不在同一个 `section` 的两个相对地址、或者一个绝对地址一个相对地址，这些情况首先将任何非绝对的条目转化为绝对条目，然后才使用操作符
+- 在一个相对地址或数值上的一元操作，以及同一个节的两个相对地址、或一个相对地址一个数值的二元操作，在地址的偏移部分上使用操作符
+- 其他二元操作，即不在同一个节的两个相对地址、或者一个绝对地址一个相对地址，这些情况首先将任何非绝对的条目转化为绝对条目，然后才使用操作符
 
 每个子表达式的结果遵循下面规则：
 
 - 一个只涉及数值的操作会得到一个数值
 - 比较、`'&&'`（逻辑与）以及 `'||'`（逻辑或）的结果也是一个数值
-- 在同一个 `section` 的两个相对地址上的其他二元算术和逻辑运算、或者经上面转化后得到的两个绝对地址，其运算结果在设置了 `LD_FEATURE`（"SANE_EXPR"）后，或在输出 `section` 定义内也是一个数值；否则结果为绝对地址
-- 在相对地址、或一个相对地址一个数值的的其他操作结果，都是与相对操作数在同一个 `section` 上的相对地址
+- 在同一个节的两个相对地址上的其他二元算术和逻辑运算、或者经上面转化后得到的两个绝对地址，其运算结果在设置了 `LD_FEATURE`（"SANE_EXPR"）后，或在输出节定义内也是一个数值；否则结果为绝对地址
+- 在相对地址、或一个相对地址一个数值的的其他操作结果，都是与相对操作数在同一个节上的相对地址
 - 在绝对地址上（经上面转化后）的其他操作结果都是一个绝对地址
 
-你可以使用内置函数 `ABSOLUTE` 在情况允许的时候，强制将一个表达式转化为绝对地址，否则为相对地址。比如，为了在输出 `section` `'.data'` 的结尾地址上创建一个绝对符号：
+你可以使用内置函数 `ABSOLUTE` 在情况允许的时候，强制将一个表达式转化为绝对地址，否则为相对地址。比如，为了在输出段 `'.data'` 的结尾地址上创建一个绝对符号：
 
 ```lds
 SECTIONS
@@ -2067,7 +2066,7 @@ SECTIONS
   }
 ```
 
-如果 `'ABSOLUTE'` 没有使用，那么 `'_edata'` 是相对于 `'.data'` `section` 的一个相对地址
+如果 `'ABSOLUTE'` 没有使用，那么 `'_edata'` 是相对于 `'.data'` 段的一个相对地址
 
 因为 `LOADADDR` 这个特殊的内置函数返回一个绝对地址，所以也可以用来强制一个表达式变成绝对地址
 
@@ -2080,9 +2079,9 @@ SECTIONS
 链接器脚本语言包含了一系列内置函数可用于表达式
 
 - `ABSOLUTE(exp)`
-  返回表达式 `exp` 的一个绝对地址（非可重定向的，因为可能是负数）。主要用来将一个绝对地址赋值给一个 `section` 内的符号，这个符号的值通常是相对于 `section` 的，详见 [一个表达式的 `section`](https://sourceware.org/binutils/docs/ld/Expression-Section.html)
+  返回表达式 `exp` 的一个绝对地址（非可重定向的，因为可能是负数）。主要用来将一个绝对地址赋值给一个节内的符号，这个符号的值通常是相对于节的，详见 [3.10.8 一个表达式的节](https://sourceware.org/binutils/docs/ld/Expression-Section.html)
 - `ADDR(section)`
-  返回名称为 *`section`* 的地址（`VMA`），前提是你的脚本必须前面已经定义了这个 `section` 的位置。在下面这个例子中，`start_of_output_1`，`symbol_1` 和 `symbol_2` 都被赋值为同一个值，除了 `symbol_1` 是相对于 `.output·` `section` 的值而其他两个是绝对的值：  
+  返回名称为 *`section`* 的地址（`VMA`），前提是你的脚本必须前面已经定义了这个节的位置。在下面这个例子中，`start_of_output_1`，`symbol_1` 和 `symbol_2` 都被赋值为同一个值，除了 `symbol_1` 是相对于 `.output·` 段的值而其他两个是绝对的值：  
   ```lds
   SECTIONS { …
     .output1 :
@@ -2100,7 +2099,7 @@ SECTIONS
 - `ALIGN(align)`
 - `ALIGN(exp, align)`
   返回位置计数器（`.`）或者一个单独的、对齐下一个 *`align`* 边界的表达式。单个操作数的 `ALIGN` 不会改变位置计数器的值，只用来计算。两个操作数的 `ALIGN` 允许任意向上对齐（`ALIGN(align)`）的表达式，等价于 `ALGIN(ABSOLUTE(.), align)`  
-  这里是一个示例，将输出 `section` `.data` 对齐到前一个 `section` 后的 0x200 字节边界处。并且在 `section` 内将一个变量设置为输入 `section` 后的 0x8000 边界处：
+  这里是一个示例，将输出段 `.data` 对齐到前一个输出段后的 0x2000 字节边界处。并且在输出段内将一个变量设置为输入节后的 0x8000 边界处：
   ```lds
   SECTIONS { …
     .data ALIGN(0x2000): {
@@ -2109,10 +2108,10 @@ SECTIONS
     }
   … }
   ```
-  第一个 `ALIGN` 指出了一个 `section` 的位置，因为它用作一个 `section` 定义的可选 `address` 属性（详见 [输出 `section` 地址](https://sourceware.org/binutils/docs/ld/Output-Section-Address.html)）。第二个 `ALIGN` 用来定义符号的值  
+  第一个 `ALIGN` 指出了一个输出段的位置，因为它用作一个输出段定义的可选 `address` 属性（详见 [3.6.3 输出段地址](https://sourceware.org/binutils/docs/ld/Output-Section-Address.html)）。第二个 `ALIGN` 用来定义符号的值  
   内置函数 `NEXT` 与 `ALIGN` 密切相关
 - `ALIGNOF(section)`
-  返回名为 *`section`* 的以字节为单位的对齐值，前提是已分配该 `section`。否则链接器计算该 `section` 时会抛出错误。在下面这个例子中，`.output` 的对齐值储存在该段的第一个值里：
+  返回名为 *`section`* 的以字节为单位的对齐值，前提是已分配该输出段。否则链接器计算该输出段时会抛出错误。在下面这个例子中，`.output` 的对齐值储存在该段的第一个值里：
   ```lds
   SECTIONS{ …
     .output {
@@ -2122,7 +2121,7 @@ SECTIONS
   … }
   ```
 - `BLOCK(exp)`
-  `ALIGN` 的同义词，用于兼容旧版本的链接器脚本，常见于设置一个输出 `section` 的地址
+  `ALIGN` 的同义词，用于兼容旧版本的链接器脚本，常见于设置一个输出段的地址
 - `DATA_SEGMENT_ALIGN(maxpagesize, commonpagesize)`
   这等价于
   ```lds
@@ -2133,23 +2132,23 @@ SECTIONS
   (ALIGN(maxpagesize)
   + ((. + commonpagesize - 1) & (maxpagesize - commonpagesize)))
   ```
-  具体取决于用于数据 `segment` （此处 `segment` 是该表达式的结果和 `DATA_SEGMENT_END` 之间的区域）的页，两者使用的 `commonpagesize` 大小的页时，是否后者比前者更小。如果用了后一种形式，意味着运行阶段将节省 `commonpagesize` 字节大小的内存，但代价是磁盘文件中最多会浪费同样的大小  
-  该表达式只能用在 `SECTIONS` 命令中，而不能是其他任何输出 `section` 的描述里，并且只能在链接器脚本里出现一次。`commonpagesize` 应该小于等于 `maxpagesize`，并且当系统运行在最多 `maxpagesize` 大小的页时，对象想要优化的系统页大小。然而，需要注意的是，如果系统页大小超过了 `maxpagesize`，`'-z relro'` 选项就会降低效率，比如：
+  具体取决于用于数据段（此处的段是该表达式的结果和 `DATA_SEGMENT_END` 之间的区域）的页，两者使用的 `commonpagesize` 大小的页时，是否后者比前者更小。如果用了后一种形式，意味着运行阶段将节省 `commonpagesize` 字节大小的内存，但代价是磁盘文件中最多会浪费同样的大小  
+  该表达式只能用在 `SECTIONS` 命令中，而不能是其他任何输出段的描述里，并且只能在链接器脚本里出现一次。`commonpagesize` 应该小于等于 `maxpagesize`，并且当系统运行在最多 `maxpagesize` 大小的页时，对象想要优化的系统页大小。然而，需要注意的是，如果系统页大小超过了 `maxpagesize`，`'-z relro'` 选项就会降低效率，比如：
   ```lds
     . = DATA_SEGMENT_ALIGN(0x10000, 0x2000);
   ```
 - `DATA_SEGMENT_END(exp)`
-  定义 `DATA_SEGMENT_END` 计算出的数据 `segment` 的结尾地址
+  定义 `DATA_SEGMENT_END` 计算出的数据段的结尾地址
   ```lds
     . = DATA_SEGMENT_END(.);
   ```
 - `DATA_SEGMENT_RELRO_END(offset, exp)`
-  当设置了 `'-z relro'` 选项时，就会定义 `PT_GNU_RELRO` `segment` 的结尾地址，并且会填充 `DATA_SEGMENT_ALIGN` 以便 *`exp + offset`* 与 `commonpagesize` 对齐；否则，`DATA_SEGMENT_RELRO_END` 什么都没做。如果出现在链接器脚本上，则必须放在 `DATA_SEGMENT_ALIGN` 和 `DATA_SEGMENT_END` 之间。由于 `section` 的对齐，会计算第二个参数加上 `PT_GNU_RELRO` `segment` 末尾所需的填充
+  当设置了 `'-z relro'` 选项时，就会定义 `PT_GNU_RELRO` 段的结尾地址，并且会填充 `DATA_SEGMENT_ALIGN` 以便 *`exp + offset`* 与 `commonpagesize` 对齐；否则，`DATA_SEGMENT_RELRO_END` 什么都没做。如果出现在链接器脚本上，则必须放在 `DATA_SEGMENT_ALIGN` 和 `DATA_SEGMENT_END` 之间。由于输出段的对齐，会计算第二个参数加上 `PT_GNU_RELRO` 段末尾所需的填充
   ```lds
     . = DATA_SEGMENT_RELRO_END(24, .);
   ```
 - `DEFINED(symbol)`
-  如果 *`symbol`* 在链接器全局符号表上有定义，并且定义在脚本里使用 `DEFINED` 的语句之前，则返回 1；否则返回 0。你可以用这个函数为符号提供默认值。比如，接下来的脚本块展示了怎样将全局符号 `'begin'` 设置为 `'.text'` `section` 的第一个位置（但如果叫做 `'begin'` 符号已经存在，那么这个全局符号 `'.begin'` 则会保持原来的值）：
+  如果 *`symbol`* 在链接器全局符号表上有定义，并且定义在脚本里使用 `DEFINED` 的语句之前，则返回 1；否则返回 0。你可以用这个函数为符号提供默认值。比如，接下来的脚本块展示了怎样将全局符号 `'begin'` 设置为 `'.text'` 段的第一个位置（但如果叫做 `'begin'` 符号已经存在，那么这个全局符号 `'.begin'` 则会保持原来的值）：
   ```lds
   SECTIONS { …
     .text : {
@@ -2162,7 +2161,7 @@ SECTIONS
 - `LENGTH(memory)`
   返回 *`memory`* 内存区的长度
 - `LOADADDR(section)`
-  返回 *`section`* 的绝对地址（详见 [输出 `section` 的 LMA](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)）
+  返回 *`section`* 的绝对地址（详见 [3.6.8.2 输出段的 LMA](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)）
 - `LOG2CEIL(exp)`
   返回 *`exp`* 向无穷大舍入的二进制对数，`LOG2CEIL(0)` 将返回 0
 - `MAX(exp1, exp2)`
@@ -2174,9 +2173,9 @@ SECTIONS
 - `ORIGIN(memory)`
   返回 *`memory`* 内存的起始地址
 - `SEGMENT_START(segment, default)`
-  返回 *`segment`* 的基地址。如果本 `segment` 已经显式给出了一个值（通过 `'-T'` 选项），则这个值才会返回，否则这个值是默认值。目前，`'-T'` 选项只能用于设置 `".text"`、`".data"` 和 `".bss"` `section` 的基地址，但可以将 `SEGMENT_START` 与任何 `segment` 名一起使用
+  返回 *`segment`* 的基地址。如果本输出段已经显式给出了一个值（通过 `'-T'` 选项），则这个值才会返回，否则这个值是默认值。目前，`'-T'` 选项只能用于设置 `".text"`、`".data"` 和 `".bss"` 段的基地址，但可以将 `SEGMENT_START` 与任何 `segment` 名一起使用
 - `SIZEOF(section)`
-  返回 *`section`* 的大小，以字节为单位，当然前提是该 `section` 已经分配。否则执行时链接会抛出错误。在下面这个例子里，`symbol_1` 和 `symbol_2` 均赋值同一个值：
+  返回 *`section`* 的大小，以字节为单位，当然前提是该输出段已经分配。否则执行时链接会抛出错误。在下面这个例子里，`symbol_1` 和 `symbol_2` 均赋值同一个值：
   ```lds
   SECTIONS{ …
     .output {
@@ -2189,8 +2188,8 @@ SECTIONS
   … }
   ```
 - `SIZEOF_HEADERS`
-  返回输出文件首部的大小，以字节为单位。这是出现在输出文件开头的信息。你可以用这个值设置第一个 `section` 的起始地址，以便分页
-  当产生一个 `ELF` 输出文件时，如果链接器脚本用了 `SIZEOF_HEADERS` 内置函数，则链接器必须在它确定所有 `section` 地址和大小之前，先计算程序头的数量。如果链接器之后发现需要额外的程序头，就会抛出 `'没有足够的程序头空间'`（`'not enough room for program headers'`）。为了避免这个错误，你必须避免使用 `SIZEOF_HEADERS`，或者你修改你的脚本让链接器避免使用额外的程序头，又或者用 `PHDRS` 命令（详见 [PHDRS](https://sourceware.org/binutils/docs/ld/PHDRS.html)）定义程序头
+  返回输出文件首部的大小，以字节为单位。这是出现在输出文件开头的信息。你可以用这个值设置第一个输出段的起始地址，以便分页
+  当产生一个 `ELF` 输出文件时，如果链接器脚本用了 `SIZEOF_HEADERS` 内置函数，则链接器必须在它确定所有输出段地址和大小之前，先计算程序头的数量。如果链接器之后发现需要额外的程序头，就会抛出 `'没有足够的程序头空间'`（`'not enough room for program headers'`）。为了避免这个错误，你必须避免使用 `SIZEOF_HEADERS`，或者你修改你的脚本让链接器避免使用额外的程序头，又或者用 `PHDRS` 命令（详见 [3.8 PHDRS](https://sourceware.org/binutils/docs/ld/PHDRS.html)）定义程序头
 
 <br></br>
 

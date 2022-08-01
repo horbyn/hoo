@@ -49,7 +49,8 @@ bootsect: ./kernel/bootsect.o
 	$(AS) --32 $< -o $@
 
 # OBJS 集合中的所有 .o 都需要 .s(.c) 作前提
-# --32: https://sourceware.org/binutils/docs/as/i386_002dOptions.html#i386_002dOptions
+# --32: 指定生成 32 位字长，即隐含目标平台（target）为 Intel i386 架构
+#       https://sourceware.org/binutils/docs/as/i386_002dOptions.html#i386_002dOptions
 $(OBJS): %.o: %.s
 	$(AS) --32 $< -o $@
 

@@ -1,16 +1,20 @@
+ENTRY(entry)
 SECTIONS
 {
-    . = 0x10;
+    . = 0x50;
     .text :
     {
+        entry.o(.text)
+        . = ALIGN(4);
         *(.text)
     }
-    . = 0x200;
+
+    . = ALIGN(4);
     .data :
     {
         *(.data)
     }
-    . = ALIGN(8);
+    . = ALIGN(4);
     .bss :
     {
         *(.bss)

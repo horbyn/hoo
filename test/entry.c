@@ -4,7 +4,7 @@ int entry() {
             "nop\n\t"
             "movl %ds, %eax");
     
-    char *entry = "entry";
+    char *str1 = "entry";
     int e;
     return 0;
 }

@@ -1,3 +1,5 @@
+__asm__(".code16gcc");
+
 int test2() {
     char *str3 = "test2";
     int t2 = 100;

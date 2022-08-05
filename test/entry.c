@@ -1,3 +1,5 @@
+__asm__(".code16gcc");
+
 int entry() {
     __asm__("movl %cs, %eax\n\t"
             "nop\n\t"

@@ -1,7 +1,7 @@
 ENTRY(entry)
 SECTIONS
 {
-    . = 0x50;
+    . = 0x1000;
     .text :
     {
         entry.o(.text)

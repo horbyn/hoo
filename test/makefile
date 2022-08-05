@@ -9,3 +9,4 @@ nop:
 	dd if=/dev/zero of=test.img bs=1474560 count=1
 	dd if=boot of=test.img bs=512 count=1 conv=notrunc
 	dd if=kernel of=test.img bs=512 count=3 seek=1 conv=notrunc
+	objdump -m i8086 -d kernel.elf > kernel.objd

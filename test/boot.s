@@ -1,5 +1,5 @@
     .globl _start
-    .code16
+    .code16gcc
 
     .set CYL_144M, 80
     .set HEA_144M, 2
@@ -7,10 +7,6 @@
     .set NUM_SEC,  3
 
     .text
-lba_base:
-    .word 1
-mm_addr:
-    .word 0x1000
 _start:
     movw %cs,     %ax
     movw %ax,     %ds
@@ -70,6 +66,10 @@ after_reset:
 load_sect_ok:
     ljmp $0, $0x1000        # jump to kernel
     jmp  .
+lba_base:
+    .word 1
+mm_addr:
+    .word 0x1000
 
     .org  0x1fe, 0x90
     .word 0xaa55

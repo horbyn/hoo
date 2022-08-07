@@ -1,47 +1,83 @@
-# Segment v.s. Section
+# bootloader
 
-参考资料：
+## x86 故事开始的地方
 
-- [《操作系统真象还原，郑钢》](https://book.douban.com/subject/26745156/)
+当按下开机键那一刻，对于 `x86` 硬件来说发生了很多事，但对于内核来说，发生的第一件事便是跳转到 `0:0x7c00` 处执行指令
 
-个人理解是，两者都是指逻辑段。平时汇编源文件里说的代码 *"段"*，数据 *"段"* 等，都是指 `section`；而 `segment` 指的是链接之后的整个可执行文件内部的一个个逻辑段。类似以下：
+为什么这个地方会有指令？要知道内存属于 RAM，刚开机是没有数据的。其实是 `BIOS` 替内核作了一些处理
 
-```cpp
-/*
- * 汇编文件1            汇编文件2
- * ┌────────────────┐   ┌────────────────┐
- * │section: .text1 │   │section: .text2 │
- * ├────────────────┤   ├────────────────┤
- * │section: .data1 │   │section: .data2 │
- * └────────────────┘   └────────────────┘
- *            \          /
- *             \ 链接   /
- *           ┌───────────────┐
- *           │segment: .text │
- *           ├───────────────┤
- *           │segment: .data │
- *           └───────────────┘
- */
-```
+`BIOS` 是一个固件，烧录到 ROM 的，所有总能找到 `BIOS`。它从存储系统读取了一些数据，加载到内存 `0:0x7c00`，因此对于内核来说就有了**第一条指令**
 
-如果你写过汇编，你可能知道汇编器会提供各种各样用来生成逻辑段的伪指令（`directive`），有的汇编器可能用的关键字是 `section`，有的可能是 `segment` 或者其他什么词。但这个只是汇编源文件层次上的事情，本质上只是方便程序员划分程序逻辑的 *"逻辑段"* 而已。**这种源文件上的逻辑段，一般用 `section` 来指代，中文常译为 `节`**。比如上面这个例子，汇编文件 1 和 2 都定义了逻辑段，因此广义上的 `section` 指的是 `.text1`、`.text2`、`.data1` 和 `.data2`
+再具体点，`BIOS` 加载的这个 "数据"，被称为 `MBR（主引导记录，Master Boot Record，或者主引导扇区）`，它总是位于存储系统的某个固定的地方（对于磁盘来说是第一个逻辑扇区）。无论刮风还是下雨，`MBR` 都矢志不渝地在这个地方等待着 `BIOS` 的呼唤
 
-编译型语言从源文件走到可执行文件这个过程往往涉及多个阶段：源文件编译得到汇编文件，汇编文件汇编得到目标文件，最终将所有用到的目标文件链接到一起，就是可执行文件。可执行文件里面也有逻辑段，但这里的 *"逻辑"* 不是面向程序员的，而是面向加载器的。可执行文件包含的二进制数据可能是指令，可能是数据，也可能是有其他用途的东西。所以这里的 *"逻辑"* 指的是可读、可写、可执行，链接阶段负责将具有相同 *"逻辑"* 的节（`section`）合并起来。**这种可执行文件上的逻辑段，一般用 `segment` 来指代，中文常译为 `段`**。比如上面那个例子，链接完成后，得到了一个文件，里面的 `.text` 和 `.data` 就是广义上说的 `segment`。这个例子里 `.text` 由 `.text1` 和 `.text2` 合并而来，`.data` 同理（但是，也完全有可能和直观上不同，比如 `.text1` 和 `.data1` 合并，这是链接器负责的事，它的逻辑怎样的那需要研究链接器才行）
+![](https://pic.imgdb.cn/item/62ee33588c61dc3b8ec5c251.jpg)
 
-但也要注意，无论是 "节（`section`）" 还是 "段（`segment`）"，本质都是逻辑段，作区分只是为了强调是输入文件（汇编源文件）还是输出文件（目标文件）。实际上无论是输入文件还是输出文件，完全可以使用同一个术语，因为都是逻辑段。所以，具体语境具体分析
+`MBR` 是**整个内核故事的开始**，换句话说，如果你想实现一个内核，这便是第一个程序（当然，这个阶段你也可以不列入内核功能的范畴，你可以将这个阶段交给其他机制/技术来完成，比如 `GRUB`、`UEFI` 等等）。如果你要实现 `MBR`，首先要明确以下这几点限制：
 
-参考《真象还原》可以编译几个汇编文件来验证，但这里仅作记录：
+- 大小限制为 512 字节
+- 最后两个字节先是 `0x55`，然后是 `0xaa`
+- 需要使用 CPU 能直接识别的机器指令来编写
 
-> 可以使用 **readelf -e hello.elf** 来查看 `ELF` 头，输出信息分四部分，大概如下：
-> ELF Header: 保存描述信息
-> Section Header: 保存源文件逻辑段（即列举所有 `section`）
-> Program Header: 保存可执行文件逻辑段（即列举所有 `segment`）
-> Section to Segment mapping: 列举每个 `segment` 都由哪些 `section` 合并而成
+由于大小限制得太严重，所以内核不可能放在 `MBR` 里面实现，传统的做法是：
+
+- 先加载 `MBR`，让 `MBR` 去加载位于存储系统的另一个程序
+- 然后这个程序做一些初始化工作（打开和进入保护模式、开启页表机制等等），之后才从存储系统加载真真正正内核
+
+在传统的做法里，`MBR` 被称为引导器（booter），而这里的 "另一个程序" 被称为加载器（loader），然后把它们统称为 `bootloader`，这便是引导和加载
+
+之所以称为 "传统"，一方面是因为大多数资料都是这样的过程（[《于渊，自动动手写操作系统》](https://book.douban.com/subject/1422377/)，[《郑钢，操作系统真相还原》](https://book.douban.com/subject/26745156/) 甚至 [《赵炯，Linux 内核 0.11 详细注释》](https://mirror.math.princeton.edu/pub/oldlinux/download/clk011.pdf) 等等）；另一方面是我这里不会遵循这个流程，我的原因是：
+
+- 引导和加载本质上都是加载其他的程序，让其他程序去完成某些功能
+- 引导和加载需要使用 CPU 能直接识别的机器指令来编写，比如汇编（当然也可以用高级语言来编写，之后使用诸如 `objcopy` 等命令为生成的可执行文件提取纯粹的二进制指令）
+
+首先，`booter` 可能只能用汇编来写，因为要控制大小为 512 字节且最后两个字节为 `0x55` 和 `0xaa`
+
+然后，`loader` 要做的初始化工作其实是很多的，我并不想用汇编写这么多东西
+
+所以，我的思路是，我会把 `loader` 删掉。但是初始化工作还是要做的，但不是汇编来做，而是用高级语言来做（`C 语言`）。所以我会直接从 `boot` 一下子跳入内核，让内核自己做它自己的初始化工作
 
 <br></br>
 
-# `.iplt` 这些是什么节
+## 从汇编到 C 语言
 
-参考 [Re: Why gcc manual does not explain some sections](https://gcc.gnu.org/legacy-ml/gcc-help/2011-02/msg00172.html)
+如果是将汇编源文件和 C 源文件链接在一起，那么问题会变得很简单，只需要把 C 的函数名声明为链接阶段可见就行了，比如在汇编源文件里用 `.globl` 声明一个函数名
 
-<br></br>
+但是现在的情况是，`booter` 是单独的一个程序，而我们自己实现的内核则是另外一个程序。换句话说，这两个程序不能链接到一起，那么你在汇编里跳入一个 C 的函数名，这就会报错 *找不到符号*
+
+让我们先来看看 `Linux 0.11` 是怎么做的（[详见《赵炯 linux 0.11，第 2 章》](https://mirror.math.princeton.edu/pub/oldlinux/download/clk011.pdf)，源码见 [oldlinux 的镜像](https://mirror.cs.msu.ru/oldlinux.org/Linux.old/Linux-0.11/sources/system/index.html)）：
+
+>
+> ![](https://pic.imgdb.cn/item/62ef782916f2c2beb15fd43e.png)
+>
+> 这是 `Linux 0.11` 从系统加电起所执行的程序的顺序，主要关注控制流改变的地方（即箭头处）：
+>
+> - 第一个箭头：由 `BIOS` 控制
+> - 第二个箭头（从 `bootsect.S` 到 `setup.s`）：`bootsect.S` 执行 [段间跳转](https://github.com/karottc/linux-0.11/blob/f8d044e078f5e5ee20a3ad2f72c243f041526983/boot/bootsect.s#L139)，其中，符号 `SETUPSEG`（ [值为 0x9020](https://github.com/karottc/linux-0.11/blob/f8d044e078f5e5ee20a3ad2f72c243f041526983/boot/bootsect.s#L37) ）表示 `setup` 模块的起始地址
+>     + `jmpi	0,SETUPSEG`，该指令表示跳转至 `0x9020: 0` 处执行
+> - 第三个箭头（从 `setup.s` 到 `system 模块`）：`setup.s` 同样是执行 [段间跳转](https://github.com/karottc/linux-0.11/blob/f8d044e078f5e5ee20a3ad2f72c243f041526983/boot/setup.s#L191)，不过需要注意此时已经进入了保护模式，源操作数 `8` 表示的是段选择子
+>     + `jmpi	0,8`，该指令表示跳入绝对地址 `0: 0` 处执行
+> - 最后一个箭头：由于 `head.s` 和 `main.c` 是链接为一起的，所以 `head.s` 是能够 "看见" `main.c` 的函数名的，所以这里的跳转就很简单了
+>
+> 当然，上面只是程序源码的内容，编译过程输入了什么命令也很重要，因为也能控制执行流的改变，所以接下来看看 `Makefile` 是怎么写的：
+>
+> - 生成 `bootsect` 模块：主要关注下面这条命令给出的 [链接过程](https://github.com/karottc/linux-0.11/blob/f8d044e078f5e5ee20a3ad2f72c243f041526983/Makefile#L93)，可以发现 `bootsect` 通过 `-O` 选项（ [展开 LD86 变量](https://github.com/karottc/linux-0.11/blob/f8d044e078f5e5ee20a3ad2f72c243f041526983/Makefile#L8) ）直接生成了 `8086` 二进制文件
+>     + `$(LD86) -s -o boot/bootsect boot/bootsect.o`
+> - 生成 `setup` 模块：和 `bootsect` 是[同样的命令](https://github.com/karottc/linux-0.11/blob/f8d044e078f5e5ee20a3ad2f72c243f041526983/Makefile#L91) 生成的是 `8086` 二进制文件
+>     + `$(LD86) -s -o boot/setup boot/setup.o`
+> - 生成 `system` 模块：[主要关注链接命令](https://github.com/karottc/linux-0.11/blob/f8d044e078f5e5ee20a3ad2f72c243f041526983/Makefile#L58)，这里有个链接顺序的问题，可以看到内核模块是把 `boot/head.o` 和 `init/main.o` 放在前面，这就保证了从 `setup` 模块跳入内核时先执行的 `head` 模块的指令
+>     + `$(LD) $(LDFLAGS) boot/head.o init/main.o \`
+>     + 这里 [展开 LDFLAGS 变量](https://github.com/karottc/linux-0.11/blob/f8d044e078f5e5ee20a3ad2f72c243f041526983/Makefile#L12) 可以看到内核模块是生成的 `ELF` 二进制文件
+
+至此，便可以总结一下 `Linux 0.11` 的 `bootloader` 过程（对于 `0.11` 来说，`setup` 模块就是 `loader`）
+
+- 分别生成 `bootsect`、`setup` 和 `内核` 单独的三个模块
+- 各个模块之间的跳转利用段间跳转实现，涉及的地址为绝对地址
+- 这里的关键是链接的过程
+
+值得一提的是，[xv6-x86-fall-2018](https://pdos.csail.mit.edu/6.828/2018/xv6/xv6-rev10.pdf) 和 [ucore-x86-fall-2018](https://github.com/xr1s/ucore_os_lab/tree/master/labcodes/lab2) 这两个比较出名的教学内核也是用了类似的 `booter` -> `loader` -> `kernel` 的手段，这说明天下技术均 "一家" ？（XD）
+
+这可以给我们 **从汇编跳入 C** 提供这样的思路（假设我们希望内核的入口点为 `0x100000`）：
+
+- 链接后的输出文件的起始地址指定为 `0x100000`（可以用 `ld -Ttext` 选项也可以用链接脚本完成）
+- 输入文件的链接顺序一定要指定 C 文件放开头，这样这个 C 文件编译后的 `.text` 便相当于 "绑定" 到地址 `0x100000` 了（换句话说，第一个 C 函数的地址就是 `0x100000`）
+- 最后只需要在汇编源文件（即 `MBR`）上利用段间跳转，跳转到 `0x100000` 就可以了

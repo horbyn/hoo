@@ -82,11 +82,11 @@ LOAD test1.o
 LOAD test2.o
 OUTPUT(kernel.elf elf32-i386)
 
-.comment        0x0000000000000000       0x2b
- .comment       0x0000000000000000       0x2b entry.o
-                                         0x2c (size before relaxing)
- .comment       0x000000000000002b       0x2c test1.o
- .comment       0x000000000000002b       0x2c test2.o
+.comment        0x0000000000000000       0x61
+ .comment       0x0000000000000000       0x61 entry.o
+                                         0x62 (size before relaxing)
+ .comment       0x0000000000000061       0x62 test1.o
+ .comment       0x0000000000000061       0x62 test2.o
 
 .note.GNU-stack
                 0x0000000000000000        0x0

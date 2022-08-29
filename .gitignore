@@ -4,6 +4,6 @@
 
 bootsect
 
-bochs.out
+*.out
 
 .vscode/

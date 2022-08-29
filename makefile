@@ -5,7 +5,7 @@
 #       以及 https://stackoverflow.com/questions/33740270/makefile-patsubst-multiple-expressions
 SSRC := $(shell find . -name "*.s")
 CSRC := $(shell find . -name "*.c")
-OBJS := $(filter-out ./kernel/bootsect.o, $(SSRC:.s=.o))
+OBJS := $(filter-out ./boot/bootsect.o, $(SSRC:.s=.o))
 OBJC := $(CSRC:.c=.o)
 
 AS := as
@@ -42,10 +42,10 @@ fd1_44M.img: bootsect
 # -Ttext: 链接地址总是加上这个数值
 # -m: 模拟一个编译环境，当需要在 64 位机器上编译 32 位代码时需要模拟 32 位编译环境
 #     详见 https://stackoverflow.com/questions/19200333/architecture-of-i386-input-file-is-incompatible-with-i386x86-64
-bootsect: ./kernel/bootsect.o
+bootsect: ./boot/bootsect.o
 	$(LD) --oformat binary -e _start -Ttext 0x7c00 -m elf_i386 $< -o $@
 
-./kernel/bootsect.o: ./kernel/bootsect.s
+./boot/bootsect.o: ./boot/bootsect.s
 	$(AS) --32 $< -o $@
 
 # OBJS 集合中的所有 .o 都需要 .s(.c) 作前提
@@ -59,4 +59,4 @@ $(OBJC): %.o: %.c
 
 # -rm: 有些文件可能不存在，但不用管（但还是会报错的）
 clean:
-	-rm -r $(OBJS) $(OBJC) ./kernel/bootsect.o bootsect fd1_44M.img
+	-rm -r $(OBJS) $(OBJC) ./boot/bootsect.o bootsect fd1_44M.img

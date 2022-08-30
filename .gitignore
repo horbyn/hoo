@@ -6,4 +6,8 @@ bootsect
 
 *.out
 
+*.map
+
+*.elf
+
 .vscode/

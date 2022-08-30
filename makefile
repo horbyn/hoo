@@ -22,6 +22,9 @@ CC := gcc
 # -fno-builtin: 不允许编译器优化我们定义的函数
 #       详见 https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
 CFLAGS := -c -Wall -Werror -m32 -nostdinc -fno-builtin
+# -m: 指定输出文件的格式
+# -Map: 输出内存映射文件
+LDFLAGS := -m elf_i386 -Map kernel.map
 
 # 第一条命令请保持依赖为 img，这样默认 make 就能执行
 nop: clean image $(OBJS) $(OBJC) fd1_44M.img
@@ -34,8 +37,10 @@ image:
 		dd if=/dev/zero of=fd1_44M.img bs=1474560 count=1; \
 	fi
 
-fd1_44M.img: bootsect
+fd1_44M.img: bootsect kernel.elf
 	dd if=bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
+	objcopy -S -O binary -j .text kernel.elf kernel
+	dd if=kernel of=fd1_44M.img bs=512 count=3 seek=1 conv=notrunc
 
 # --oformat: 输出格式为纯二进制
 # -e: bootsect 入口点为 _start
@@ -47,6 +52,9 @@ bootsect: ./boot/bootsect.o
 
 ./boot/bootsect.o: ./boot/bootsect.s
 	$(AS) --32 $< -o $@
+
+kernel.elf: $(OBJC)
+	$(LD) $(LDFLAGS) $< -o $@
 
 # OBJS 集合中的所有 .o 都需要 .s(.c) 作前提
 # --32: 指定生成 32 位字长，即隐含目标平台（target）为 Intel i386 架构

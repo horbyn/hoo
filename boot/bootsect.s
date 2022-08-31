@@ -15,6 +15,8 @@
 	.globl start
 	.code16
 
+	.set MBR_NEW_SEG,  0x8000
+	.set SYS_BUF,      0x8000
 	.set MEM_NR,       0   # ARDS amount
 	.set MEM_ST,       4   # ARDS struct base address
 	.set SEC_NR,       3   # 896 # the amount of sector to be loaded (≈448KB)
@@ -23,33 +25,33 @@
 	.set HEAD_144M,    2   # the specification for head of 1.44M floppy
 
 start:
-	movw %cs,         %ax
-	movw %ax,         %ds
-	movw $0x8000,     %ax
-	movw %ax,         %ss
-	movw $0x7c00,     %sp # stack is set to 0x87c00
+	movw %cs,          %ax
+	movw %ax,          %ds
+	movw $MBR_NEW_SEG, %ax
+	movw %ax,          %ss
+	movw $0x7c00,      %sp # stack is set to 0x87c00
 	
 	## function 1.
 	## ds:si -> es:di (0:0x7c00 -> 0x8000:0x7c00)
 	cld
-	movw $0x8000,     %ax
-	movw %ax,         %es
-	movl $0x7c00,     %esi
-	movl $0x7c00,     %edi
-	movl $0x100,      %ecx
+	movw $MBR_NEW_SEG, %ax
+	movw %ax,          %es
+	movl $0x7c00,      %esi
+	movl $0x7c00,      %edi
+	movl $0x100,       %ecx
 	rep  movsw
 
-	ljmp $0x8000,     $go
+	ljmp $MBR_NEW_SEG, $go
 go:
 
 	## function 2.
 	## Memory detection
-	movw $0x8000,     %ax
-	movw %ax,         %ds
-	movl $0,          %ebx
-	movl $0x14,       %ecx
-	movw $MEM_ST,     %di # ARDS struct base address
-	movl $0,          MEM_NR # ARDS amount
+	movw $SYS_BUF, %ax
+	movw %ax,      %ds
+	movl $0,       %ebx
+	movl $0x14,    %ecx
+	movw $MEM_ST,  %di # ARDS struct base address
+	movl $0,       MEM_NR # ARDS amount
 detect_mem:
 	movl $0xe820,     %eax
 	movl $0x534d4150, %edx
@@ -120,16 +122,16 @@ load_sect_ok:
 
 	## function 5.
 	## Move the whole kernel from 0x10000 to 0
-	movw $0x1000,     %ax
-	movw %ax,         %ds
-	movw $0,          %ax
-	movw %ax,         %es
-	xorl %esi,        %esi
-	xorl %edi,        %edi
-	movl $SEC_NR<<7,  %ecx
+	movw $0x1000,      %ax
+	movw %ax,          %ds
+	movw $0,           %ax
+	movw %ax,          %es
+	xorl %esi,         %esi
+	xorl %edi,         %edi
+	movl $SEC_NR<<7,   %ecx
 	rep  movsl
-	movw $0,          %ax # reset ds because the refresh pipeline
-	movw %ax,         %ds #     needs to use this file label
+	movw $MBR_NEW_SEG, %ax
+	movw %ax,          %ds
 
 	## function 6.
 	## Enable PM
@@ -144,9 +146,9 @@ load_sect_ok:
 	orl  $1,          %eax
 	movl %eax,        %cr0
 	
-	ljmp $0x08,       $pm_go
-	
 	.code32
+	ljmp $0x08,       $(pm_go + MBR_NEW_SEG * 16)
+
 pm_go:
 	movw $0x10,       %ax
 	movw %ax,         %ds
@@ -162,11 +164,11 @@ pm_go:
 	
 	## function 8.
 	## Forge a stack environment to call lret
-	movl $0x80000,    %eax
-	addl $died,       %eax
+	movl $(MBR_NEW_SEG * 16), %eax
+	addl $died,               %eax
 	pushl $0x08
 	pushl %eax
-	ljmp $0x08,       $0
+	ljmp $0x08,               $0
 died:
 	jmp  .
 

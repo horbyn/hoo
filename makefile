@@ -21,7 +21,7 @@ CC := gcc
 #       详见 https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html#Directory-Options
 # -fno-builtin: 不允许编译器优化我们定义的函数
 #       详见 https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-CFLAGS := -c -Wall -Werror -m32 -nostdinc -fno-builtin
+CFLAGS := -c -Wall -O2 -Werror -m32 -nostdinc -fno-builtin -fno-pie
 # -m: 指定输出文件的格式
 # -Map: 输出内存映射文件
 LDFLAGS := -m elf_i386 -Map kernel.map
@@ -54,7 +54,7 @@ bootsect: ./boot/bootsect.o
 	$(AS) --32 $< -o $@
 
 kernel.elf: $(OBJC)
-	$(LD) $(LDFLAGS) $< -o $@
+	$(LD) $(LDFLAGS) -T kernel.ld $^ -o $@
 
 # OBJS 集合中的所有 .o 都需要 .s(.c) 作前提
 # --32: 指定生成 32 位字长，即隐含目标平台（target）为 Intel i386 架构

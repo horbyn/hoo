@@ -1,5 +1,7 @@
 #include "disp.h"
 
+static uint32_t *g_cursor = (uint32_t)GLOBAL_CURSOR;
+
 void
 init_disp(void) {
     // s1. clear screen
@@ -29,8 +31,7 @@ set_cursor(int row, int col) {
     // 0xf: cursor location low reg
 
     uint16_t pos = row * VGA_WIDTH + col;
-    uint32_t *pgc = (uint32_t *)GLOBAL_CURSOR;
-    *pgc = pos;
+    *g_cursor = pos;
 
     uint8_t low = pos & 0xff;
     uint16_t hig = pos & 0xff00;
@@ -58,25 +59,59 @@ get_cursor(void) {
 
 void
 kprint_char(char ch) {
-    uint32_t *pgc = (uint32_t *)GLOBAL_CURSOR;
+    uint16_t pos = (uint16_t)*g_cursor;
     uint16_t *pv = (uint16_t *)VIDEO_MEM;
 
-    pv += (*pgc * 2);
-    tmode_char_t tch;
-    tch.acode = (uint8_t)ch;
-    tch.atti = 0xf;
+    // text mode
+    uint16_t tch;
+    tch |= 0xf00;
+
+    // special: `\b` `\t` `\n`
+    if (ch == '\b' && (pos % VGA_WIDTH > 0)) {
+        pos--;
+
+        // new v.m. addr
+        pv += pos * 2;
+        tch |= ' ';
+        *pv = tch;
+    } else if (ch == '\t') {
+        int row = pos / VGA_WIDTH,
+            col = pos % VGA_WIDTH;
+
+        // calc mod 4
+    }
+
+    // judge whether is beyond
+    if (col >= VGA_WIDTH) {
+        row++;
+        col = 0;
+    }
+
+
+    set_cursor(pos / VGA_WIDTH, pos % VGA_WIDTH);
 }
 
 void
 kprint_str(const char *str) {
-    uint32_t str_len = strlen(str);
+    size_t str_len = strlen(str);
 
-    for (uint32_t i = 0; i < str_len; ++i)
+    for (size_t i = 0; i < str_len; ++i)
         kprint_char(str[i]);
-    
-    // calc old pos
+}
 
-    // old pos + current len
+void
+scroll_back(void) {
+    // scroll first 23 lines
+    for (size_t i = 1; i < 24; ++i) {
+        for (int j = 0; j < VGA_WIDTH; ++j) {
+            uint32_t from = VIDEO_MEM + (i * VGA_WIDTH + j) * 2;
+            uint32_t to = VIDEO_MEM + ((i - 1) * VGA_WIDTH + j) * 2;
+            uint16_t *pfrom = (uint16_t *)from;
+            uint16_t *pto = (uint16_t *)to;
 
-    // update new pos
+            *pto = *pfrom;
+        }
+    }
+
+    // scroll the last
 }

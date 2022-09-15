@@ -20,5 +20,6 @@ void set_cursor(int, int);
 uint16_t get_cursor(void);
 void kprint_char(char);
 void kprint_str(const char *);
+void scroll_back(void);
 
 #endif

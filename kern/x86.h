@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#define SIZE_TAG 4
+
 // fetch data from the specified port
 static inline uint8_t
 inb(uint16_t port) {

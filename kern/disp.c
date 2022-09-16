@@ -1,6 +1,6 @@
 #include "disp.h"
 
-static uint32_t *g_cursor = (uint32_t)GLOBAL_CURSOR;
+static uint32_t *g_cursor = (uint32_t *)GLOBAL_CURSOR;
 
 void
 init_disp(void) {
@@ -59,15 +59,18 @@ get_cursor(void) {
 
 void
 kprint_char(char ch) {
-    uint16_t pos = (uint16_t)*g_cursor;
     uint16_t *pv = (uint16_t *)VIDEO_MEM;
+    uint16_t pos = (uint16_t)*g_cursor;
+        int row = pos / VGA_WIDTH,
+            col = pos % VGA_WIDTH;
 
     // text mode
-    uint16_t tch;
+    uint16_t tch = 0;
     tch |= 0xf00;
 
     // special: `\b` `\t` `\n`
-    if (ch == '\b' && (pos % VGA_WIDTH > 0)) {
+    if (ch == '\b' && (col > 0)) {
+        col--;
         pos--;
 
         // new v.m. addr
@@ -75,20 +78,29 @@ kprint_char(char ch) {
         tch |= ' ';
         *pv = tch;
     } else if (ch == '\t') {
-        int row = pos / VGA_WIDTH,
-            col = pos % VGA_WIDTH;
-
         // calc mod 4
-    }
+        int rem = (pos + 1) % SIZE_TAG,
+            rest = rem != 0 ? SIZE_TAG - rem + 1
+                : 1;
+        tch |= ' ';
 
-    // judge whether is beyond
-    if (col >= VGA_WIDTH) {
-        row++;
+        // complete spaces
+        for (size_t i = 0; i < rest; ++i)
+            *pv = tch;
+        
+        if (col + rest >= VGA_WIDTH) {
+            row++;
+            col = 0;
+        } else    col += rest;
+    } else if (ch == '\n') {
+        // only affect cursor
+        if (row <= 23)    row++;
+        else    scroll_back();
+
         col = 0;
     }
 
-
-    set_cursor(pos / VGA_WIDTH, pos % VGA_WIDTH);
+    set_cursor(row, col);
 }
 
 void
@@ -101,8 +113,8 @@ kprint_str(const char *str) {
 
 void
 scroll_back(void) {
-    // scroll first 23 lines
-    for (size_t i = 1; i < 24; ++i) {
+    // scroll all lines but first line
+    for (size_t i = 1; i <= 24; ++i) {
         for (int j = 0; j < VGA_WIDTH; ++j) {
             uint32_t from = VIDEO_MEM + (i * VGA_WIDTH + j) * 2;
             uint32_t to = VIDEO_MEM + ((i - 1) * VGA_WIDTH + j) * 2;
@@ -112,6 +124,4 @@ scroll_back(void) {
             *pto = *pfrom;
         }
     }
-
-    // scroll the last
 }

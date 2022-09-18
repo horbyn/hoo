@@ -7,7 +7,8 @@
 
 #define GLOBAL_CURSOR 0xf000    // global cursor
 #define VIDEO_MEM     0xb8000   // video mm. base
-#define VGA_WIDTH     0x80
+#define VGA_WIDTH     80
+#define VGA_HIGH      25
 
 typedef struct tmode_char_t {
     uint8_t acode;

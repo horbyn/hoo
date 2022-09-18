@@ -16,7 +16,7 @@ clear_screen(void) {
     uint8_t *p = (uint8_t *)VIDEO_MEM;
 
     // VGA text mode
-    for (int i = 0; i < 25 * 80; ++i) {
+    for (int i = 0; i < VGA_HIGH * VGA_WIDTH; ++i) {
         *p++ = ' ';
         *p++ = 0x0f;    // bg: black and fg: white
     }
@@ -61,43 +61,64 @@ void
 kprint_char(char ch) {
     uint16_t *pv = (uint16_t *)VIDEO_MEM;
     uint16_t pos = (uint16_t)*g_cursor;
-        int row = pos / VGA_WIDTH,
-            col = pos % VGA_WIDTH;
+    int row = pos / VGA_WIDTH,
+        col = pos % VGA_WIDTH;
 
     // text mode
     uint16_t tch = 0;
     tch |= 0xf00;
 
     // special: `\b` `\t` `\n`
-    if (ch == '\b' && (col > 0)) {
-        col--;
-        pos--;
+    if (ch == '\b') {
+        if (!(row == 0 && col == 0)) {
+            do {
+                pos--;
 
-        // new v.m. addr
-        pv += pos * 2;
-        tch |= ' ';
-        *pv = tch;
+                // new v.m. addr
+                pv = (uint16_t *)VIDEO_MEM;
+                pv += pos;
+                tch |= ' ';
+                *pv = tch;
+
+                if (col - 1 < 0) {
+                    col = VGA_WIDTH - 1;
+                    row--;
+                } else    col -= 1;
+            } while ((*(pv - 1) | 0xff20) == 0xff20);
+        }
     } else if (ch == '\t') {
-        // calc mod 4
-        int rem = (pos + 1) % SIZE_TAG,
-            rest = rem != 0 ? SIZE_TAG - rem + 1
-                : 1;
-        tch |= ' ';
+        if (col != 0) {
+            // calc mod 4
+            int rem = (pos + 1) % SIZE_TAG,
+                rest = rem != 0 ? SIZE_TAG - rem + 1
+                    : 1;
+            tch |= ' ';
 
-        // complete spaces
-        for (size_t i = 0; i < rest; ++i)
-            *pv = tch;
-        
-        if (col + rest >= VGA_WIDTH) {
-            row++;
-            col = 0;
-        } else    col += rest;
+            // complete spaces
+            pv += pos;
+            for (size_t i = 0; i < rest; ++i, ++pv)
+                *pv = tch;
+            
+            if (col + rest >= VGA_WIDTH) {
+                row++;
+                col = 0;
+            } else    col += rest;
+        }
     } else if (ch == '\n') {
         // only affect cursor
         if (row <= 23)    row++;
         else    scroll_back();
 
         col = 0;
+    } else {
+        pv += pos;
+        tch |= ch;
+        *pv = tch;
+
+        if (col + 1 >= VGA_WIDTH) {
+            row++;
+            col = 0;
+        } else    col += 1;
     }
 
     set_cursor(row, col);
@@ -114,7 +135,7 @@ kprint_str(const char *str) {
 void
 scroll_back(void) {
     // scroll all lines but first line
-    for (size_t i = 1; i <= 24; ++i) {
+    for (size_t i = 1; i <= VGA_HIGH - 1; ++i) {
         for (int j = 0; j < VGA_WIDTH; ++j) {
             uint32_t from = VIDEO_MEM + (i * VGA_WIDTH + j) * 2;
             uint32_t to = VIDEO_MEM + ((i - 1) * VGA_WIDTH + j) * 2;
@@ -123,5 +144,14 @@ scroll_back(void) {
 
             *pto = *pfrom;
         }
+
+        // last one fill in space
+        if (i == VGA_HIGH - 1) {
+            uint16_t *pv = (uint16_t *)VIDEO_MEM;
+            pv += (VGA_HIGH - 1) * VGA_WIDTH;
+            for (size_t j = 0; j < VGA_WIDTH; ++j, ++pv)
+                *pv = 0xf20;
+        }
     }
+
 }

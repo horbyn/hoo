@@ -5,6 +5,16 @@
 
 #define SIZE_TAG 4
 
+static inline void
+cli() {
+    __asm__ ("cli\n\t");
+}
+
+static inline void
+sti() {
+    __asm__ ("sti\n\t");
+}
+
 // fetch data from the specified port
 static inline uint8_t
 inb(uint16_t port) {

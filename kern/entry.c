@@ -1,8 +1,9 @@
 #include "disp.h"
+#include "inte.h"
 
 int entry(void) {
     init_disp();
-    kprint_str("a\nb\t\b");
+    init_pic();
 
     while (1);
     // should not return

@@ -1,7 +1,16 @@
 #include "inte.h"
 
+// IDT
+__attribute__((aligned(0x8)))
+static idt_entry_t idt[IDT_ENTRIES_NUM];
+
+// IDTR
+static idtr_t idtr;
+
 void
 init_pic(void) {
+    // IRQ0-15 --> vec.0x20-0x2f
+
     // =========== master ============
     // ICW1
     // 7  6 5 4  3    2   1    0
@@ -46,4 +55,13 @@ init_pic(void) {
     outb(2, PIC_SLA_EVEN + 1);
     // ICW4
     outb(3, PIC_SLA_EVEN + 1);
+}
+
+void
+init_idt(void) {
+    // load idtr
+    idtr.limit = sizeof(idt) - 1;
+    idtr.base = idt;
+    uint32_t idtr_addr = &idtr;
+    __asm__ volatile ("lidt %k0" : : "a"(idtr_addr));
 }

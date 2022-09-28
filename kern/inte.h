@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "x86.h"
+#include "disp.h"
 
 #define PIC_MAS_EVEN    0x20
 #define PIC_SLA_EVEN    0xa0
@@ -18,11 +19,11 @@
 // │Segment Selector  │  Offset 15..0            │
 // └──────────────────┴──────────────────────────┘
 typedef struct {
-	uint16_t    isr_low;
-	uint16_t    selector;
+	uint16_t    isr_low;	// will be loaded to EIP
+	uint16_t    selector;	// will be loaded to CS when interrupt happened
 	uint8_t     reserved;
 	uint8_t     attributes;
-	uint16_t    isr_high;
+	uint16_t    isr_high;	// will be loaded to EIP
 } __attribute__((packed)) idt_entry_t;
 
 // IDTR structure
@@ -33,5 +34,7 @@ typedef struct {
 
 void init_pic(void);
 void init_idt(void);
+void set_idt_entry(int, uint32_t);
+void isr_default(void);
 
 #endif

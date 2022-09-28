@@ -3,7 +3,11 @@
 
 #include "types.h"
 
-#define SIZE_TAG 4
+#define CS_SELECTOR    0x08
+#define DS_SELECTOR    0x10
+#define GATE_INTERRUPT 0x0e
+#define GATE_TRAP      0x0f
+#define SIZE_TAG       4
 
 static inline void
 cli() {

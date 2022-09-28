@@ -59,9 +59,35 @@ init_pic(void) {
 
 void
 init_idt(void) {
+    // set idt
+    //////////////// test /////////////////////
+    for (size_t i = 0; i < IDT_ENTRIES_NUM; ++i)
+        set_idt_entry(i, (uint32_t)isr_default);
+
     // load idtr
     idtr.limit = sizeof(idt) - 1;
-    idtr.base = idt;
-    uint32_t idtr_addr = &idtr;
-    __asm__ volatile ("lidt %k0" : : "a"(idtr_addr));
+    idtr.base = (uint32_t)idt;
+    __asm__ __volatile__ ("lidt %k0\n\t" : : "m"(idtr));
+}
+
+void
+set_idt_entry(int id, uint32_t addr) {
+    // 0x80 is `P/DPL/0 == 1/00/0`
+    uint8_t attr = (0x80 | GATE_INTERRUPT);
+
+    idt[id].isr_low = (uint16_t)addr;
+    idt[id].selector = CS_SELECTOR;
+    idt[id].reserved = 0;
+    idt[id].attributes = attr;
+    idt[id].isr_high = (uint16_t)(addr >> 16);
+}
+
+void
+isr_default(void) {
+    clear_screen();
+    kprint_str(">>>>>>>>>>>> DUMP <<<<<<<<<<<<\n");
+    kprint_str("oh my god, what are you doing?\n");
+
+    // need not to return
+    while (1);
 }

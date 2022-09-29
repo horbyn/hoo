@@ -7,3 +7,12 @@ strlen(const char *str) {
         len++;
     return len;
 }
+
+void
+memset(void *buff, uint8_t fill, size_t bufflen) {
+    if (buff == null || bufflen == 0)    return;
+
+    uint8_t *ptr = (uint8_t *)buff;
+    while (bufflen--)
+        *ptr++ = fill;
+}

@@ -5,4 +5,6 @@
 
 uint32_t strlen(const char *);
 
+void memset(void *, uint8_t, size_t);
+
 #endif

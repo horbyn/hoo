@@ -133,6 +133,41 @@ kprint_str(const char *str) {
 }
 
 void
+kprint_int(int dig) {
+    char arr_dig[32];
+    memset(arr_dig, 0, sizeof(arr_dig));
+
+    int i = 0;
+    while (dig) {
+        int rem = dig % 10;
+        arr_dig[i] = ('0' + rem);
+        dig /= 10;
+    }
+
+    while (i)
+        kprint_char(arr_dig[i--]);
+}
+
+void
+kprint_hex(int dig) {
+    char arr_dig[32];
+    memset(arr_dig, 0, sizeof(arr_dig));
+
+    int i = 0;
+    while (dig) {
+        int rem = dig % 16;
+        if (rem <= 9)
+            arr_dig[i] = (char)('0' + rem);
+        else
+            arr_dig[i] = (char)(87 + rem);
+        dig /= 16;
+    }
+
+    while (i)
+        kprint_char(arr_dig[i--]);
+}
+
+void
 scroll_back(void) {
     // scroll all lines but first line
     for (size_t i = 1; i <= VGA_HIGH - 1; ++i) {

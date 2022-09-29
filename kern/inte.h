@@ -35,6 +35,6 @@ typedef struct {
 void init_pic(void);
 void init_idt(void);
 void set_idt_entry(int, uint32_t);
-void isr_default(void);
+void isr_entry(void);
 
 #endif

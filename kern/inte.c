@@ -62,7 +62,7 @@ init_idt(void) {
     // set idt
     //////////////// test /////////////////////
     for (size_t i = 0; i < IDT_ENTRIES_NUM; ++i)
-        set_idt_entry(i, (uint32_t)isr_default);
+        set_idt_entry(i, (uint32_t)isr_entry);
 
     // load idtr
     idtr.limit = sizeof(idt) - 1;
@@ -83,7 +83,7 @@ set_idt_entry(int id, uint32_t addr) {
 }
 
 void
-isr_default(void) {
+isr_entry(void) {
     clear_screen();
     kprint_str(">>>>>>>>>>>> DUMP <<<<<<<<<<<<\n");
     kprint_str("oh my god, what are you doing?\n");

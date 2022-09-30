@@ -3,11 +3,8 @@
 
 int entry(void) {
     init_disp();
-    //init_pic();
-    kprint_int(582107);
-    kprint_char('\n');
-    kprint_hex(85719);
-    //init_idt();
+    init_pic();
+    init_idt();
 
     //////////// test idt //////////////
     //int a = 3, b = 0;

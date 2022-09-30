@@ -5,7 +5,7 @@
     .globl _start
     .code16
 
-	.set SEC_NR,       4        # 896 # the amount of sector to be loaded (≈448KB)
+	.set SEC_NR,       6        # 896 # the amount of sector to be loaded (≈448KB)
 	.set SEC_144M,     18       # the specification for sector of 1.44M floppy
 	.set TRK_144M,     80       # the specification for track of 1.44M floppy
 	.set HEAD_144M,    2        # the specification for head of 1.44M floppy

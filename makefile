@@ -40,7 +40,7 @@ image:
 fd1_44M.img: bootsect kernel.elf
 	dd if=bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
-	dd if=kernel of=fd1_44M.img bs=512 count=3 seek=1 conv=notrunc
+	dd if=kernel of=fd1_44M.img bs=512 count=6 seek=1 conv=notrunc
 	objdump -D -m i386 kernel.elf > kernel.elf.d
 
 # --oformat: 输出格式为纯二进制

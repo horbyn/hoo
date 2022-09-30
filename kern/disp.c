@@ -142,10 +142,11 @@ kprint_int(int dig) {
         int rem = dig % 10;
         arr_dig[i] = ('0' + rem);
         dig /= 10;
+        ++i;
     }
 
     while (i)
-        kprint_char(arr_dig[i--]);
+        kprint_char(arr_dig[--i]);
 }
 
 void
@@ -161,10 +162,11 @@ kprint_hex(int dig) {
         else
             arr_dig[i] = (char)(87 + rem);
         dig /= 16;
+        ++i;
     }
 
     while (i)
-        kprint_char(arr_dig[i--]);
+        kprint_char(arr_dig[--i]);
 }
 
 void

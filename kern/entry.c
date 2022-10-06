@@ -1,10 +1,11 @@
 #include "disp.h"
 #include "inte.h"
 
-int entry(void) {
+int
+entry(void) {
     init_disp();
     init_pic();
-    init_idt();
+    init_interrupt();
 
     //////////// test idt //////////////
     //int a = 3, b = 0;

@@ -5,7 +5,7 @@
     .globl _start
     .code16
 
-	.set SEC_NR,       6        # 896 # the amount of sector to be loaded (≈448KB)
+	.set SEC_NR,       896      # the amount of sector to be loaded (≈448KB)
 	.set SEC_144M,     18       # the specification for sector of 1.44M floppy
 	.set TRK_144M,     80       # the specification for track of 1.44M floppy
 	.set HEAD_144M,    2        # the specification for head of 1.44M floppy
@@ -92,6 +92,13 @@ after_reset:
 	jmp  load_sect_ok # othervise completed (lba_base >= $SEC_NR)
 3:
 	addw $0x200,          %bx
+	cmpw $0,              %bx
+	jnz  4f
+	movw %es,             %bx
+	addw $0x1000,         %bx
+	movw %bx,             %es
+	xorw %bx,             %bx
+4:
 	addw $0x1,            lba_base
 	jmp  load_sect
 

@@ -7,7 +7,13 @@
 
 #define PIC_MAS_EVEN    0x20
 #define PIC_SLA_EVEN    0xa0
+#define IDT_INTEL_NUM   32
 #define IDT_ENTRIES_NUM 256
+
+typedef void (*isr_t)(void);
+
+extern uint32_t isr_part1[IDT_INTEL_NUM];
+extern isr_t isr[IDT_ENTRIES_NUM];
 
 // IDT entries
 // 63           48 47 46 45 44 43     40 39    32
@@ -33,8 +39,21 @@ typedef struct {
 } __attribute__((packed)) idtr_t;
 
 void init_pic(void);
-void init_idt(void);
+void init_interrupt(void);
 void set_idt_entry(int, uint32_t);
-void isr_entry(void);
+void set_isr_entry(int, uint32_t);
+
+// ====================================
+// ============== isr =================
+// ====================================
+
+void info(uint32_t, uint32_t, uint32_t,
+uint32_t, uint32_t, uint32_t, uint32_t,
+uint32_t, uint32_t, uint32_t, uint32_t,
+uint32_t, uint32_t, uint32_t, uint32_t,
+uint32_t, uint32_t, uint32_t, uint32_t,
+uint32_t);
+void isr_default(void);
+void divide_error(void);		// #0
 
 #endif

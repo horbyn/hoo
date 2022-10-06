@@ -1,11 +1,15 @@
 #include "inte.h"
 
-// IDT
+// IDTR
+static idtr_t idtr;
+
+// IDT[]
 __attribute__((aligned(0x8)))
 static idt_entry_t idt[IDT_ENTRIES_NUM];
 
-// IDTR
-static idtr_t idtr;
+// ISR[]
+__attribute__((aligned(0x4)))
+isr_t isr[IDT_ENTRIES_NUM];
 
 void
 init_pic(void) {
@@ -58,11 +62,19 @@ init_pic(void) {
 }
 
 void
-init_idt(void) {
-    // set idt
-    //////////////// test /////////////////////
-    for (size_t i = 0; i < IDT_ENTRIES_NUM; ++i)
-        set_idt_entry(i, (uint32_t)isr_entry);
+init_interrupt(void) {
+    // set isr[0..31]
+    set_isr_entry(0, (uint32_t)divide_error);
+
+    // set rest isr[]
+    for (size_t i = IDT_INTEL_NUM; i < IDT_ENTRIES_NUM; ++i)
+        set_isr_entry(i, (uint32_t)isr_default);
+
+    // set idt[]
+    for (size_t i = 0; i < IDT_INTEL_NUM; ++i)
+        set_idt_entry(i, (uint32_t)isr_part1[i]);
+    for (size_t i = IDT_INTEL_NUM; i < IDT_ENTRIES_NUM; ++i)
+        set_idt_entry(i, (uint32_t)0);
 
     // load idtr
     idtr.limit = sizeof(idt) - 1;
@@ -83,11 +95,6 @@ set_idt_entry(int id, uint32_t addr) {
 }
 
 void
-isr_entry(void) {
-    clear_screen();
-    kprint_str(">>>>>>>>>>>> DUMP <<<<<<<<<<<<\n");
-    kprint_str("oh my god, what are you doing?\n");
-
-    // need not to return
-    while (1);
+set_isr_entry(int id, uint32_t addr) {
+    isr[id] = (isr_t)addr;
 }

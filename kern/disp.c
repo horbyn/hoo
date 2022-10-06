@@ -134,6 +134,11 @@ kprint_str(const char *str) {
 
 void
 kprint_int(int dig) {
+    if (dig == 0) {
+        kprint_char('0');
+        return;
+    }
+
     char arr_dig[32];
     memset(arr_dig, 0, sizeof(arr_dig));
 
@@ -151,6 +156,11 @@ kprint_int(int dig) {
 
 void
 kprint_hex(int dig) {
+    if (dig == 0) {
+        kprint_char('0');
+        return;
+    }
+
     char arr_dig[32];
     memset(arr_dig, 0, sizeof(arr_dig));
 
@@ -165,6 +175,7 @@ kprint_hex(int dig) {
         ++i;
     }
 
+    kprint_str("0x");
     while (i)
         kprint_char(arr_dig[--i]);
 }

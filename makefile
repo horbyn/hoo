@@ -40,7 +40,7 @@ image:
 fd1_44M.img: bootsect kernel.elf
 	dd if=bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
-	dd if=kernel of=fd1_44M.img bs=512 count=6 seek=1 conv=notrunc
+	dd if=kernel of=fd1_44M.img bs=512 count=896 seek=1 conv=notrunc
 	objdump -D -m i386 kernel.elf > kernel.elf.d
 
 # --oformat: 输出格式为纯二进制
@@ -54,7 +54,7 @@ bootsect: ./boot/bootsect.o
 ./boot/bootsect.o: ./boot/bootsect.s
 	$(AS) --32 $< -o $@
 
-kernel.elf: $(OBJC)
+kernel.elf: $(OBJS) $(OBJC)
 	$(LD) $(LDFLAGS) -T kernel.ld $^ -o $@
 
 # OBJS 集合中的所有 .o 都需要 .s(.c) 作前提

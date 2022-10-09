@@ -68,3 +68,10 @@ divide_error(void) {
     __asm__ volatile ("call info\n\t"::);
     __asm__ volatile ("hlt\n\t"::);
 }
+
+void
+timer(void) {
+    static int ticker = 0;
+    set_cursor(0, 0);
+    kprint_int(ticker++);
+}

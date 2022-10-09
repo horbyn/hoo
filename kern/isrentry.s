@@ -47,6 +47,7 @@ ISRNOERR 28
 ISRNOERR 29
 ISRNOERR 30
 ISRNOERR 31
+ISRNOERR 32
 
 isr_part1:
     .long isr_part1_0,  isr_part1_1,  isr_part1_2
@@ -60,6 +61,7 @@ isr_part1:
     .long isr_part1_24, isr_part1_25, isr_part1_26
     .long isr_part1_27, isr_part1_28, isr_part1_29
     .long isr_part1_30, isr_part1_31
+    .long isr_part1_32  # timer
 
 isr_part2:
     pushl %ds

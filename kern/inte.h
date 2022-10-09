@@ -7,7 +7,7 @@
 
 #define PIC_MAS_EVEN    0x20
 #define PIC_SLA_EVEN    0xa0
-#define IDT_INTEL_NUM   32
+#define IDT_INTEL_NUM   33
 #define IDT_ENTRIES_NUM 256
 
 typedef void (*isr_t)(void);
@@ -55,5 +55,6 @@ uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t);
 void isr_default(void);
 void divide_error(void);		// #0
+void timer(void);				// #32
 
 #endif

@@ -11,6 +11,7 @@ entry(void) {
     //int a = 3, b = 0;
     //int c = a / b;
 
+    __asm__ volatile ("sti");
     while (1);
     // should not return
     return 0;

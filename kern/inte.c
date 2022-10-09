@@ -59,12 +59,17 @@ init_pic(void) {
     outb(2, PIC_SLA_EVEN + 1);
     // ICW4
     outb(3, PIC_SLA_EVEN + 1);
+
+    // ====== test timer =============
+    outb(0xfe, PIC_MAS_EVEN + 1);
+    outb(0xff, PIC_SLA_EVEN + 1);
 }
 
 void
 init_interrupt(void) {
-    // set isr[0..31]
+    // set isr[0..IDT_INTEL_NUM]
     set_isr_entry(0, (uint32_t)divide_error);
+    set_isr_entry(32, (uint32_t)timer);
 
     // set rest isr[]
     for (size_t i = IDT_INTEL_NUM; i < IDT_ENTRIES_NUM; ++i)

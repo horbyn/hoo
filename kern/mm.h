@@ -5,8 +5,8 @@
 #include "disp.h"
 
 // MUST be equal of `boot/bootsect.s`
-#define ADDR_ARDS_NUM   0xf000
-#define ADDR_ARDS_BASE  0xf004
+#define ADDR_ARDS_NUM   0xf004
+#define ADDR_ARDS_BASE  0xf008
 
 typedef struct {
     uint32_t base_low;

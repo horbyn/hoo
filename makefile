@@ -68,4 +68,5 @@ $(OBJC): %.o: %.c
 
 # -rm: 有些文件可能不存在，但不用管（但还是会报错的）
 clean:
-	-rm -r $(OBJS) $(OBJC) ./boot/bootsect.o bootsect fd1_44M.img
+	-rm -r $(OBJS) $(OBJC) ./boot/bootsect.o bootsect \
+	./kernel ./kernel.elf ./kernel.elf.d ./kernel.map fd1_44M.img

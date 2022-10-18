@@ -73,7 +73,6 @@ isr_part2:
 
     movl 52(%esp), %eax
     call *isr(, %eax, 4)   # addr = $isr + %eax * $4
-    addl $4, %esp
 
     popal
     addl $4, %esp           # jump %ss

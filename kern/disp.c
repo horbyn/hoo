@@ -155,7 +155,7 @@ kprint_int(int dig) {
 }
 
 void
-kprint_hex(int dig) {
+kprint_hex(uint32_t dig) {
     if (dig == 0) {
         kprint_char('0');
         return;

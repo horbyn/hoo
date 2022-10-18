@@ -1,5 +1,6 @@
 #include "disp.h"
 #include "inte.h"
+#include "mm.h"
 
 int
 entry(void) {
@@ -10,9 +11,10 @@ entry(void) {
     //////////// test idt //////////////
     //int a = 3, b = 0;
     //int c = a / b;
+    get_phymm();
 
-    __asm__ volatile ("sti");
-    while (1);
+    // __asm__ volatile ("sti");    // open timer
+    __asm__ ("hlt");
     // should not return
     return 0;
 }

@@ -22,7 +22,7 @@ uint16_t get_cursor(void);
 void kprint_char(char);
 void kprint_str(const char *);
 void kprint_int(int);
-void kprint_hex(int);
+void kprint_hex(uint32_t);
 void scroll_back(void);
 
 #endif

@@ -19,7 +19,7 @@ entry(void) {
     kprint_hex((uint32_t)__kern_end);
     kprint_str("\n\n");
 
-    get_phymm();
+    init_phymm();
 
     // __asm__ volatile ("sti");    // open timer
     __asm__ ("hlt");

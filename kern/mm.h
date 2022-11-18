@@ -7,6 +7,11 @@
 // MUST be equal of `boot/bootsect.s`
 #define ADDR_ARDS_NUM   0xf004
 #define ADDR_ARDS_BASE  0xf008
+#define PGSIZE          4096
+#define PGDOWN(x, align) \
+    ((x) & ~(align - 1))
+#define PGUP(x, align) \
+    (PGDOWN((x + align - 1), align))
 
 typedef struct {
     uint32_t base_low;
@@ -21,6 +26,12 @@ typedef enum {
     ards_type_arch      // arch reserves
 } ards_type_t;
 
-void get_phymm(void);
+typedef struct link_phy {
+    uint32_t addr;
+    struct link_phy *next;
+} link_phy_t;
+
+void show_phymm(void);
+void init_phymm(void);
 
 #endif

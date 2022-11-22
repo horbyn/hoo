@@ -27,7 +27,6 @@ typedef enum {
 } ards_type_t;
 
 typedef struct link_phy {
-    uint32_t addr;
     struct link_phy *next;
 } link_phy_t;
 

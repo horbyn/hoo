@@ -28,7 +28,7 @@ LDFLAGS := -m elf_i386 -Map kernel.map
 
 # 第一条命令请保持依赖为 img，这样默认 make 就能执行
 nop: clean image $(OBJS) $(OBJC) fd1_44M.img
-	/usr/bin/bochs
+	DISPLAY=:0 /usr/bin/bochs
 
 # -f 文件存在就不生成
 #     详见 man test

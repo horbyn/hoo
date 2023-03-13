@@ -4,7 +4,7 @@ romimage:    file=$BXSHARE/BIOS-bochs-latest
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
 boot:        floppy
-floppya:     image="fd1_44M.img", status=inserted
+floppya:     1_44=fd1_44M.img, status=inserted
 
 log:         bochs.out
 

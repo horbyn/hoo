@@ -10,6 +10,14 @@
 #define VGA_WIDTH     80
 #define VGA_HIGH      25
 
+typedef char *va_list
+#define va_start(a,fst) \
+    (a = (((va_list)&fst) + 1)) // set `a` to the address right after of `fst`
+#define va_arg(a,type)  \
+    (((type *)a)++)             // move `a` to next pos
+#define va_end(a)       \
+    (a = (va_list)0)            // set `a` to NULL
+
 typedef struct tmode_char_t {
     uint8_t acode;
     uint8_t atti;
@@ -23,6 +31,7 @@ void kprint_char(char);
 void kprint_str(const char *);
 void kprint_int(int);
 void kprint_hex(uint32_t);
+void kprintf(const char *, ...);
 void scroll_back(void);
 
 #endif

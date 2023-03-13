@@ -30,7 +30,15 @@ init_phymm(void) {
     ards_t *ards = (ards_t *)ADDR_ARDS_BASE;
 
     size_t num = *ards_num;
+#ifdef DEBUG
+    kprint_str("ARDS amount is: ");
+    kprint_int(num);
+    kprint_char('\n');
+#endif
     for (size_t i = 0; i < num; ++i) {
+#ifdef DEBUG
+    kprint_int(i);
+#endif
         if ((ards + i)->type == ards_type_os) {
             uint32_t base = (ards + i)->base_low;
             uint32_t end = base + (ards + i)->length_low;

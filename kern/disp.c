@@ -181,6 +181,11 @@ kprint_hex(uint32_t dig) {
 }
 
 void
+kprintf(const char *format, ...) {
+    
+}
+
+void
 scroll_back(void) {
     // scroll all lines but first line
     for (size_t i = 1; i <= VGA_HIGH - 1; ++i) {

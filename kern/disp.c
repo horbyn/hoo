@@ -182,7 +182,24 @@ kprint_hex(uint32_t dig) {
 
 void
 kprintf(const char *format, ...) {
-    
+    va_list va;
+    va_start(va, format);
+
+    // %d %x %s %f %c
+    const char *stash = format;
+    while (*format) {
+        if (*format != '%') {
+            kprint_char(*format);
+            continue;
+        }
+
+        // ignore if the last is '%'
+        if (*(++format) == null)    return;
+        switch(*(++format)) {
+        case 'd': va_arg(va, int); kprint_int(*va); break;
+        default: break;
+        }
+    }
 }
 
 void

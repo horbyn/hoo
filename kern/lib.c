@@ -16,3 +16,24 @@ memset(void *buff, uint8_t fill, size_t bufflen) {
     while (bufflen--)
         *ptr++ = fill;
 }
+
+/**
+ * @brief copy memory
+ * 
+ * @param dst destination
+ * @param src source
+ * @param size size
+ * @retval -1 error
+ * @retval 0 success
+ */
+int
+memmove(void *dst, const void *src, size_t size) {
+    if (dst == null)    return -1;
+    if (src == null || src == dst)    return 0;
+
+    dst += size - 1;
+    src += size - 1;
+    while (size--)    *dst-- = *src--;
+
+    return 0;
+}

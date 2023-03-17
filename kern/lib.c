@@ -31,9 +31,9 @@ memmove(void *dst, const void *src, size_t size) {
     if (dst == null)    return -1;
     if (src == null || src == dst)    return 0;
 
-    dst += size - 1;
-    src += size - 1;
-    while (size--)    *dst-- = *src--;
+    uint8_t *pdst = (uint8_t *)dst + size - 1;
+    const uint8_t *psrc = (uint8_t *)src + size - 1;
+    while (size--)    *pdst-- = *psrc--;
 
     return 0;
 }

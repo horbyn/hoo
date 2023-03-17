@@ -186,7 +186,6 @@ kprintf(const char *format, ...) {
     va_start(va, format);
 
     // %d %x %s %f %c
-    const char *stash = format;
     while (*format) {
         if (*format != '%') {
             kprint_char(*format);

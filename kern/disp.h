@@ -12,11 +12,11 @@
 
 typedef char *va_list;
 #define va_start(a,fst) \
-    (a = (((va_list)&fst) + sizeof(fst))) // set `a` to the address right after of `fst`
+    ((a) = (((va_list)&(fst)) + sizeof(fst))) // set `a` to the address right after of `fst`
 #define va_arg(a,type)  \
-    (((type *)a)++)             // move `a` to next pos
+    ((a) = (a) + sizeof(type))             // move `a` to next pos
 #define va_end(a)       \
-    (a = (va_list)0)            // set `a` to NULL
+    ((a) = (va_list)0)            // set `a` to NULL
 
 typedef struct tmode_char_t {
     uint8_t acode;

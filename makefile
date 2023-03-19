@@ -3,10 +3,11 @@
 # OBJS: 将 SSRC 和 CSRC 两个集合换成 .o，然后只筛掉 bootsect.o
 #       详见 https://seisman.github.io/how-to-write-makefile/functions.html
 #       以及 https://stackoverflow.com/questions/33740270/makefile-patsubst-multiple-expressions
-SSRC := $(shell find . -name "*.s")
-CSRC := $(shell find . -name "*.c")
-OBJS := $(filter-out ./boot/bootsect.o, $(SSRC:.s=.o))
-OBJC := $(CSRC:.c=.o)
+SSRC  := $(shell find . -name "*.s")
+CSRC  := $(shell find . -name "*.c")
+OBJS  := $(filter-out ./boot/bootsect.o, $(SSRC:.s=.o))
+OBJC  := $(CSRC:.c=.o)
+OBJCD := $(CSRC:.c=.o) # debug
 
 AS := as
 LD := ld
@@ -28,6 +29,9 @@ LDFLAGS := -m elf_i386 -Map kernel.map
 
 # 第一条命令请保持依赖为 img，这样默认 make 就能执行
 nop: clean image $(OBJS) $(OBJC) fd1_44M.img
+	DISPLAY=:0 /usr/bin/bochs
+
+debug: clean image $(OBJS) $(OBJCD) fd1_44M.img
 	DISPLAY=:0 /usr/bin/bochs
 
 # -f 文件存在就不生成
@@ -65,6 +69,9 @@ $(OBJS): %.o: %.s
 
 $(OBJC): %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
+
+$(OBJCD): %.o: %.c
+	$(CC) $(CFLAGS) -g -DDEBUG $< -o $@
 
 # -rm: 有些文件可能不存在，但不用管（但还是会报错的）
 clean:

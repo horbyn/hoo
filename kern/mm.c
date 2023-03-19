@@ -1,70 +1,44 @@
 #include "mm.h"
 
-static link_phy_t klink_phymm;
+static prange_t kphymm;
+//static ppg_t *phymm_available, *phymm_used; // maybe the later is unnecessary?
 
 void
-show_phymm(void) {
-    uint32_t *ards_num = (uint32_t *)ADDR_ARDS_NUM;
-    ards_t *ards = (ards_t *)ADDR_ARDS_BASE;
-
-    size_t num = *ards_num;
-    kprint_str("ards total: ");
-    kprint_int(num);
-    kprint_str("\n\n");
-
-    for (size_t i = 0; i < num; ++i) {
-        kprint_str("====================\nbase: 0x");
-        kprint_hex((ards + i)->base_low);
-        kprint_str("\tlength: 0x");
-        kprint_hex((ards + i)->length_low);
-        kprint_str("\ttype: ");
-        kprint_hex((ards + i)->type);
-        kprint_str("\n\n");
-    }
+init_phymm_range(void) {
+    kphymm.base = kphymm.end
+        = (uint8_t *)MM_BASE;
+    kphymm.pg_amount = 0;
+    kphymm.ppg_amount = 0;
 }
 
 void
 init_phymm(void) {
-    klink_phymm.next = null;
+    // initialize the management
+    init_phymm_range();
+
+
     uint32_t *ards_num = (uint32_t *)ADDR_ARDS_NUM;
     ards_t *ards = (ards_t *)ADDR_ARDS_BASE;
-
     size_t num = *ards_num;
 #ifdef DEBUG
-    kprint_str("ARDS amount is: ");
-    kprint_int(num);
-    kprint_char('\n');
+    kprintf("ARDS amount is: %d\n", num);
 #endif
+
+
     for (size_t i = 0; i < num; ++i) {
 #ifdef DEBUG
     kprint_int(i);
 #endif
-        if ((ards + i)->type == ards_type_os) {
-            uint32_t base = (ards + i)->base_low;
-            uint32_t end = base + (ards + i)->length_low;
-
-            base = PGUP(base, PGSIZE);
-            end = PGDOWN(end, PGSIZE);
-            for (; base < end; base += PGSIZE) {
-                link_phy_t *p;
-                p = (link_phy_t *)base;
-                p->next = klink_phymm.next;
-                klink_phymm.next = p;
-            }
+        if (((ards + i)->type == ards_type_os)
+        && ((ards + i)->base_low >= MM_BASE)) {
+            /*TODO
+            uint32_t length = (ards + i)->length_low;
+            kphymm.end += length / PGSIZE;
+            kphymm.pg_amount = length / PGSIZE;*/
         }
     }
 
     // print
-    link_phy_t *ptr = klink_phymm.next;
-    kprint_hex((uint32_t)ptr);
-    kprint_char('\n');
-    kprint_hex((uint32_t)ptr->next);
-    /*int i = 1;
-    while (ptr != null) {
-        kprint_int(i++);
-        kprint_str(": ");
-        kprint_hex((uint32_t)ptr->next);
-        kprint_char('\n');
-        ptr = ptr->next;
-    }*/
+    kprintf("available mm from %x to %x\n",
+        (uint32_t)kphymm.base, (uint32_t)kphymm.end);
 }

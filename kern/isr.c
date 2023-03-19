@@ -9,52 +9,19 @@ uint32_t ds,  uint32_t idx, uint32_t ecode, uint32_t eip,
 uint32_t cs,  uint32_t eflags) {
     set_cursor(0, 0);
 
-    kprint_str(">>>>> The interruption vector ");
-    kprint_int(idx);
-    kprint_str(" <<<<<\n\n");
-
-    kprint_str("\nEFLAGS = 0x");
-    kprint_hex(eflags);
-    kprint_str("\nCS = ");
-    kprint_hex((cs & 0xffff));
-    kprint_str("\nEIP = ");
-    kprint_hex(eip);
-    kprint_str("\nECODE = ");
-    kprint_hex(ecode);
-
-    kprint_str("\nDS = ");
-    kprint_hex((ds & 0xffff));
-    kprint_str("\nES = ");
-    kprint_hex((es & 0xffff));
-    kprint_str("\nFS = ");
-    kprint_hex((fs & 0xffff));
-    kprint_str("\nGS = ");
-    kprint_hex((gs & 0xffff));
-    kprint_str("\nSS = ");
-    kprint_hex((ss & 0xffff));
-
-    kprint_str("\nEAX = ");
-    kprint_hex(eax);
-    kprint_str("\nECX = ");
-    kprint_hex(ecx);
-    kprint_str("\nEDX = ");
-    kprint_hex(edx);
-    kprint_str("\nEBX = ");
-    kprint_hex(ebx);
-    kprint_str("\nESP = ");
-    kprint_hex(esp);
-    kprint_str("\nEBP = ");
-    kprint_hex(ebp);
-    kprint_str("\nESI = ");
-    kprint_hex(esi);
-    kprint_str("\nEDI = ");
-    kprint_hex(edi);
-
-    kprint_str("\nISR2PART2 = ");
-    kprint_hex(isr_to_part2);
-    kprint_str("\nISR_EBP = ");
-    kprint_hex(isr_ebp);
-    kprint_char('\n');
+    kprintf(">>>>> The interruption vector "
+        "%d  <<<<<\n\n", idx);
+    kprintf("\nEFLAGS = %x\nCS = %x\nEIP = %x"
+        "\nECODE = %x\n", eflags, (cs & 0xffff),
+        eip, ecode);
+    kprintf("DS = %x\nES = %x\nFS = %x\nGS = %x\n"
+        "SS = %x\n", (ds & 0xffff), (es & 0xffff),
+        (fs & 0xffff), (gs & 0xffff), (ss & 0xffff));
+    kprintf("EAX = %x\nECX = %x\nEDX = %x\nEBX = %x\n"
+        "ESP = %x\nEBP = %x\nESI = %x\nEDI = %x\n",
+        eax, ecx, edx, ebx, esp, ebp, esi, edi);
+    kprintf("ISR2PART2 = %x\nISP_EBP = %x\n",
+        isr_to_part2, isr_ebp);
 }
 
 void

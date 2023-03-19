@@ -87,23 +87,20 @@ kprint_char(char ch) {
             } while ((*(pv - 1) | 0xff20) == 0xff20);
         }
     } else if (ch == '\t') {
-        if (col != 0) {
-            // calc mod 4
-            int rem = (pos + 1) % SIZE_TAG,
-                rest = rem != 0 ? SIZE_TAG - rem + 1
-                    : 1;
-            tch |= ' ';
+        // mod 4
+        int spaces = SIZE_TAG - (pos % SIZE_TAG);
+        tch |= ' ';
 
-            // complete spaces
-            pv += pos;
-            for (size_t i = 0; i < rest; ++i, ++pv)
-                *pv = tch;
-            
-            if (col + rest >= VGA_WIDTH) {
-                row++;
-                col = 0;
-            } else    col += rest;
-        }
+        // fill with spaces
+        pv += pos;
+        for (size_t i = 0; i < spaces; ++i, ++pv)
+            *pv = tch;
+        
+        // update col, row
+        if (col + spaces >= VGA_WIDTH) {
+            row++;
+            col = 0;
+        } else    col += spaces;
     } else if (ch == '\n') {
         // only affect cursor
         if (row <= 23)    row++;
@@ -144,8 +141,8 @@ kprint_int(int dig) {
 
     int i = 0;
     while (dig) {
-        int rem = dig % 10;
-        arr_dig[i] = ('0' + rem);
+        int remaider = dig % 10;
+        arr_dig[i] = ('0' + remaider);
         dig /= 10;
         ++i;
     }
@@ -166,11 +163,11 @@ kprint_hex(uint32_t dig) {
 
     int i = 0;
     while (dig) {
-        int rem = dig % 16;
-        if (rem <= 9)
-            arr_dig[i] = (char)('0' + rem);
+        int remaider = dig % 16;
+        if (remaider <= 9)
+            arr_dig[i] = (char)('0' + remaider);
         else
-            arr_dig[i] = (char)(87 + rem);
+            arr_dig[i] = (char)(87 + remaider);
         dig /= 16;
         ++i;
     }
@@ -185,20 +182,36 @@ kprintf(const char *format, ...) {
     va_list va;
     va_start(va, format);
 
-    // %d %x %s %f %c
-    while (*format) {
+    for (; *format; ++format) {
         if (*format != '%') {
             kprint_char(*format);
             continue;
         }
 
         // ignore if the last is '%'
-        if (*(++format) == null)    return;
-        switch(*(++format)) {
-        case 'd': va_arg(va, int); kprint_int(*va); break;
-        default: break;
+        if (*(format + 1) == null)    return;
+        else    ++format;
+
+        // %% %c %s %d %x(%X)
+        switch(*format) {
+        case '%': kprint_char('%'); break;
+        case 'c': va_arg(va, char); kprint_char(*((char *)va)); break;
+        case 's':
+            va_arg(va, const char *);
+            uint32_t addr = *((uint32_t *)va);   // get address
+            kprint_str((const char *)addr); break;
+        case 'd': va_arg(va, int); kprint_int(*((int *)va)); break;
+        case 'X':
+        case 'x': va_arg(va, int); kprint_hex(*((uint32_t *)va)); break;
+        default:
+            va_arg(va, POINTER_SIZE);
+            kprint_char('%');
+            kprint_char(*format);
+            break;
         }
     }
+
+    va_end(va);
 }
 
 void

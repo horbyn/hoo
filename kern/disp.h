@@ -11,12 +11,18 @@
 #define VGA_HIGH      25
 
 typedef char *va_list;
+#define POINTER_SIZE (sizeof(const char *))
+#define TYPE_TO_POINTER_SIZE(type) \
+    ((sizeof(type) - 1) / POINTER_SIZE + 1)
+// set `a` to the address of `fst`
 #define va_start(a,fst) \
-    ((a) = (((va_list)&(fst)) + sizeof(fst))) // set `a` to the address right after of `fst`
+    ((a) = (((va_list)&(fst))))
+// move `a` to next pointer
 #define va_arg(a,type)  \
-    ((a) = (a) + sizeof(type))             // move `a` to next pos
+    ((a) = (a) + (sizeof(va_list) * TYPE_TO_POINTER_SIZE(type)))
+// set `a` to NULL (seems not necessary?)
 #define va_end(a)       \
-    ((a) = (va_list)0)            // set `a` to NULL
+    ((a) = (va_list)0)
 
 typedef struct tmode_char_t {
     uint8_t acode;

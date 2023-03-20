@@ -34,6 +34,9 @@ debug: CFLAGS += -g -DDEBUG
 debug: clean image $(OBJS) $(OBJC) fd1_44M.img
 	DISPLAY=:0 /usr/bin/bochs
 
+run:
+	DISPLAY=:0 /usr/bin/bochs
+
 # -f 文件存在就不生成
 #     详见 man test
 image:

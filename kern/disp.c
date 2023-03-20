@@ -192,7 +192,7 @@ kprintf(const char *format, ...) {
         if (*(format + 1) == null)    return;
         else    ++format;
 
-        // %% %c %s %d %x(%X)
+        // %% %c %s %d %x(%X) %p
         switch(*format) {
         case '%': kprint_char('%'); break;
         case 'c': va_arg(va, char); kprint_char(*((char *)va)); break;
@@ -201,11 +201,12 @@ kprintf(const char *format, ...) {
             uint32_t addr = *((uint32_t *)va);   // get address
             kprint_str((const char *)addr); break;
         case 'd': va_arg(va, int); kprint_int(*((int *)va)); break;
+        case 'p':
         case 'X':
-        case 'x': va_arg(va, int); kprint_hex(*((uint32_t *)va)); break;
+        case 'x': va_arg(va, uint32_t); kprint_hex(*((uint32_t *)va)); break;
         default:
             // something unsupported displays directly
-            // TODO: %p %f
+            // TODO: %f
             va_arg(va, POINTER_SIZE);
             kprint_char('%');
             kprint_char(*format);

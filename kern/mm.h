@@ -32,11 +32,11 @@ typedef struct phy_page {
     struct phy_page *next;// indicate the next `ppg_t` node
 } ppg_t;
 
-typedef struct phymm_range {
-    uint8_t *base, *end;// indicate where memory begin and end
+typedef struct phy_page_range {
+    uint8_t *ppg_base;  // indicate where `ppg_t` management strcut begins and ends
+    uint8_t *ppg_end;
     size_t pg_amount;   // indicate pages amount
-    size_t ppg_amount;  // indicate the amount of pages management
-} prange_t;
+} ppg_range_t;
 
 void init_phymm_range(void);
 void init_phymm(void);

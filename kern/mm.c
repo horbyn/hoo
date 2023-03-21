@@ -28,7 +28,7 @@ init_phymm(void) {
         if (((ards + i)->type == ards_type_os)
         && ((ards + i)->base_low >= MM_BASE)) {
 #ifdef DEBUG
-    kprintf("ARDS:\n\tbase_low = %x; length_low = %x\n\n\n",
+    kprintf("ARDS:\n\tbase_low = %p; length_low = %p\n\n\n",
         (ards + i)->base_low, (ards + i)->length_low);
 #endif
             uint32_t pages = (ards + i)->length_low / PGSIZE;
@@ -53,12 +53,13 @@ init_phymm(void) {
     ppg_t *cur = (ppg_t *)MM_BASE;
     ppg_t *worker = &phymm_available;
     uint8_t *curpg = (uint8_t *)PGUP((uint32_t)kphymm.ppg_end, PGSIZE);
+    size_t skip = ((uint32_t)curpg - (uint32_t)cur) / PGSIZE;   // we must skip some pages used for management struct
 #ifdef DEBUG
-    kprintf("cur = %p; worker = %p; curpg = %p\n\n\n", cur,
-        worker, curpg);
+    kprintf("cur = %p; worker = %p; curpg = %p; skip = %d\n\n\n", cur,
+        worker, curpg, skip);
 #endif
 
-    for (size_t i = 0; i < kphymm.pg_amount; ++i, curpg += PGSIZE) {
+    for (size_t i = skip; i < kphymm.pg_amount; ++i, curpg += PGSIZE) {
         cur[i].pgaddr = curpg;
         worker->next = cur + i;
         worker = cur + i;
@@ -66,7 +67,7 @@ init_phymm(void) {
 
 #ifdef DEBUG
     worker = &phymm_available;
-    for (size_t i = 0; i < kphymm.pg_amount; ++i, worker = worker->next) {
+    for (size_t i = 0; worker; ++i, worker = worker->next) {
         kprintf("[%d]addr: %p; next: %p", i, worker->pgaddr, worker->next);
         if (i % 2 == 0)    kprintf("\n");
         else    kprintf("\t\t");

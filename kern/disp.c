@@ -103,7 +103,7 @@ kprint_char(char ch) {
         } else    col += spaces;
     } else if (ch == '\n') {
         // only affect cursor
-        if (row <= 23)    row++;
+        if (row <= VGA_HIGH - 2)    row++;
         else    scroll_back();
 
         col = 0;
@@ -113,8 +113,9 @@ kprint_char(char ch) {
         *pv = tch;
 
         if (col + 1 >= VGA_WIDTH) {
-            row++;
             col = 0;
+            if (row <= VGA_HIGH - 2)    row++;
+            else    scroll_back();
         } else    col += 1;
     }
 

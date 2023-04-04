@@ -7,6 +7,9 @@
 // MUST be equal of `boot/bootsect.s`
 #define ADDR_ARDS_NUM   0xf004
 #define ADDR_ARDS_BASE  0xf008
+#define ADDR_SEG_KERN   0x10000
+#define OFFSET_KERN     0xc0000000
+#define VMA_KERN        ((ADDR_SEG_KERN) + (OFFSET_KERN))
 #define MM_BASE         0x100000
 #define PGSIZE          4096
 #define PGDOWN(x, align) \

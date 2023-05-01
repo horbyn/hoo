@@ -1,6 +1,6 @@
 #include "disp.h"
 
-static uint32_t *g_cursor = (uint32_t *)GLOBAL_CURSOR;
+static uint32_t *const g_cursor = (uint32_t *)GLOBAL_CURSOR;
 
 void
 init_disp(void) {

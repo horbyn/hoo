@@ -21,6 +21,7 @@ init_phymm(void) {
         kphymm.ppg_end, kphymm.pg_amount);
 #endif
 
+    // travesal ARDS to find out the available mm.
     uint32_t *ards_num = (uint32_t *)ADDR_ARDS_NUM;
     ards_t *ards = (ards_t *)ADDR_ARDS_BASE;
 
@@ -48,7 +49,7 @@ init_phymm(void) {
 
     // NOTE:
     // from `MM_BASE` to `kphymm.ppg_end` is used for management struct(i.e. `ppg_t`)
-    // frome `kphymm.ppg_end` to maybe 0xffff_ffff is the real page available
+    // from `kphymm.ppg_end` to maybe 0xffff_ffff is the real page available
     // initialize the `ppg_t` object
     ppg_t *cur = (ppg_t *)MM_BASE;
     ppg_t *worker = &phymm_available;
@@ -59,6 +60,7 @@ init_phymm(void) {
         worker, curpg, skip);
 #endif
 
+    // set the linked list for all the physical mm.
     for (size_t i = skip; i < kphymm.pg_amount; ++i, curpg += PGSIZE) {
         cur[i].pgaddr = curpg;
         worker->next = cur + i;

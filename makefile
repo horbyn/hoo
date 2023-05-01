@@ -44,11 +44,13 @@ image:
 		dd if=/dev/zero of=fd1_44M.img bs=1474560 count=1; \
 	fi
 
+# objdump -S: 混合源代码的形式反汇编代码段
+#         -D: 反汇编所有段
 fd1_44M.img: bootsect kernel.elf
 	dd if=bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
 	dd if=kernel of=fd1_44M.img bs=512 count=896 seek=1 conv=notrunc
-	objdump -D -m i386 kernel.elf > kernel.elf.d
+	objdump -SD -m i386 kernel.elf > kernel.elf.d
 
 # --oformat: 输出格式为纯二进制
 # -e: bootsect 入口点为 _start

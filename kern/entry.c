@@ -10,8 +10,8 @@ entry(void) {
     init_pic();
     init_interrupt();
 
-    kprintf("kern base = %x\nkern end = %x\n\n",
-        (uint32_t)__kern_base, (uint32_t)__kern_end);
+    //kprintf("kern base = %x\nkern end = %x\n\n",
+    //    (uint32_t)__kern_base, (uint32_t)__kern_end);
 
     init_phymm();
 

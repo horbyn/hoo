@@ -1,7 +1,17 @@
-fd1_44M.img
+*.img
 
-bochs.out
+*.o
+
+*.d
 
 bootsect
 
-*.o
+kernel
+
+*.out
+
+*.map
+
+*.elf
+
+.vscode/

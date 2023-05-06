@@ -12,6 +12,9 @@
     .include "kern_will_use.inc"
 
 _start:
+    movw $SEG_KSTACK,   %ax
+    movw %ax,           %ss
+    xorw %sp,           %sp
 
     # ####            function 1.           ####
     # #### MBR move to high then exec there ####
@@ -67,15 +70,12 @@ cf0:
 
 
 
-    movw $SEG_KSTACK,   %ax
-    movw %ax,           %ss
-    xorw %sp,           %sp
 
     # ####              function 4.                ####
     # #### kernel loading from disk to mm.(0x1000) ####
     .set SEG_KERN,      0x100
     .set SEC_144M,      18  # the specification for sector of 1.44M floppy
-    .set SEC_CR,        129 # the amount of sector to be loaded (≈448KB)
+    .set SEC_CR,        896 # the amount of sector to be loaded (≈448KB)
     movw %cs,           %ax
     movw %ax,           %ds
     movw $SEG_KERN,     %ax
@@ -132,72 +132,11 @@ load_sect_ok:
 
 
 
-    # ####    function 5.     ####
-    # #### Move kernel to 0x0 ####
-    .set SEC_CR_MAX,    128 # `rep movsd` will affect `si/di`, but they will round back when increases to 0xfffc
-    .set REP_MOVS_CR,   128*512/4
-    # movw $SEC_CR>>7,    %cx # `>>7` here is equal of dividing $SEC_CR_MAX
-    # ax/bl=al..ah; al-->cx, ah-->remainder
-    movw $SEC_CR,       %ax
-    movb $SEC_CR_MAX,   %bl
-    div %bl
-    movb %al,           %cl
-    andw $0xf,          %cx
-    movb %ah,           %cs:remainder
-    addw $1,            %cx
-    push %cx
-
-    movw $SEG_KERN,     %ax
-    movw %ax,           %ds # %ds init to $SEG_KERN
-    xorw %ax,           %ax
-    movw %ax,           %es # %es init to $0
-
-    movl $SEC_CR_MAX<<9,%edx
-    movw %dx,           %ax
-    shrl $0x10,         %edx
-    movw $0x10,         %bx
-    div %bx
-    movw %ax,           %bx # calculate increment which stores into %bx
-
-loop:
-    xorl %esi,          %esi
-    xorl %edi,          %edi
-    movl $REP_MOVS_CR,  %ecx
-    rep movsd
-
-    pop %cx
-    decw %cx
-    cmpw $1,            %cx # check if it is the last
-    jnz not_last
-last:
-    movw %cs:remainder, %dx
-    jmp last_handle
-not_last:
-    movw %bx,           %dx
-
-last_handle:
-    movw %ds,           %ax
-    addw %dx,           %ax
-    movw %ax,           %ds # increase %ds
-    movw %es,           %ax
-    addw %dx,           %ax
-    movw %ax,           %es # increase %es
-
-    push %cx
-    jnz loop
-    pop %cx
-
-
-
-
 died:
     jmp .
 
 lba_base:
     .word 0x1   # loading from no.2 sector (i.e., LBA is no.1)
-
-remainder:
-    .word 0     # store the remainder of `SEC_CR` mod `SEC_CR_MAX`
 
 .org    0x1fe, 0x90
 .word   0xaa55

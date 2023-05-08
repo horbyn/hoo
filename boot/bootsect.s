@@ -132,6 +132,10 @@ load_sect_ok:
 
 
 
+    # #### JUMP INTO KERNEL ####
+    ljmp $SEG_KERN,     $0
+    # ###### BOOT ENDING #######
+
 died:
     jmp .
 

@@ -13,6 +13,8 @@ AS := as
 LD := ld
 CC := g++
 
+INC := kern/
+
 # -c: compile
 # -Wall: display all the warnings
 # -Werror: regard the warnings to errors
@@ -22,7 +24,7 @@ CC := g++
 #       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html#Directory-Options
 # -fno-builtin: dont allow the compiler to optimize our own function
 #       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-CFLAGS := -c -Wall -Werror -m32 -nostdinc -fno-builtin -fno-pie -fno-stack-protector
+CFLAGS := -c -std=c++11 -Wall -Werror -m32 -nostdinc -fno-builtin -fno-pie -fno-stack-protector -I$(INC)
 # -m: specify the output format
 # -Map: output memory map
 LDFLAGS := -m elf_i386 -Map kernel.map

@@ -1,8 +1,9 @@
 #pragma once
-#ifndef __KERN_GDT_HPP__
-#define __KERN_GDT_HPP__
+#ifndef __KERN_DESCRIPTOR_GDT_HPP__
+#define __KERN_DESCRIPTOR_GDT_HPP__
 
 #include "type.hpp"
+#include "AccessBytes.hpp"
 
 namespace hoo {
 

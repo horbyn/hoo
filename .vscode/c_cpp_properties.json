@@ -1,0 +1,13 @@
+{
+    "configurations": [
+      {
+        "name": "Linux",
+        "intelliSenseMode": "gcc-x64",
+        "includePath": ["${workspaceFolder}/**"],
+        "compilerPath": "/usr/bin/g++",
+        "cStandard": "c11",
+        "cppStandard": "c++11"
+      }
+    ],
+    "version": 4
+}

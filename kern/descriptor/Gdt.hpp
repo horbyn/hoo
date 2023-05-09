@@ -4,6 +4,7 @@
 
 #include "type.hpp"
 #include "AccessBytes.hpp"
+#include "Flags.hpp"
 
 namespace hoo {
 
@@ -22,6 +23,7 @@ protected:
      * │P│DPL │S│E│DC│RW│A│
      * └─┴────┴─┴─┴──┴──┴─┘
      */
+
     uint8_t  access_byte_a_   :1;
     uint8_t  access_byte_rw_  :1;
     uint8_t  access_byte_dc_  :1;
@@ -37,6 +39,7 @@ protected:
      * │G│DB│L│Reserved│
      * └─┴──┴─┴────────┘
      */
+
     uint8_t  flags_rsv_       :1;
     uint8_t  flags_l_         :1;
     uint8_t  flags_db_        :1;
@@ -48,11 +51,18 @@ public:
     ~Gdt() = default;
 
     /**
-     * @brief get descriptor
+     * @brief Get the gdt object
+     * 
+     * @param limit the maximun of addressing, which units are either 1B or 4KB
+     * @param base segment base linear address
+     * @param ab the access bytes
+     * @param flags flags
+     * @return Gdt descriptor
      */
-    
+    static Gdt get_gdt(uint32_t limit, uint32_t base, const
+        AcsGdt &ab, const Flags &flags);
 };
 
-}
+} // end namespace end
 
 #endif

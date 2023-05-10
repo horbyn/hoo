@@ -63,6 +63,29 @@ public:
         AcsGdt &ab, const Flags &flags);
 };
 
+/**
+ * @brief definition of GDTR
+ */
+class GdtRegister {
+protected:
+    uint16_t size_;                                         // gdt size
+    Gdt *linear_;                                           // gdt linear base
+
+public:
+    GdtRegister() = default;
+    ~GdtRegister() = default;
+    /**
+     * @brief Construct a new Gdt Register object
+     * 
+     * @param sz gdt size
+     * @param addr gdt linear addr
+     */
+    GdtRegister(uint16_t sz, Gdt *addr)
+        : size_(sz), linear_(addr) {}
+};
+
 } // end namespace end
+
+extern void enable_gdt(hoo::GdtRegister *gdt);
 
 #endif

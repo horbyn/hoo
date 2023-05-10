@@ -73,7 +73,7 @@ kernel.elf: $(OBJS) $(OBJC)
 # --32: generate 32 bit code implied the target is `Intel i386`
 #       DETAILS IN https://sourceware.org/binutils/docs/as/i386_002dOptions.html#i386_002dOptions
 $(OBJS): %.o: %.s
-	$(AS) --32 $< -o $@
+	$(AS) --32 $< -I boot -o $@
 
 $(OBJC): %.o: %.cc
 	$(CC) $(CFLAGS) $< -o $@

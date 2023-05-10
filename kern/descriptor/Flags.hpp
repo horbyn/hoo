@@ -23,32 +23,8 @@ public:
      * @param db protected mode: set if 32 bit pm.; clear if 16 bit
      * @param g granularity: set if 4KB units; clear if 1B
      */
-    Flags(uint8_t rsv, uint8_t l, uint8_t db, uint8_t g);
-
-    /**
-     * @brief Get the rsv field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_rsv() const;
-    /**
-     * @brief Get the long field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_long() const;
-    /**
-     * @brief Get the db field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_db() const;
-    /**
-     * @brief Get the g field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_g() const;
+    Flags(uint8_t rsv, uint8_t l, uint8_t db, uint8_t g)
+        : rsv_(rsv), long_(l), db_(db), g_(g) {}
 };
 
 }

@@ -9,7 +9,7 @@
 namespace hoo {
 
 /**
- * @brief handle something on setting gdt
+ * @brief gdt definition
  */
 class Gdt {
 protected:
@@ -24,13 +24,7 @@ protected:
      * └─┴────┴─┴─┴──┴──┴─┘
      */
 
-    uint8_t  access_byte_a_   :1;
-    uint8_t  access_byte_rw_  :1;
-    uint8_t  access_byte_dc_  :1;
-    uint8_t  access_byte_e_   :1;
-    uint8_t  access_byte_s_   :1;
-    uint8_t  access_byte_dpl_ :2;
-    uint8_t  access_byte_p_   :1;
+    AcsGdt   access_bytes_;
     uint8_t  limit_19_16_     :4;
     /*
      * ┌─┬──┬─┬────────┐
@@ -40,27 +34,29 @@ protected:
      * └─┴──┴─┴────────┘
      */
 
-    uint8_t  flags_rsv_       :1;
-    uint8_t  flags_l_         :1;
-    uint8_t  flags_db_        :1;
-    uint8_t  flags_g_         :1;
+    Flags    flags_;
     uint8_t  base_31_24_;
 
 public:
     Gdt() = default;
     ~Gdt() = default;
-
     /**
-     * @brief Get the gdt object
+     * @brief Construct a new Gdt object
      * 
      * @param limit the maximun of addressing, which units are either 1B or 4KB
      * @param base segment base linear address
-     * @param ab the access bytes
+     * @param ag the access bytes
      * @param flags flags
-     * @return Gdt descriptor
      */
-    static Gdt get_gdt(uint32_t limit, uint32_t base, const
-        AcsGdt &ab, const Flags &flags);
+    Gdt(uint32_t limit, uint32_t base, const AcsGdt &ag,
+        const Flags &flags)
+        : access_bytes_(ag), flags_(flags) {
+        this->limit_15_0_  = (uint16_t)limit;
+        this->limit_19_16_ = (uint16_t)(limit >> 16) & 0xf;
+        this->base_15_0_   = (uint16_t)base;
+        this->base_23_16_  = (uint8_t)(base >> 16) & 0xff;
+        this->base_31_24_  = (uint8_t)(base >> 24) & 0xff;
+    }
 };
 
 /**

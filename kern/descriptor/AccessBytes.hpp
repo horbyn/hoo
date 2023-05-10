@@ -41,31 +41,6 @@ public:
     AccessBytes(uint8_t un, uint8_t sys, uint8_t dpl,
         uint8_t ps)
         : union_(un), sys_(sys), dpl_(dpl), ps_(ps) {}
-
-    /**
-     * @brief Get the sys field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_sys() const;
-    /**
-     * @brief Get the dpl field
-     * 
-     * @return 0, 1, 2 or 3
-     */
-    uint8_t get_dpl() const;
-    /**
-     * @brief Get the ps field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_ps() const;
-
-    ////////////////////////////////////////////////////////
-    /// Now i think SETTER is useless because the access ///
-    /// bytes is only used in descriptor constructing;   ///
-    /// So i will always used it temporary               ///
-    ////////////////////////////////////////////////////////
 };
 
 /**
@@ -88,32 +63,11 @@ public:
      * @param ps present
      */
     AcsGdt(uint8_t acs, uint8_t rw, uint8_t dc, uint8_t exe,
-        uint8_t sys, uint8_t dpl, uint8_t ps);
-
-    /**
-     * @brief Get the acs field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_acs() const;
-    /**
-     * @brief Get the rw field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_rw() const;
-    /**
-     * @brief Get the dc field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_dc() const;
-    /**
-     * @brief Get the exe field
-     * 
-     * @return 0 or 1
-     */
-    uint8_t get_exe() const;
+        uint8_t sys, uint8_t dpl, uint8_t ps)
+        : AccessBytes(0, sys, dpl, ps) {
+            this->union_ =
+                (exe <<= 3) | (dc <<= 2) | (rw <<= 1) | acs;
+        }
 };
 
 }

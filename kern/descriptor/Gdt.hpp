@@ -38,8 +38,10 @@ protected:
     uint8_t  base_31_24_;
 
 public:
-    Gdt() = default;
-    ~Gdt() = default;
+    Gdt(): limit_15_0_(0), base_15_0_(0), base_23_16_(0),
+        access_bytes_({}), limit_19_16_(0), flags_({}),
+        base_31_24_(0) {}
+    ~Gdt() {}
     /**
      * @brief Construct a new Gdt object
      * 
@@ -68,8 +70,8 @@ protected:
     Gdt *linear_;                                           // gdt linear base
 
 public:
-    GdtRegister() = default;
-    ~GdtRegister() = default;
+    GdtRegister(): size_(0), linear_(nullptr) {}
+    ~GdtRegister() {}
     /**
      * @brief Construct a new Gdt Register object
      * 
@@ -80,8 +82,6 @@ public:
         : size_(sz), linear_(addr) {}
 };
 
-} // end namespace end
-
-extern void enable_gdt(hoo::GdtRegister *gdt);
+} // end namespace hoo
 
 #endif

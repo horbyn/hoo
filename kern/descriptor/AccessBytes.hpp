@@ -28,8 +28,8 @@ protected:
     uint8_t ps_    :1;                                      // present: set if in memory
 
 public:
-    AccessBytes() = default;
-    ~AccessBytes() = default;
+    AccessBytes(): union_(0), sys_(0), dpl_(0), ps_(0) {}
+    virtual ~AccessBytes() {}
     /**
      * @brief Constructor
      * 
@@ -49,8 +49,8 @@ public:
 class AcsGdt: public AccessBytes {
 public:
 
-    AcsGdt() = default;
-    ~AcsGdt() = default;
+    AcsGdt() : AccessBytes() {}
+    ~AcsGdt() {}
     /**
      * @brief Construct a new Acs Gdt object
      * 

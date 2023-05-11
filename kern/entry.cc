@@ -1,4 +1,12 @@
+#include "kernel.hpp"
+
 void
 entry(void) {
-    while(1);
+    using namespace hoo;
+
+    Kernel kern;
+    kern.execute();
+
+    // MUST stop here!
+    __asm__ ("hlt");
 }

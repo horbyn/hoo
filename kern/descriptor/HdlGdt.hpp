@@ -18,8 +18,8 @@ protected:
     GdtRegister gdtr_;
 
 public:
-    HdlGdt() = default;
-    ~HdlGdt() = default;
+    HdlGdt() {}
+    ~HdlGdt() {}
     /**
      * @brief Set the gdt object
      * 

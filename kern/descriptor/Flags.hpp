@@ -13,8 +13,8 @@ public:
     uint8_t db_   : 1;                                      // protected mode
     uint8_t g_    : 1;                                      // granularity
 
-    Flags() = default;
-    ~Flags() = default;
+    Flags(): rsv_(0), long_(0), db_(0), g_(0) {}
+    ~Flags() {}
     /**
      * @brief Construct a new Flags object
      * 

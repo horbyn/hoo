@@ -24,10 +24,10 @@ INC := kern/
 #       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html#Directory-Options
 # -fno-builtin: dont allow the compiler to optimize our own function
 #       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-CFLAGS := -c -std=c++11 -Wall -Werror -m32 -nostdinc -fno-builtin -fno-pie -fno-stack-protector -I$(INC)
+CFLAGS := -c -std=c++11 -Wall -Werror -m32 -nostdinc -nostdinc++ -fno-builtin -fno-pie -fno-stack-protector -I$(INC)
 # -m: specify the output format
 # -Map: output memory map
-LDFLAGS := -m elf_i386 -Map kernel.map
+LDFLAGS := -m32 -nostdinc -nostdinc++ -nolibc #-Map kernel.map
 
 # keep the depencement `.img` in the first command pleaze, that `make` will
 #    execute all the command by default
@@ -67,7 +67,7 @@ bootsect: ./boot/bootsect.o
 	$(AS) --32 -I boot $< -o $@
 
 kernel.elf: $(OBJS) $(OBJC)
-	$(LD) $(LDFLAGS) -T kernel.ld $^ -o $@
+	$(CC) $(LDFLAGS) -T kernel.ld $^ -o $@
 
 # `OBJS` depand all the `.s(.c)`
 # --32: generate 32 bit code implied the target is `Intel i386`

@@ -20,14 +20,21 @@ INC := kern/
 # -Werror: regard the warnings to errors
 # -m32: generate 32 bit source can be executed in any i386 arch machine
 #       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html#x86-Options
-# -nostdinc: dont use standard functions unless specify some options(`-I`, `-iquote` etc.)
+# -nostdinc:
+# -nostdinc++: dont use standard functions unless specify some options(`-I`, `-iquote` etc.)
 #       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html#Directory-Options
 # -fno-builtin: dont allow the compiler to optimize our own function
 #       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-CFLAGS := -c -std=c++11 -Wall -Werror -m32 -nostdinc -nostdinc++ -fno-builtin -fno-pie -fno-stack-protector -I$(INC)
+# -fno-pie: forbid to generate `__x86.get_pc_thunk.ax` subroutine
+#       DETIALS IN https://stackoverflow.com/questions/50105581/how-do-i-get-rid-of-call-x86-get-pc-thunk-ax
+# -fno-stack-protector: enable will generate some undefined symbols (e.g. __stack_chk_fail)
+# -fno-exceptions: enable will generate some undefined symbols (e.g. _Unwind_Resume)
+# -fno-rtti: enable will generate some undefined symbols (e.g. __cxxabiv1::__class_type_info)
+CFLAGS := -c -std=c++11 -Wall -Werror -m32 -I$(INC) \
+	-nostdinc -nostdinc++ -fno-builtin -fno-pie -fno-stack-protector -fno-exceptions -fno-rtti
 # -m: specify the output format
 # -Map: output memory map
-LDFLAGS := -m32 -nostdinc -nostdinc++ -nolibc #-Map kernel.map
+LDFLAGS := -m elf_i386 -Map kernel.map
 
 # keep the depencement `.img` in the first command pleaze, that `make` will
 #    execute all the command by default
@@ -67,7 +74,7 @@ bootsect: ./boot/bootsect.o
 	$(AS) --32 -I boot $< -o $@
 
 kernel.elf: $(OBJS) $(OBJC)
-	$(CC) $(LDFLAGS) -T kernel.ld $^ -o $@
+	$(LD) $(LDFLAGS) -T kernel.ld $^ -o $@
 
 # `OBJS` depand all the `.s(.c)`
 # --32: generate 32 bit code implied the target is `Intel i386`

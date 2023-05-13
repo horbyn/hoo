@@ -1,0 +1,14 @@
+
+root = true
+
+# All files
+[*]
+# *nix style new line: LF
+end_of_line = lf
+# files ending with new line
+insert_final_newline = true
+# indentation style is space not tag
+indent_style = space
+# indent with 4 spaces
+indent_size = 4
+charset = utf-8

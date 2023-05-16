@@ -3,9 +3,9 @@ SECTIONS {
     /* VMA is the logic address;
        while LMA is the real loading address */
 
-    . = 0x1000;
+    . = 0x0;
     PROVIDE(__kern_base = .);
-    .text : AT(0x1000) {
+    .text : AT(0x0) {
         kern/entry.o(.text)
         . = ALIGN(4);
         *(.text)

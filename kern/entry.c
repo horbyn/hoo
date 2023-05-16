@@ -4,6 +4,7 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
+#include "kernel.h"
 
 void
 entry(void) {
@@ -25,6 +26,8 @@ entry(void) {
     "movl %esp,     %ebp\r\n"
     "pushl $0x77ffc\r\n"                                    // setup DIED INSTRUCTION
     "pushl $0x80000");                                      // setup calling convention
+
+    kernel_exec();
 
     /********************************
      * NEED NOT TO RETURN NORMALLY  *

@@ -168,9 +168,6 @@ move_end:
 
 
 
-
-
-
     # #### function 5. ####
     # #### enter p.m.  ####
     cli

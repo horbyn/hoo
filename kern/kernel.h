@@ -9,6 +9,7 @@
 #define __KERN_KERNEL_H__
 
 #include "module/setup.h"
+#include "module/mm.h"
 
 void kernel_exec();
 

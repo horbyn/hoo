@@ -4,10 +4,12 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "kernel.h"
+#pragma once
+#ifndef __KERN_MODULE_MM_H__
+#define __KERN_MODULE_MM_H__
 
-void
-kernel_exec() {
-    setup_kernel_gdt();
-    setup_pmm();
-}
+#include "memory/HdlPhy.h"
+
+void setup_pmm(void);
+
+#endif

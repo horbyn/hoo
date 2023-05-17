@@ -4,10 +4,12 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "kernel.h"
+#include "mm.h"
 
+/**
+ * @brief setup physical memory
+ */
 void
-kernel_exec() {
-    setup_kernel_gdt();
-    setup_pmm();
+setup_pmm(void) {
+    init_phymm();
 }

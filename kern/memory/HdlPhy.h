@@ -10,6 +10,7 @@
 
 #include "StuffPhy.h"
 #include "lib/lib.h"
+#include "x86.h"
 
 /************************************
  * Following definition MUST be the *
@@ -18,13 +19,6 @@
 
 #define ADDR_ARDS_NUM   0x78200                             // the ARDS amount addr
 #define ADDR_ARDS_BASE  0x78204                             // the ARDS itself addr
-
-#define MM_BASE         0x100000                            // memory will be traced
-#define PGSIZE          4096
-#define PGDOWN(x, align) \
-    ((x) & ~(align - 1))
-#define PGUP(x, align) \
-    (PGDOWN((x + align - 1), align))
 
 void init_phymm(void);
 

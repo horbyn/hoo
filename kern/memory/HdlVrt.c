@@ -1,0 +1,37 @@
+/************************************
+ *                                  *
+ *  Copyright (C)    horbyn, 2023   *
+ *        (hoRbyn4zZ@outlook.com)   *
+ *                                  *
+ ************************************/
+#include "HdlVrt.h"
+
+//static pgelem_t page_dir[PGDIR_SIZE];
+//static pgelem_t page_tbl_4mb[PGDIR_SIZE];                   // only the low 4mb map
+
+/**
+ * @brief setup page table mapping
+ * 
+ * @param pgt               page table addr
+ * @param ent_base          page table entry base
+ * @param pg_phy_addr_base  the physical address base of the page
+ * @param n                 the amount needed to setup
+ */
+void
+create_pgtbl_map(void *pgt, size_t ent_base, void *
+pg_phy_addr_base, size_t n) {
+    // a page table can setup `PGTBL_SIZE` at most
+    ASSERT(n > PGTBL_SIZE);
+
+    // adjust the amount to setup
+    n = (ent_base + n) > PGTBL_SIZE ?
+        PGTBL_SIZE - ent_base : n;
+
+    bzero(pgt, PGSIZE);
+    pgelem_t *worker = (pgelem_t *)pgt;
+    uint32_t pg =
+        (uint32_t)PGUP((uint32_t)pg_phy_addr_base, PGSIZE);
+
+    for (size_t i = 0; i < n; ++i, pg += PGSIZE)
+        worker[ent_base + i] = pg;
+}

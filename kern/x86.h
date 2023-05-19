@@ -8,8 +8,9 @@
 #ifndef __KERN_X86_H__
 #define __KERN_X86_H__
 
-#define MM_BASE         0x100000                            // memory will be traced
-#define PGSIZE          4096
+#define MM_BASE             0x100000                        // memory will be traced
+#define KERN_HIGH_MAPPING   0xc0000000
+#define PGSIZE              4096
 #define PGDOWN(x, align)    ((x) & ~(align - 1))
 #define PGUP(x, align)      (PGDOWN((x + align - 1), align))
 

@@ -9,7 +9,11 @@
 #define __KERN_MODULE_MM_H__
 
 #include "memory/HdlPhy.h"
+#include "memory/HdlVrt.h"
+
+#define MB4     0x400000
 
 void setup_pmm(void);
+void setup_vmm(void);
 
 #endif

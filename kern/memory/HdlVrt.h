@@ -18,5 +18,6 @@ typedef uint32_t    pgelem_t;                               // used to calculate
 
 void create_pgtbl_map(void *pgt, size_t ent_base, void *
     pg_phy_addr, size_t n);
+void create_ptdir_map(void *pgd, size_t ent, void *pgt);
 
 #endif

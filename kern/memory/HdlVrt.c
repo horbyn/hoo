@@ -6,9 +6,6 @@
  ************************************/
 #include "HdlVrt.h"
 
-//static pgelem_t page_dir[PGDIR_SIZE];
-//static pgelem_t page_tbl_4mb[PGDIR_SIZE];                   // only the low 4mb map
-
 /**
  * @brief setup page table mapping
  * 
@@ -20,8 +17,12 @@
 void
 create_pgtbl_map(void *pgt, size_t ent_base, void *
 pg_phy_addr_base, size_t n) {
-    // a page table can setup `PGTBL_SIZE` at most
+    // DONOT handle the following condition temporary
+    ASSERT(pgt == null);
+    ASSERT(ent_base < 0 || ent_base > PGDIR_SIZE);
     ASSERT(n > PGTBL_SIZE);
+
+    if (n == 0)    return;
 
     // adjust the amount to setup
     n = (ent_base + n) > PGTBL_SIZE ?
@@ -34,4 +35,22 @@ pg_phy_addr_base, size_t n) {
 
     for (size_t i = 0; i < n; ++i, pg += PGSIZE)
         worker[ent_base + i] = pg;
+}
+
+/**
+ * @brief setup page dir mapping
+ * 
+ * @param pgd page dir addr
+ * @param ent page dir entry
+ * @param pgt page table physical addr
+ */
+void
+create_ptdir_map(void *pgd, size_t ent, void *pgt) {
+    ASSERT(pgd == null);
+    ASSERT(ent < 0 || ent > PGDIR_SIZE);
+
+    if (pgt == null)    return;
+
+    pgelem_t *worker = (pgelem_t *)pgd;
+    worker[ent] = (uint32_t)pgt;
 }

@@ -38,9 +38,26 @@ disable_intr() {
     __asm__ ("sti");
 }
 
+/**
+ * @brief lgdt instruction
+ * @param gdt48 gdtr format
+ */
 static inline void
 load_gdtr(void *gdt48) {
-    __asm__ ("lgdt %0" : :"m"(gdt48));
+    __asm__ ("lgdt (%0)" : :"r"(gdt48));
+}
+
+/**
+ * @brief enable paging
+ * @param pd_addr page dir table addr
+ */
+static inline void
+paging(void *pd_addr) {
+    __asm__ ("movl %0, %%cr3" : :"r"(pd_addr));
+    __asm__ ("\r\n"
+        "movl %cr0,       %eax\r\n"
+        "orl $0x80000000, %eax\r\n"
+        "movl %eax,       %cr0");
 }
 
 #endif

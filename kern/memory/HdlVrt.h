@@ -8,6 +8,7 @@
 #ifndef __KERN_MEMORY_HDLVRT_H__
 #define __KERN_MEMORY_HDLVRT_H__
 
+#include "StuffVrt.h"
 #include "types.h"
 #include "x86.h"
 #include "lib/lib.h"

@@ -34,7 +34,8 @@ pg_phy_addr_base, size_t n) {
         (uint32_t)PGUP((uint32_t)pg_phy_addr_base, PGSIZE);
 
     for (size_t i = 0; i < n; ++i, pg += PGSIZE)
-        worker[ent_base + i] = pg;
+        worker[ent_base + i] =
+            (pg | PGENT_US | PGENT_RW | PGENT_PS);
 }
 
 /**
@@ -52,5 +53,6 @@ create_ptdir_map(void *pgd, size_t ent, void *pgt) {
     if (pgt == null)    return;
 
     pgelem_t *worker = (pgelem_t *)pgd;
-    worker[ent] = (uint32_t)pgt;
+    worker[ent] =
+        ((uint32_t)pgt | PGENT_US | PGENT_RW | PGENT_PS);
 }

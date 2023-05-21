@@ -32,31 +32,29 @@ uint8_t rw, uint8_t dc, uint8_t exe, uint8_t sys, uint8_t dpl,
 uint8_t ps, uint8_t l, uint8_t db, uint8_t g) {
     ASSERT(idx >= SIZE_GDT);
 
-    Gdt_t desc;
-    desc.limit_15_0_        = (uint16_t)limit;
-    desc.limit_19_16_       = (uint8_t)limit >> 16;
-    desc.base_15_0_         = (uint16_t)base;
-    desc.base_23_16_        = (uint8_t)base >> 16;
-    desc.base_31_24_        = (uint8_t)base >> 24;
-    desc.access_bytes_.a_   = a;
-    desc.access_bytes_.rw_  = rw;
-    desc.access_bytes_.dc_  = dc;
-    desc.access_bytes_.e_   = exe;
-    desc.access_bytes_.sys_ = sys;
-    desc.access_bytes_.dpl_ = dpl;
-    desc.access_bytes_.ps_  = ps;
-    desc.rsv_               = 0;
-    desc.long_              = l;
-    desc.db_                = db;
-    desc.g_                 = g;
-    __gdt[idx] = desc;
+    __gdt[idx].limit_15_0_        = (uint16_t)limit;
+    __gdt[idx].limit_19_16_       = (uint8_t)(limit >> 16);
+    __gdt[idx].base_15_0_         = (uint16_t)base;
+    __gdt[idx].base_23_16_        = (uint8_t)(base >> 16);
+    __gdt[idx].base_31_24_        = (uint8_t)(base >> 24);
+    __gdt[idx].access_bytes_.a_   = a;
+    __gdt[idx].access_bytes_.rw_  = rw;
+    __gdt[idx].access_bytes_.dc_  = dc;
+    __gdt[idx].access_bytes_.e_   = exe;
+    __gdt[idx].access_bytes_.sys_ = sys;
+    __gdt[idx].access_bytes_.dpl_ = dpl;
+    __gdt[idx].access_bytes_.ps_  = ps;
+    __gdt[idx].rsv_               = 0;
+    __gdt[idx].long_              = l;
+    __gdt[idx].db_                = db;
+    __gdt[idx].g_                 = g;
 }
 
 /**
  * @brief Set the gdtr object
  */
 void set_gdtr() {
-    __gdtr.size_   = NELEMS(__gdt);
+    __gdtr.size_   = sizeof(__gdt);
     __gdtr.linear_ = __gdt;
     load_gdtr(&__gdtr);
 }

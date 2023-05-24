@@ -13,6 +13,9 @@
 #define PGSIZE              4096
 #define PGDOWN(x, align)    ((x) & ~(align - 1))
 #define PGUP(x, align)      (PGDOWN((x + align - 1), align))
+#define PD_INDEX(x)         (((x)>>22) & 0x3ff)
+#define PT_INDEX(x)         (((x)>>12) & 0x3ff)
+#define PG_OFFSET(x)        ((x) & 0xfff)
 
 /**
  * @brief watching if kernel panic error happen over

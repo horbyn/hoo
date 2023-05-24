@@ -6,7 +6,7 @@
  ************************************/
 #include "kernel.h"
 
-void
+__attribute__ ((section(".init.text"))) void
 entry(void) {
     /********************************
      * ignore the boot environment  *

@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "memory": "cpp",
-        "hdlphy.h": "c"
+        "hdlphy.h": "c",
+        "config.h": "c",
+        "assert.h": "c"
     }
 }

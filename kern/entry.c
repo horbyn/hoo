@@ -4,9 +4,9 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "kernel.h"
+#include "Config.h"
 
-__attribute__ ((section(".init.text"))) void
+void
 entry(void) {
     /********************************
      * ignore the boot environment  *
@@ -27,7 +27,7 @@ entry(void) {
     "pushl $0x77ffc\r\n"                                    // setup DIED INSTRUCTION
     "pushl $0x80000");                                      // setup calling convention
 
-    kernel_exec();
+    kernel_config();
 
     /********************************
      * NEED NOT TO RETURN NORMALLY  *

@@ -13,7 +13,7 @@ AS := as
 LD := ld
 CC := gcc
 
-INC := kern/
+INC := -Ikern/ -Iconf/
 
 # -c: compile
 # -Wall: display all the warnings
@@ -27,7 +27,7 @@ INC := kern/
 # -fno-pie: forbid to generate `__x86.get_pc_thunk.ax` subroutine
 #       DETIALS IN https://stackoverflow.com/questions/50105581/how-do-i-get-rid-of-call-x86-get-pc-thunk-ax
 # -fno-stack-protector: enable will generate some undefined symbols (e.g. __stack_chk_fail)
-CFLAGS := -c -Wall -Werror -m32 -I$(INC) \
+CFLAGS := -c -Wall -Werror -m32 $(INC) \
 	-nostdinc -fno-builtin -fno-pie -fno-stack-protector
 # -m: specify the output format
 # -Map: output memory map

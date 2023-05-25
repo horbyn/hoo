@@ -5,11 +5,10 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_DESC_STUFFGDT_H__
-#define __KERN_DESC_STUFFGDT_H__
+#ifndef __CONF_GDT_H__
+#define __CONF_GDT_H__
 
 #include "types.h"
-#include "x86.h"
 
 /**
  * @brief definition of access byte field in gdt

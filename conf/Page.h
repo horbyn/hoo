@@ -26,7 +26,6 @@ typedef uint32_t            pgelem_t;                       // used to calculate
 #define PGDIR_SIZE          ((PGSIZE) / sizeof(pgelem_t))   // pg dir entry amount
 #define PGTBL_SIZE          PGDIR_SIZE                      // pg table entry amount
 #define MB4                 0x400000
-#define KERN_HIGH_MAPPING   0xc0000000
 #define PD_INDEX(x)         (((x)>>22) & 0x3ff)
 #define PT_INDEX(x)         (((x)>>12) & 0x3ff)
 #define PG_OFFSET(x)        ((x) & 0xfff)

@@ -13,7 +13,7 @@ __attribute__ ((section(".config"))) static
 __attribute__ ((section(".config"))) static
     ppg_range_t kphymm;
 __attribute__ ((section(".config"))) static
-    ppg_t phymm_available;
+    ppg_t kfree_list;
 __attribute__ ((section(".page"))) static
     pgelem_t page_dir[PGDIR_SIZE];
 __attribute__ ((section(".page"))) static
@@ -29,6 +29,8 @@ kernel_config(void) {
     config_lgdt();
     config_free_list();
     config_paging();
+
+    kernel_exec();
 }
 
 /**
@@ -73,7 +75,7 @@ config_free_list(void) {
     // from `kphymm.ppg_end` to maybe 0xffff_ffff is the real page available
     // initialize the `ppg_t` object
     ppg_t *cur = (ppg_t *)MM_BASE;
-    ppg_t *worker = &phymm_available;
+    ppg_t *worker = &kfree_list;
     uint8_t *curpg = (uint8_t *)PGUP((uint32_t)kphymm.ppg_end, PGSIZE);
     // we must skip some pages used for management struct
     size_t skip = ((uint32_t)curpg - (uint32_t)cur) / PGSIZE;

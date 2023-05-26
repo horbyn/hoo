@@ -5,11 +5,9 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_KERNEL_H__
-#define __KERN_KERNEL_H__
+#ifndef __CONF_PRECONF_H__
+#define __CONF_PRECONF_H__
 
-#include "disp/disp.h"
-
-void kernel_exec(void);
+#define KERN_HIGH_MAPPING   0xc0000000
 
 #endif

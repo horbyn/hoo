@@ -15,4 +15,6 @@ kernel_exec(void) {
 
     kprintf("kern base = %x\nkern end = %x\n\n",
         (uint32_t)__kern_base, (uint32_t)__kern_end);
+
+    init_pic();
 }

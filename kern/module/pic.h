@@ -5,12 +5,11 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_KERNEL_H__
-#define __KERN_KERNEL_H__
+#ifndef __KERN_MODULE_PIC_H__
+#define __KERN_MODULE_PIC_H__
 
-#include "disp/disp.h"
-#include "module/pic.h"
+#include "inter/8259a.h"
 
-void kernel_exec(void);
+void init_pic(void);
 
 #endif

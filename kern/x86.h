@@ -10,6 +10,11 @@
 
 #include "types.h"
 
+#define CS_SELECTOR     0x08
+#define DS_SELECTOR     0x10
+#define GATE_INTERRUPT  0x0e
+#define GATE_TRAP       0x0f
+
 /**
  * @brief enable intrrupt
  */

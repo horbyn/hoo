@@ -11,12 +11,12 @@
 #include "types.h"
 #include "x86.h"
 
-#define IDT_INTEL_NUM   33
-#define IDT_ENTRIES_NUM 256
+#define IDT_NEED_TO_INIT_NUM	33							// 32 intel reserved; 1 is timer
+#define IDT_ENTRIES_NUM 		256
 
 typedef void (*isr_t)(void);
 
-extern uint32_t isr_part1[IDT_INTEL_NUM];
+extern uint32_t isr_part1[IDT_NEED_TO_INIT_NUM];
 extern isr_t isr[IDT_ENTRIES_NUM];
 
 // IDT entries
@@ -28,6 +28,7 @@ extern isr_t isr[IDT_ENTRIES_NUM];
 // ┌──────────────────┼──────────────────────────┐
 // │Segment Selector  │  Offset 15..0            │
 // └──────────────────┴──────────────────────────┘
+
 typedef struct {
 	uint16_t    isr_low;	// will be loaded to EIP
 	uint16_t    selector;	// will be loaded to CS when interrupt happened

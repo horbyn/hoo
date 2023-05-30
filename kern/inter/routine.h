@@ -4,20 +4,20 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
+/**
+ * @file routine.h
+ * @brief Install a isr routine:
+ * 
+ * 1. `inter/isr.c` to set `isr[X]` pointing to any function;
+ * 2. `inter/isrentry.s` to define macro and add it to `isr_part1[X]`;
+ * 3. `inter/isr.c` to set `idt[X]` pointing to `isr_part1[X]`
+ */
 #pragma once
-#ifndef __KERN_INTER_INTE_H__
-#define __KERN_INTER_INTE_H__
+#ifndef __KERN_INTER_ROUTINE_H__
+#define __KERN_INTER_ROUTINE_H__
 
-#include "StuffInte.h"
+#include "types.h"
 #include "disp/disp.h"
-
-void init_interrupt(void);
-void set_idt_entry(int, uint32_t);
-void set_isr_entry(int, uint32_t);
-
-// =========================================================
-// ======================== isr ============================
-// =========================================================
 
 void info(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,

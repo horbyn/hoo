@@ -5,13 +5,11 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_KERNEL_H__
-#define __KERN_KERNEL_H__
+#ifndef __KERN_MODULE_INTE_H__
+#define __KERN_MODULE_INTE_H__
 
-#include "disp/disp.h"
-#include "module/pic.h"
-#include "module/inte.h"
+#include "inter/isr.h"
 
-void kernel_exec(void);
+void init_interrupt(void);
 
 #endif

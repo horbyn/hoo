@@ -4,14 +4,12 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#pragma once
-#ifndef __KERN_KERNEL_H__
-#define __KERN_KERNEL_H__
+#include "inte.h"
 
-#include "disp/disp.h"
-#include "module/pic.h"
-#include "module/inte.h"
-
-void kernel_exec(void);
-
-#endif
+/**
+ * @brief interrupt initialization
+ */
+void
+init_interrupt(void) {
+    init_isr_idt();
+}

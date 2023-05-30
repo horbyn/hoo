@@ -8,6 +8,9 @@
 
 extern uint8_t __kern_base[], __kern_end[];
 
+/**
+ * @brief kernel run!
+ */
 void
 kernel_exec(void) {
     clear_screen();
@@ -17,4 +20,5 @@ kernel_exec(void) {
         (uint32_t)__kern_base, (uint32_t)__kern_end);
 
     init_pic();
+    init_interrupt();
 }

@@ -1,6 +1,7 @@
+# ###################################
 #       Copyright (C)    horbyn, 2023
 #             (hoRbyn4zZ@outlook.com)
-#
+# ###################################
 
     .text
     .code32
@@ -52,10 +53,11 @@ ISRNOERR 29
 ISRNOERR 30
 ISRNOERR 31
 ISRNOERR 32
+ISRNOERR 33
 
 isr_part1:
     .long isr_part1_0,  isr_part1_1,  isr_part1_2
-    .long isr_part1_3,  isr_part1_5,  isr_part1_5
+    .long isr_part1_3,  isr_part1_4,  isr_part1_5
     .long isr_part1_6,  isr_part1_7,  isr_part1_8
     .long isr_part1_9,  isr_part1_10, isr_part1_11
     .long isr_part1_12, isr_part1_13, isr_part1_14
@@ -66,6 +68,7 @@ isr_part1:
     .long isr_part1_27, isr_part1_28, isr_part1_29
     .long isr_part1_30, isr_part1_31
     .long isr_part1_32  # timer
+    .long isr_part1_33  # default
 
 isr_part2:
     pushl %ds

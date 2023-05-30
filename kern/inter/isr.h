@@ -5,13 +5,14 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_KERNEL_H__
-#define __KERN_KERNEL_H__
+#ifndef __KERN_INTER_ISR_H__
+#define __KERN_INTER_ISR_H__
 
-#include "disp/disp.h"
-#include "module/pic.h"
-#include "module/inte.h"
+#include "StuffInte.h"
+#include "routine.h"
 
-void kernel_exec(void);
+void init_isr_idt(void);
+void set_idt_entry(int, uint32_t);
+void set_isr_entry(int, uint32_t);
 
 #endif

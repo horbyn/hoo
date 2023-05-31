@@ -11,6 +11,7 @@
 #include "disp/disp.h"
 #include "module/pic.h"
 #include "module/inte.h"
+#include "x86.h"
 
 void kernel_exec(void);
 

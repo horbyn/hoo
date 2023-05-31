@@ -21,4 +21,5 @@ kernel_exec(void) {
 
     init_pic();
     init_interrupt();
+    enable_intr();
 }

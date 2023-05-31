@@ -86,12 +86,12 @@ set_icw4(uint8_t cmd) {
 }
 
 /**
- * @brief Set the ocw1 mask
+ * @brief Disable the ocw1 mask
  * 
  * @param irq_pin
  */
 void
-set_mask_ocw1(uint8_t irq_pin) {
+disable_mask_ocw1(uint8_t irq_pin) {
     uint16_t port;
     uint8_t value;
 
@@ -106,12 +106,12 @@ set_mask_ocw1(uint8_t irq_pin) {
 }
 
 /**
- * @brief Clear the ocw1 mask
+ * @brief Enable the ocw1 mask
  * 
  * @param irq_pin
  */
 void
-clear_mask_ocw1(uint8_t irq_pin) {
+enable_mask_ocw1(uint8_t irq_pin) {
     uint16_t port;
     uint8_t value;
 

@@ -20,7 +20,7 @@
  */
 static inline void
 enable_intr() {
-    __asm__ ("cli");
+    __asm__ ("sti");
 }
 
 /**
@@ -28,7 +28,7 @@ enable_intr() {
  */
 static inline void
 disable_intr() {
-    __asm__ ("sti");
+    __asm__ ("cli");
 }
 
 /**

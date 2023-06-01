@@ -5,8 +5,8 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_INTER_8259A_H__
-#define __KERN_INTER_8259A_H__
+#ifndef __DEVICE_8259A_H__
+#define __DEVICE_8259A_H__
 
 #include "types.h"
 #include "Cmd8259a.h"

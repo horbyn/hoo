@@ -5,11 +5,14 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_MODULE_PIC_H__
-#define __KERN_MODULE_PIC_H__
+#ifndef __DEVICE_8253_H__
+#define __DEVICE_8253_H__
 
-#include "inter/8259a.h"
+#include "Cmd8253.h"
+#include "x86.h"
+#include "types.h"
 
-void init_pic(void);
+void set_command(sc_t, am_t, om_t, bm_t);
+void set_counter(size_t);
 
 #endif

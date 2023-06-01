@@ -5,8 +5,8 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_INTER_CMD8259A_H__
-#define __KERN_INTER_CMD8259A_H__
+#ifndef __DEVICE_CMD8259A_H__
+#define __DEVICE_CMD8259A_H__
 
 #define MAS_EVEN    0x20
 #define SLA_EVEN    0xa0

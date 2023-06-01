@@ -5,14 +5,13 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_KERNEL_H__
-#define __KERN_KERNEL_H__
+#ifndef __KERN_MODULE_DEVICE_H__
+#define __KERN_MODULE_DEVICE_H__
 
-#include "disp/disp.h"
-#include "module/device.h"
-#include "module/inte.h"
-#include "x86.h"
+#include "8259a.h"
+#include "8253.h"
 
-void kernel_exec(void);
+void init_pic(void);
+void init_pit(void);
 
 #endif

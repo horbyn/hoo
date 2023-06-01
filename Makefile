@@ -13,7 +13,7 @@ AS := as
 LD := ld
 CC := gcc
 
-INC := -Ikern/ -Iconf/
+INC := -Ikern/ -Iconf/ -Idevice/
 
 # -c: compile
 # -Wall: display all the warnings

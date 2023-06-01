@@ -4,7 +4,7 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "pic.h"
+#include "device.h"
 
 /**
  * @brief pic initialization
@@ -32,4 +32,13 @@ init_pic(void) {
     disable_mask_ocw1(IRQ_MATH);                            // irq#13
     disable_mask_ocw1(IRQ_ATA1);                            // irq#14
     disable_mask_ocw1(IRQ_ATA2);                            // irq#15
+}
+
+/**
+ * @brief pit initialization
+ */
+void
+init_pit(void) {
+    set_command(SC_CHANNEL0, LOWHIGHBYTE, M3, BINARY);
+    set_counter(100);                                       // 100 singal per second
 }

@@ -20,6 +20,7 @@ kernel_exec(void) {
         (uint32_t)__kern_base, (uint32_t)__kern_end);
 
     init_pic();
+    init_pit();
     init_interrupt();
     enable_intr();
 }

@@ -8,9 +8,9 @@
  * @file routine.h
  * @brief Install a isr routine:
  * 
- * 1. `inter/isr.c` to set `isr[X]` pointing to any function;
+ * 1. `inter/isr.c` to set `__isr[X]` pointing to any function;
  * 2. `inter/isrentry.s` to define macro and add it to `isr_part1[X]`;
- * 3. `inter/isr.c` to set `idt[X]` pointing to `isr_part1[X]`
+ * 3. `inter/isr.c` to set `__idt[X]` pointing to `isr_part1[X]`
  */
 #pragma once
 #ifndef __KERN_INTER_ROUTINE_H__

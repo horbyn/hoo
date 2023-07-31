@@ -5,6 +5,7 @@
  *                                  *
  ************************************/
 #include "Config.h"
+#include "kernel.h"
 
 void
 entry(void) {
@@ -28,6 +29,8 @@ entry(void) {
     "pushl $0x80000");                                      // setup calling convention
 
     kernel_config();
+    kernel_exec();
+    while (1);
 
     /********************************
      * NEED NOT TO RETURN NORMALLY  *

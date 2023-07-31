@@ -6,7 +6,7 @@
     .text
     .code32
     .globl isr_part1
-    .extern isr
+    .extern __isr
 .macro ISRNOERR id
 isr_part1_\id:
     pushl $0
@@ -79,7 +79,7 @@ isr_part2:
     pushal
 
     movl 52(%esp), %eax
-    call *isr(, %eax, 4)   # addr = $isr + %eax * $4
+    call *__isr(, %eax, 4)   # addr = $isr + %eax * $4
 
     popal
     addl $4, %esp           # jump %ss

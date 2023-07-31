@@ -35,15 +35,13 @@ LDFLAGS := -m elf_i386 -Map kernel.map
 
 # keep the depencement `.img` in the first command pleaze, that `make` will
 #    execute all the command by default
-nop: clean image $(OBJS) $(OBJC) fd1_44M.img
-	DISPLAY=:0 /usr/bin/bochs
+nop: clean image $(OBJS) $(OBJC) fd1_44M.img run
 
 debug: CFLAGS += -g -DDEBUG
-debug: clean image $(OBJS) $(OBJC) fd1_44M.img
-	DISPLAY=:0 /usr/bin/bochs
+debug: clean image $(OBJS) $(OBJC) fd1_44M.img run
 
 run:
-	DISPLAY=:0 /usr/bin/bochs
+	DISPLAY=:0 /usr/bin/bochs -q
 
 # -f: dont generate the file if exists
 image:

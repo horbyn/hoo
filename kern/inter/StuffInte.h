@@ -17,7 +17,7 @@
 typedef void (*isr_t)(void);
 
 extern uint32_t isr_part1[IDT_NEED_TO_INIT_NUM];
-extern isr_t isr[IDT_ENTRIES_NUM];
+extern isr_t __isr[IDT_ENTRIES_NUM];
 
 // IDT entries
 // 63           48 47 46 45 44 43     40 39    32

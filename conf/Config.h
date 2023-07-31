@@ -12,7 +12,6 @@
 #include "Page.h"
 #include "assert.h"
 #include "preconf.h"
-#include "kernel.h"
 
 #define SIZE_GDT    8                                       // the gdt descriptors amount
 

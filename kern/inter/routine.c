@@ -9,7 +9,7 @@
 /**
  * @brief intel reserved exception names
  */
-static char *exception_names[] = {
+static char *__exception_names[] = {
     "#DE, Division Error, Fault, No error-code",            // #0
     "#DB, Debug, Fault/Trap, No error-code",                // #1
     ", Non-maskable interrupt, Interrupt, No error-code",   // #2
@@ -79,7 +79,7 @@ uint32_t eflags) {
     clear_screen();
     set_cursor(0, 0);
 
-    kprintf(">>>>> %s <<<<<\n\n", exception_names[idx]);
+    kprintf(">>>>> %s <<<<<\n\n", __exception_names[idx]);
     kprintf("\nEFLAGS = %x\nCS = %x\nEIP = %x"
         "\nECODE = %x\n", eflags, (cs & 0xffff),
         eip, ecode);

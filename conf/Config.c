@@ -11,13 +11,13 @@ __attribute__ ((section(".config"))) static
 __attribute__ ((section(".config"))) static
     Gdtr_t __gdtr;
 __attribute__ ((section(".config"))) static
-    ppg_range_t kphymm;
+    ppg_range_t __kphymm;
 __attribute__ ((section(".config"))) static
-    ppg_t kfree_list;
+    ppg_t __kfree_list;
 __attribute__ ((section(".page"))) static
-    pgelem_t page_dir[PGDIR_SIZE];
+    pgelem_t __page_dir[PGDIR_SIZE];
 __attribute__ ((section(".page"))) static
-    pgelem_t page_tbl_4mb[PGDIR_SIZE];                   // only the low 4mb map
+    pgelem_t __page_tbl_4mb[PGDIR_SIZE];                    // only the low 4mb map
 
 /**
  * @brief prehandling before entering kernel:
@@ -29,8 +29,6 @@ kernel_config(void) {
     config_lgdt();
     config_free_list();
     config_paging();
-
-    kernel_exec();
 }
 
 /**
@@ -53,8 +51,8 @@ config_lgdt(void) {
 void
 config_free_list(void) {
     // initialize the management
-    kphymm.ppg_base = kphymm.ppg_end = (uint8_t *)MM_BASE;
-    kphymm.pg_amount = 0;
+    __kphymm.ppg_base = __kphymm.ppg_end = (uint8_t *)MM_BASE;
+    __kphymm.pg_amount = 0;
 
     // travesal ARDS to find out the available mm.
     uint32_t *ards_num = (uint32_t *)ADDR_ARDS_NUM;
@@ -64,24 +62,24 @@ config_free_list(void) {
         if (((ards + i)->type_ == ardstype_os)
         && ((ards + i)->base_low_ >= MM_BASE)) {
             uint32_t pages = (ards + i)->length_low_ / PGSIZE;
-            kphymm.pg_amount = pages;
+            __kphymm.pg_amount = pages;
             // use 8-bit to represent a page
-            kphymm.ppg_end += pages * 8;
+            __kphymm.ppg_end += pages * 8;
         }
     }
 
     // NOTE:
-    // from `MM_BASE` to `kphymm.ppg_end` is used for management struct(i.e. `ppg_t`)
-    // from `kphymm.ppg_end` to maybe 0xffff_ffff is the real page available
+    // from `MM_BASE` to `__kphymm.ppg_end` is used for management struct(i.e. `ppg_t`)
+    // from `__kphymm.ppg_end` to maybe 0xffff_ffff is the real page available
     // initialize the `ppg_t` object
     ppg_t *cur = (ppg_t *)MM_BASE;
-    ppg_t *worker = &kfree_list;
-    uint8_t *curpg = (uint8_t *)PGUP((uint32_t)kphymm.ppg_end, PGSIZE);
+    ppg_t *worker = &__kfree_list;
+    uint8_t *curpg = (uint8_t *)PGUP((uint32_t)__kphymm.ppg_end, PGSIZE);
     // we must skip some pages used for management struct
     size_t skip = ((uint32_t)curpg - (uint32_t)cur) / PGSIZE;
 
     // set the linked list for all the physical mm.
-    for (size_t i = skip; i < kphymm.pg_amount; ++i, curpg += PGSIZE) {
+    for (size_t i = skip; i < __kphymm.pg_amount; ++i, curpg += PGSIZE) {
         cur[i].pgaddr = curpg;
         worker->next = cur + i;
         worker = cur + i;
@@ -94,17 +92,17 @@ config_free_list(void) {
 void
 config_paging(void) {
     // setup low 4mb mapping
-    create_pgtbl_map(page_tbl_4mb, 0, 0, MB4 / PGSIZE);
+    create_pgtbl_map(__page_tbl_4mb, 0, 0, MB4 / PGSIZE);
 
     // setup kernel page dir table
-    create_ptdir_map(page_dir, 0, page_tbl_4mb);            // #0
-    create_ptdir_map(page_dir, PD_INDEX(KERN_HIGH_MAPPING),
-        page_tbl_4mb);                                      // #768
-    create_ptdir_map(page_dir, PD_INDEX(0xffc00000),
-        page_dir);                                          // #1023
+    create_ptdir_map(__page_dir, 0, __page_tbl_4mb);        // #0
+    create_ptdir_map(__page_dir, PD_INDEX(KERN_HIGH_MAPPING),
+        __page_tbl_4mb);                                    // #768
+    create_ptdir_map(__page_dir, PD_INDEX(0xffc00000),
+        __page_dir);                                        // #1023
 
     // paging
-    __asm__ ("movl %0, %%cr3" : :"r"(page_dir));
+    __asm__ ("movl %0, %%cr3" : :"r"(__page_dir));
     __asm__ ("\r\n"
         "movl %cr0,       %eax\r\n"
         "orl $0x80000000, %eax\r\n"

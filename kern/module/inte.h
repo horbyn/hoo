@@ -8,7 +8,7 @@
 #ifndef __KERN_MODULE_INTE_H__
 #define __KERN_MODULE_INTE_H__
 
-#include "inter/isr.h"
+#include "kern/inter/isr.h"
 
 void init_interrupt(void);
 

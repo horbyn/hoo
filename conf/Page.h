@@ -8,7 +8,7 @@
 #ifndef __CONF_PAGE_H__
 #define __CONF_PAGE_H__
 
-#include "types.h"
+#include "kern/types.h"
 
 /************************************
  * Following definition MUST be the *

@@ -8,7 +8,7 @@
 #ifndef __KERN_LIB_LIB_H__
 #define __KERN_LIB_LIB_H__
 
-#include "types.h"
+#include "kern/types.h"
 
 uint32_t strlen(const char *);
 void memset(void *, uint8_t, size_t);

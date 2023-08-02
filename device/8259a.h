@@ -8,9 +8,9 @@
 #ifndef __DEVICE_8259A_H__
 #define __DEVICE_8259A_H__
 
-#include "types.h"
 #include "Cmd8259a.h"
-#include "x86.h"
+#include "kern/types.h"
+#include "kern/x86.h"
 
 void set_icw1(uint8_t);
 void set_icw2(uint8_t master, uint8_t slave);

@@ -8,10 +8,11 @@
 #ifndef __KERN_KERNEL_H__
 #define __KERN_KERNEL_H__
 
-#include "disp/disp.h"
-#include "module/device.h"
-#include "module/inte.h"
 #include "x86.h"
+#include "kern/disp/disp.h"
+#include "kern/module/device.h"
+#include "kern/module/inte.h"
+#include "kern/module/sched.h"
 
 void kernel_exec(void);
 

@@ -4,8 +4,8 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "Config.h"
-#include "kernel.h"
+#include "conf/Config.h"
+#include "kern/kernel.h"
 
 void
 entry(void) {
@@ -30,7 +30,6 @@ entry(void) {
 
     kernel_config();
     kernel_exec();
-    while (1);
 
     /********************************
      * NEED NOT TO RETURN NORMALLY  *

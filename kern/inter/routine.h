@@ -16,8 +16,8 @@
 #ifndef __KERN_INTER_ROUTINE_H__
 #define __KERN_INTER_ROUTINE_H__
 
-#include "types.h"
-#include "disp/disp.h"
+#include "kern/types.h"
+#include "kern/disp/disp.h"
 
 void info(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,

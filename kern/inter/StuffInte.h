@@ -8,8 +8,8 @@
 #ifndef __KERN_INTER_STUFFINTE_H__
 #define __KERN_INTER_STUFFINTE_H__
 
-#include "types.h"
-#include "x86.h"
+#include "kern/types.h"
+#include "kern/x86.h"
 
 #define IDT_NEED_TO_INIT_NUM	33							// 32 intel reserved; 1 is timer
 #define IDT_ENTRIES_NUM 		256

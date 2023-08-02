@@ -6,6 +6,7 @@
     .text
     .code32
     .globl isr_part1
+    .globl isr_part3
     .extern __isr
 .macro ISRNOERR id
 isr_part1_\id:
@@ -55,6 +56,7 @@ ISRNOERR 31
 ISRNOERR 32
 ISRNOERR 33
 
+# isr array
 isr_part1:
     .long isr_part1_0,  isr_part1_1,  isr_part1_2
     .long isr_part1_3,  isr_part1_4,  isr_part1_5
@@ -70,6 +72,7 @@ isr_part1:
     .long isr_part1_32  # timer
     .long isr_part1_33  # default
 
+# trampoline routine entry
 isr_part2:
     pushl %ds
     pushl %es
@@ -81,6 +84,8 @@ isr_part2:
     movl 52(%esp), %eax
     call *__isr(, %eax, 4)   # addr = $isr + %eax * $4
 
+# trampoline routine exit
+isr_part3:
     popal
     addl $4, %esp           # jump %ss
     popl %gs

@@ -8,7 +8,7 @@
 #ifndef __CONF_GDT_H__
 #define __CONF_GDT_H__
 
-#include "types.h"
+#include "kern/types.h"
 
 /**
  * @brief definition of access byte field in gdt

@@ -23,4 +23,6 @@ kernel_exec(void) {
     init_pit();
     init_interrupt();
     enable_intr();
+
+    test_scheduler();
 }

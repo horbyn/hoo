@@ -8,10 +8,10 @@
 #ifndef __KERN_DISP_DISP_H__
 #define __KERN_DISP_DISP_H__
 
-#include "types.h"
-#include "preconf.h"
-#include "x86.h"
-#include "lib/lib.h"
+#include "conf/preconf.h"
+#include "kern/types.h"
+#include "kern/x86.h"
+#include "kern/lib/lib.h"
 
 #define VIDEO_MEM               (0xb8000+KERN_HIGH_MAPPING) // video mm. base
 #define VGA_WIDTH               80

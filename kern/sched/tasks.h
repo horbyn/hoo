@@ -31,15 +31,23 @@ typedef struct interrupt_stack_os {
 } __attribute__ ((packed)) istackos_t;
 
 /**
- * @brief definition of cpu interrupt stack
+ * @brief definition of cpu interrupt stack that builds
+ * the env the cpu executes `iret` instruction
  */
 typedef struct interrupt_stack_cpu {
-    uint32_t vec_;
-    uint32_t errcode_;
-    uint32_t oldeip_;
+    uint32_t vec_;                                          // unused when `iret`ing
+    uint32_t errcode_;                                      // unused when `iret`ing
+    void    *oldeip_;
     uint32_t oldcs_;
     uint32_t eflags_;
 } __attribute__ ((packed)) istackcpu_t;
+
+/**
+ * @brief thread stack
+ */
+typedef struct thread_stack {
+    void *retaddr_;
+} tstack_t;
 
 /**
  * @brief definition of Process Control Block

@@ -43,7 +43,7 @@ queue_push(queue_t *q, node_t *n, void *d) {
     n->next_ = null;
 
     q->tail_->next_ = n;
-    q->tail_ = d;
+    q->tail_ = n;
 }
 
 /**
@@ -56,7 +56,11 @@ node_t *
 queue_pop(queue_t *q) {
     if (queue_isempty(q))    return null;
 
-    node_t *ret = q->head_;
-    q->head_ = q->head_->next_;
-    return ret;
+    node_t *del = q->head_->next_;
+    q->head_->next_ = del->next_;
+    del->next_ = null;
+
+    if (del == q->tail_)    q->tail_ = q->head_;
+
+    return del;
 }

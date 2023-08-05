@@ -116,8 +116,20 @@ divide_error(void) {
  */
 void
 timer(void) {
-    static int ticker = 0;
-    set_cursor(0, 0);
-    kprint_int(ticker++);
+    // change two tasks queue
+    node_t *cur = queue_pop(&__queue_running);
+    node_t *next = queue_pop(&__queue_ready);
+
+    queue_push(&__queue_running, next, next->data_);
+    queue_push(&__queue_ready, cur, cur->data_);
+
+    uint32_t *stack_addr = null;
+    // save the current task's stack
+    __asm__ ("movl %%esp, %0" : "=a"(stack_addr) :: );
+    ((pcb_t *)cur->data_)->thread_stack_ = stack_addr;
+
+    // execute the next task
+    stack_addr = ((pcb_t *)next->data_)->thread_stack_;
+    __asm__ ("movl %0, %%esp" : : "a"(stack_addr) : );
 }
 

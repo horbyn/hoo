@@ -18,6 +18,8 @@
 
 #include "kern/types.h"
 #include "kern/disp/disp.h"
+#include "kern/sched/init.h"
+#include "kern/sched/scheduler.h"
 
 void info(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,

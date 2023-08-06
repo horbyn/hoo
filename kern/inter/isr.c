@@ -49,7 +49,7 @@ set_idt_entry(int id, uint32_t addr) {
     uint8_t attr = (0x80 | GATE_INTERRUPT);
 
     __idt[id].isr_low = (uint16_t)addr;
-    __idt[id].selector = CS_SELECTOR;
+    __idt[id].selector = CS_SELECTOR_KERN;
     __idt[id].reserved = 0;
     __idt[id].attributes = attr;
     __idt[id].isr_high = (uint16_t)(addr >> 16);

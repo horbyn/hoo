@@ -10,6 +10,11 @@
 
 #include "kern/types.h"
 
+#define CS_SELECTOR_KERN    0x08
+#define DS_SELECTOR_KERN    0x10
+#define CS_SELECTOR_USER    0x18
+#define DS_SELECTOR_USER    0x20
+
 /**
  * @brief definition of access byte field in gdt
  */

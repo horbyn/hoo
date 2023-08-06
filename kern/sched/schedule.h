@@ -11,6 +11,7 @@
 #include "tasks.h"
 #include "conf/Page.h"
 #include "conf/preconf.h"
+#include "kern/x86.h"
 #include "kern/lib/lib.h"
 #include "kern/lib/queue.h"
 #include "kern/disp/disp.h"

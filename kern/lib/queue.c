@@ -35,11 +35,9 @@ queue_isempty(queue_t *q) {
  * 
  * @param q the queue needed to operate
  * @param n the enqueuing node
- * @param d the data the node `n` will be pointed to
  */
 void
-queue_push(queue_t *q, node_t *n, void *d) {
-    n->data_ = d;
+queue_push(queue_t *q, node_t *n) {
     n->next_ = null;
 
     q->tail_->next_ = n;

@@ -4,15 +4,12 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "init.h"
+#include "schedule.h"
 
 queue_t __queue_ready;                                      // wait to schedule
 queue_t __queue_running;                                    // scheduling
-static node_t __idle_node;
-static pcb_t __idle_pcb;
+static node_t __idle_node, __init_node;
 static uint8_t __init_stack[PGSIZE] = { 0 };                // the stack used by init thread
-static node_t __init_node;
-static pcb_t __init_pcb;
 
 /**
  * @brief initialize the tasks queue
@@ -32,19 +29,15 @@ kernel_idle_thread() {
     // uses the boot stack. Now we call this flow to
     // idle thread, and the stack it used is idle stack
 
-    //uint8_t *pstack = (uint8_t *)STACK_BOOT;
-    //pstack -= sizeof(uint32_t) * 2;                         // entry stack
-    //pstack -= sizeof(uint32_t);                             // return addr
-    //pstack -= sizeof(uint32_t) * 3;                         // calling convention
-    //pstack -= sizeof(istackcpu_t);
-    //pstack -= sizeof(istackos_t);
-    //pstack -= sizeof(tstack_t);
+    pcb_t *idle_pcb = (pcb_t *)(STACK_BOOT - STACK_BOOT_SIZE);
+    bzero(idle_pcb, sizeof(pcb_t));
 
-    bzero(&__idle_pcb, sizeof(pcb_t));
-    //__idle_pcb.thread_stack_ = (uint32_t *)pstack;
+    bzero(&__idle_node, sizeof(node_t));
+    __idle_node.data_ = idle_pcb;                           // idle node points to its pcb
+    __idle_node.next_ = null;
 
     // setup the tasks queue
-    queue_push(&__queue_running, &__idle_node, &__idle_pcb);
+    queue_push(&__queue_running, &__idle_node);
 }
 
 /**
@@ -86,29 +79,33 @@ kernel_init_thread() {
     workercpu->vec_ = 0;
     workercpu->errcode_ = 0;
     workercpu->oldeip_ = (uint32_t *)init_thread;
-    workercpu->oldcs_ = 0x8;
-    workercpu->eflags_ = 0x212;
+    workercpu->oldcs_ = CS_SELECTOR_KERN;
+    workercpu->eflags_ = EFLAGS_IF;                         // the new task will enable interrupt
     workeros->edi_ = 0;
     workeros->esi_ = 0;
     workeros->ebp_ = 0;
-    workeros->esp_ = (uint32_t)(((uint32_t *)workercpu) - 5);
+    workeros->esp_ = (uint32_t)(((uint32_t *)workercpu) - 5);// skip the 5 segment regs
     workeros->ebx_ = 0;
     workeros->edx_ = 0;
     workeros->ecx_ = 0;
     workeros->eax_ = 0;
-    workeros->ss_ = 0x10;
-    workeros->gs_ = 0x10;
-    workeros->fs_ = 0x10;
-    workeros->es_ = 0x10;
-    workeros->ds_ = 0x10;
+    workeros->ss_ = DS_SELECTOR_KERN;
+    workeros->gs_ = DS_SELECTOR_KERN;
+    workeros->fs_ = DS_SELECTOR_KERN;
+    workeros->es_ = DS_SELECTOR_KERN;
+    workeros->ds_ = DS_SELECTOR_KERN;
     workerth->retaddr_ = isr_part3;
 
     // setup the thread pcb
-    bzero(&__init_pcb, sizeof(pcb_t));
-    __init_pcb.thread_stack_ = (uint32_t *)pstack;
+    pcb_t *init_pcb = (pcb_t *)&__init_stack;
+    bzero(init_pcb, sizeof(pcb_t));
+    init_pcb->thread_stack_ = (uint32_t *)pstack;
 
     // setup to the ready queue waiting to execute
-    queue_push(&__queue_ready, &__init_node, &__init_pcb);
+    bzero(&__init_node, sizeof(node_t));
+    __init_node.data_ = init_pcb;
+    __init_node.next_ = null;
+    queue_push(&__queue_ready, &__init_node);
 }
 
 /**
@@ -116,5 +113,5 @@ kernel_init_thread() {
  */
 void
 init_thread() {
-    kprint_char('I');
+    while (1)    kprint_char('I');
 }

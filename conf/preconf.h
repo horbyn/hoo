@@ -15,5 +15,6 @@
 
 #define KERN_HIGH_MAPPING   0xc0000000
 #define STACK_BOOT          0x80000
+#define STACK_BOOT_SIZE     0x7c00
 
 #endif

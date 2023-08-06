@@ -9,11 +9,23 @@
 #define __KERN_X86_H__
 
 #include "types.h"
+#include "conf/Config.h"
 
-#define CS_SELECTOR     0x08
-#define DS_SELECTOR     0x10
+// Descriptor type
+
 #define GATE_INTERRUPT  0x0e
-#define GATE_TRAP       0x0f
+
+// Eflags
+
+#define EFLAGS_CP   0x1                                     // carry flag: carry if 1
+#define EFLAGS_PF   0x4                                     // parity flag: parity even if 1
+#define EFLAGS_AF   0x10                                    // auxiliary carry flag: auxiliary carry if 1
+#define EFLAGS_ZF   0x40                                    // zero flag: zero if 1
+#define EFLAGS_SF   0x80                                    // sign flag: negative if 1
+#define EFLAGS_TF   0x100                                   // trap flag
+#define EFLAGS_IF   0x200                                   // interrupt enable flag: enable interrupt if 1
+#define EFLAGS_DF   0x400                                   // direction flag: down if 1
+#define EFLAGS_OF   0x800                                   // overflow flag: overflow if 1
 
 /**
  * @brief enable intrrupt

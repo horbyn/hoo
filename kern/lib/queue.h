@@ -28,7 +28,7 @@ typedef struct queue {
 
 void queue_init(queue_t *);
 bool queue_isempty(queue_t *);
-void queue_push(queue_t *, node_t *, void *);
+void queue_push(queue_t *, node_t *);
 node_t *queue_pop(queue_t *);
 
 #endif

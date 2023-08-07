@@ -18,7 +18,9 @@
 
 #include "kern/types.h"
 #include "kern/disp/disp.h"
-#include "kern/sched/schedule.h"
+#include "kern/sched/testtasks.h"
+
+extern void scheduler(node_t *, node_t *);
 
 void info(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,

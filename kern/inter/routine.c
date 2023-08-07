@@ -123,13 +123,15 @@ timer(void) {
     queue_push(&__queue_running, next);
     queue_push(&__queue_ready, cur);
 
-    uint32_t *stack_addr = null;
+    //uint32_t *stack_addr = null;
     // save the current task's stack
-    __asm__ ("movl %%esp, %0" : "=a"(stack_addr) :: );
-    ((pcb_t *)cur->data_)->thread_stack_ = stack_addr;
+    //__asm__ ("movl %%esp, %0" : "=a"(stack_addr) :: );
+    //((pcb_t *)cur->data_)->thread_stack_ = stack_addr;
 
     // execute the next task
-    stack_addr = ((pcb_t *)next->data_)->thread_stack_;
-    __asm__ ("movl %0, %%esp\r\nret" : : "a"(stack_addr) : );
+    //stack_addr = ((pcb_t *)next->data_)->thread_stack_;
+    //__asm__ ("movl %0, %%esp\r\nret" : : "a"(stack_addr) : );
+
+    scheduler(cur, next);
 }
 

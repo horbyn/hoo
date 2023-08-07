@@ -8,7 +8,7 @@
 #ifndef __KERN_MODULE_SCHED_H__
 #define __KERN_MODULE_SCHED_H__
 
-#include "kern/sched/schedule.h"
+#include "kern/sched/testtasks.h"
 
 void test_scheduler();
 

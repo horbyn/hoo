@@ -4,7 +4,7 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "schedule.h"
+#include "testtasks.h"
 
 queue_t __queue_ready;                                      // wait to schedule
 queue_t __queue_running;                                    // scheduling

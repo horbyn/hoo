@@ -12,7 +12,7 @@ extern uint8_t __kern_base[], __kern_end[];
  * @brief kernel run!
  */
 void
-kernel_exec(void) {
+kernel_init(void) {
     clear_screen();
     set_cursor(0, 0);
 
@@ -25,5 +25,12 @@ kernel_exec(void) {
 
     test_scheduler();
     enable_intr();
-    while(1);
+}
+
+/**
+ * @brief kernel main thread -- idle
+ */
+void
+idle(void) {
+    while (1)    kprint_char('A');
 }

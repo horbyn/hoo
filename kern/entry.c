@@ -24,12 +24,13 @@ entry(void) {
     "movw %ax,      %gs\r\n"
     "movw %ax,      %ss\r\n"
     "movl $0x80000, %esp\r\n"
-    "movl %esp,     %ebp\r\n"
     "pushl $0x77ffc\r\n"                                    // setup DIED INSTRUCTION
-    "pushl $0x80000");                                      // setup calling convention
+    "pushl $0\r\n"                                          // setup calling convention
+    "movl %esp,     %ebp");
 
     kernel_config();
-    kernel_exec();
+    kernel_init();
+    idle();
 
     /********************************
      * NEED NOT TO RETURN NORMALLY  *

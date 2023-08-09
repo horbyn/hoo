@@ -113,5 +113,5 @@ kernel_init_thread() {
  */
 void
 init_thread() {
-    while (1)    kprint_char('I');
+    while (1)    kprint_char('B');
 }

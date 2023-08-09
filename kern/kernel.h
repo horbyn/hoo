@@ -14,6 +14,7 @@
 #include "kern/module/inte.h"
 #include "kern/module/sched.h"
 
-void kernel_exec(void);
+void kernel_init(void);
+void idle(void);
 
 #endif

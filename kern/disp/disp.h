@@ -12,6 +12,7 @@
 #include "kern/types.h"
 #include "kern/x86.h"
 #include "kern/lib/lib.h"
+#include "kern/lib/spinlock.h"
 
 #define VIDEO_MEM               (0xb8000+KERN_HIGH_MAPPING) // video mm. base
 #define VGA_WIDTH               80
@@ -33,6 +34,8 @@ typedef char *va_list;
 // set `a` to NULL (seems not necessary?)
 #define va_end(a)       \
     ((a) = (va_list)0)
+
+extern spinlock_t __spinlock_disp;
 
 void        clear_screen(void);
 void        set_cursor(int, int);

@@ -18,7 +18,7 @@
 
 #include "kern/types.h"
 #include "kern/disp/disp.h"
-#include "kern/sched/testtasks.h"
+#include "kern/sched/tasksop.h"
 
 extern void scheduler(node_t *, node_t *);
 

@@ -4,7 +4,7 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "testtasks.h"
+#include "tasksop.h"
 
 queue_t __queue_ready;                                      // wait to schedule
 queue_t __queue_running;                                    // scheduling
@@ -81,6 +81,7 @@ kernel_init_thread() {
     workercpu->oldeip_ = (uint32_t *)init_thread;
     workercpu->oldcs_ = CS_SELECTOR_KERN;
     workercpu->eflags_ = EFLAGS_IF;                         // the new task will enable interrupt
+    workercpu->unused_retaddr_ = DIED_INSTRUCTION;
     workeros->edi_ = 0;
     workeros->esi_ = 0;
     workeros->ebp_ = 0;
@@ -113,5 +114,7 @@ kernel_init_thread() {
  */
 void
 init_thread() {
-    while (1)    kprint_char('B');
+    while (1) {
+        kprint_char('B');
+    }
 }

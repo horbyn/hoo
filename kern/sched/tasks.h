@@ -40,6 +40,10 @@ typedef struct interrupt_stack_cpu {
     void    *oldeip_;
     uint32_t oldcs_;
     uint32_t eflags_;
+
+    // always located on the top of new task stack that the `esp`
+    // pointed to when the new task completes its initialization
+    uint32_t unused_retaddr_;
 } __attribute__ ((packed)) istackcpu_t;
 
 /**

@@ -8,8 +8,11 @@
 #ifndef __KERN_MODULE_SCHED_H__
 #define __KERN_MODULE_SCHED_H__
 
-#include "kern/sched/testtasks.h"
+#include "kern/sched/tasksop.h"
+#include "kern/lib/spinlock.h"
+#include "kern/disp/disp.h"
 
-void test_scheduler();
+void init_scheduler();
+void init_locks();
 
 #endif

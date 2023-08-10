@@ -29,8 +29,7 @@ entry(void) {
     "movl %esp,     %ebp");
 
     kernel_config();
-    kernel_init();
-    idle();
+    kernel_exec();
 
     /********************************
      * NEED NOT TO RETURN NORMALLY  *

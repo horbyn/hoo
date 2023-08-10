@@ -12,18 +12,31 @@ extern uint8_t __kern_base[], __kern_end[];
  * @brief kernel run!
  */
 void
+kernel_exec(void) {
+    kernel_init();
+    idle();
+
+    // DONT RETURN
+    while(1);
+}
+
+/**
+ * @brief kernel initialization
+ */
+void
 kernel_init(void) {
     clear_screen();
     set_cursor(0, 0);
 
-    kprintf("kern base = %x\nkern end = %x\n\n",
-        (uint32_t)__kern_base, (uint32_t)__kern_end);
-
     init_pic();
     init_pit();
     init_interrupt();
+    init_locks();
 
-    test_scheduler();
+    kprintf("kern base = %x\nkern end = %x\n\n",
+        (uint32_t)__kern_base, (uint32_t)__kern_end);
+
+    init_scheduler();
     enable_intr();
 }
 

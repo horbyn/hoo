@@ -5,8 +5,8 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_SCHED_TESTTASKS_H__
-#define __KERN_SCHED_TESTTASKS_H__
+#ifndef __KERN_SCHED_TASKSOP_H__
+#define __KERN_SCHED_TASKSOP_H__
 
 #include "tasks.h"
 #include "conf/Page.h"

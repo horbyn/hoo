@@ -6,6 +6,7 @@
     .text
     .code32
     .globl scheduler
+    .globl mode_ring3
 
     # called as a function, `scheduler(node_t *cur_task, node_t *next_task)`
 scheduler:
@@ -40,3 +41,23 @@ scheduler:
 return:
     popl %ebp
     ret
+
+    # called as a function, `mode_ring3(uint32_t *user_stack, void *user_entry)`
+mode_ring3:
+    pushl %ebp
+    movl %esp,           %ebp
+
+    movl $((4 * 8) | 3), %eax
+    movl %eax,           %ds
+    movl %eax,           %es
+    movl %eax,           %fs
+    movl %eax,           %gs
+
+    movl 0x4(%ebp),      %eax   # fetch user stack
+    pushl $((4 * 8) | 3)        # push ss
+    pushl %eax                  # push user stack(esp)
+    pushf                       # push eflags as ring0's
+    pushl $((3 * 8) | 3)
+    movl 0x8(%ebp),      %eax   # fetch user entry
+    pushl %eax
+    iret

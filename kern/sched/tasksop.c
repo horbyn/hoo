@@ -11,6 +11,7 @@ queue_t __queue_running;                                    // scheduling
 static node_t __idle_node, __init_node;
 static uint8_t __init_stack[PGSIZE] = { 0 };                // the stack used by init thread
 spinlock_t __spinlock_disp;
+static uint8_t __init_stack_r3[PGSIZE] = { 0 };
 
 /**
  * @brief initialize the tasks queue
@@ -67,6 +68,20 @@ kernel_init_thread() {
 
     // setup the kernel stack
     uint8_t *pstack = __init_stack + sizeof(__init_stack);
+
+    // always located on the top of new task stack that the `esp`
+    // pointed to when the new task completes its initialization
+    pstack -= sizeof(uint32_t);
+    *((uint32_t *)pstack) = DIED_INSTRUCTION;
+
+    // user mode entry
+    pstack -= sizeof(uint32_t);
+    *((uint32_t *)pstack) = (uint32_t)init_thread;
+
+    // user mode stack
+    pstack -= sizeof(uint32_t);
+    *((uint32_t *)pstack) = (uint32_t)__init_stack_r3 + sizeof(__init_stack_r3);
+
     pstack -= sizeof(istackcpu_t);
     istackcpu_t *workercpu = (istackcpu_t *)pstack;
 
@@ -79,10 +94,9 @@ kernel_init_thread() {
     // setup the thread context
     workercpu->vec_ = 0;
     workercpu->errcode_ = 0;
-    workercpu->oldeip_ = (uint32_t *)init_thread;
+    workercpu->oldeip_ = (uint32_t *)mode_ring3;
     workercpu->oldcs_ = CS_SELECTOR_KERN;
     workercpu->eflags_ = EFLAGS_IF;                         // the new task will enable interrupt
-    workercpu->unused_retaddr_ = DIED_INSTRUCTION;
     workeros->edi_ = 0;
     workeros->esi_ = 0;
     workeros->ebp_ = 0;

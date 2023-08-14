@@ -17,6 +17,7 @@
 #include "kern/disp/disp.h"
 
 extern void isr_part3();
+extern void mode_ring3(uint32_t *, void *);
 extern queue_t __queue_ready;
 extern queue_t __queue_running;
 extern spinlock_t __spinlock_disp;

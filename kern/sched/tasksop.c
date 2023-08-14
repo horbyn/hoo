@@ -10,6 +10,7 @@ queue_t __queue_ready;                                      // wait to schedule
 queue_t __queue_running;                                    // scheduling
 static node_t __idle_node, __init_node;
 static uint8_t __init_stack[PGSIZE] = { 0 };                // the stack used by init thread
+spinlock_t __spinlock_disp;
 
 /**
  * @brief initialize the tasks queue
@@ -115,6 +116,16 @@ kernel_init_thread() {
 void
 init_thread() {
     while (1) {
+        wait(&__spinlock_disp);
         kprint_char('B');
+        signal(&__spinlock_disp);
     }
+}
+
+/**
+ * @brief displaying resource lock initialization
+ */
+void
+init_disp_locks() {
+    spinlock_init(&__spinlock_disp);
 }

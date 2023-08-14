@@ -6,8 +6,6 @@
  ************************************/
 #include "disp.h"
 
-spinlock_t __spinlock_disp;
-
 /**
  * @brief clear screen
  */
@@ -102,7 +100,6 @@ scroll_back() {
  */
 void
 kprint_char(char ch) {
-    wait(&__spinlock_disp);
 
     uint16_t *pv = (uint16_t *)VIDEO_MEM;
     uint16_t pos = get_cursor();
@@ -165,7 +162,6 @@ kprint_char(char ch) {
 
     set_cursor(row, col);
 
-    signal(&__spinlock_disp);
 }
 
 void

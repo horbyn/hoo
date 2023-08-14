@@ -12,8 +12,8 @@
 
 #define CS_SELECTOR_KERN    0x08
 #define DS_SELECTOR_KERN    0x10
-#define CS_SELECTOR_USER    0x18
-#define DS_SELECTOR_USER    0x20
+#define CS_SELECTOR_USER    0x1b                            // 01_1011
+#define DS_SELECTOR_USER    0x23                            // 10_0011
 
 /**
  * @brief definition of access byte field in gdt

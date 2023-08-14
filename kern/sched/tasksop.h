@@ -19,10 +19,12 @@
 extern void isr_part3();
 extern queue_t __queue_ready;
 extern queue_t __queue_running;
+extern spinlock_t __spinlock_disp;
 
 void init_tasks_queue();
 void kernel_idle_thread();
 void kernel_init_thread();
 void init_thread();
+void init_disp_locks();
 
 #endif

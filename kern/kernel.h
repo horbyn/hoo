@@ -14,6 +14,8 @@
 #include "kern/module/inte.h"
 #include "kern/module/sched.h"
 
+extern spinlock_t __spinlock_disp;
+
 void kernel_exec(void);
 void kernel_init(void);
 void idle(void);

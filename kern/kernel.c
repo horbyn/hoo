@@ -31,7 +31,6 @@ kernel_init(void) {
     init_pic();
     init_pit();
     init_interrupt();
-    init_locks();
 
     kprintf("kern base = %x\nkern end = %x\n\n",
         (uint32_t)__kern_base, (uint32_t)__kern_end);
@@ -45,5 +44,9 @@ kernel_init(void) {
  */
 void
 idle(void) {
-    while (1)    kprint_char('A');
+    while (1) {
+        wait(&__spinlock_disp);
+        kprint_char('A');
+        signal(&__spinlock_disp);
+    }
 }

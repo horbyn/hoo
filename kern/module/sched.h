@@ -13,6 +13,5 @@
 #include "kern/disp/disp.h"
 
 void init_scheduler();
-void init_locks();
 
 #endif

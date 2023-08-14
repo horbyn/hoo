@@ -35,8 +35,6 @@ typedef char *va_list;
 #define va_end(a)       \
     ((a) = (va_list)0)
 
-extern spinlock_t __spinlock_disp;
-
 void        clear_screen(void);
 void        set_cursor(int, int);
 uint16_t    get_cursor(void);

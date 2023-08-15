@@ -15,5 +15,5 @@ init_scheduler() {
     init_tasks_queue();
 
     kernel_idle_thread();
-    kernel_init_thread();
+    user_init_thread();
 }

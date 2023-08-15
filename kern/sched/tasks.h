@@ -54,7 +54,8 @@ typedef struct thread_stack {
  * @brief definition of Process Control Block
  */
 typedef struct pcb {
-    uint32_t *thread_stack_;
+    uint32_t *stack_;                                       // either kernel stack or user stack
+    uint32_t *stack0_;                                      // kernel stack
 } pcb_t;
 
 #endif

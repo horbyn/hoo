@@ -123,6 +123,10 @@ timer(void) {
     queue_push(&__queue_running, next);
     queue_push(&__queue_ready, cur);
 
+    // update tss
+    __tss.ss0_ = DS_SELECTOR_KERN;
+    __tss.esp0_ = (uint32_t)((pcb_t *)next->data_)->stack0_;
+
     scheduler(cur, next);
 }
 

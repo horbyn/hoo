@@ -12,6 +12,7 @@ static node_t __idle_node, __init_node;
 static uint8_t __init_stack[PGSIZE] = { 0 };                // the stack used by init thread
 spinlock_t __spinlock_disp;
 static uint8_t __init_stack_r3[PGSIZE] = { 0 };
+uint32_t user = 0;                                          // used to test user thread switching and will be delete later
 
 /**
  * @brief initialize the tasks queue
@@ -20,6 +21,14 @@ void
 init_tasks_queue() {
     queue_init(&__queue_ready);
     queue_init(&__queue_running);
+}
+
+/**
+ * @brief displaying resource lock initialization
+ */
+void
+init_disp_locks() {
+    spinlock_init(&__spinlock_disp);
 }
 
 /**
@@ -33,6 +42,7 @@ kernel_idle_thread() {
 
     pcb_t *idle_pcb = (pcb_t *)(STACK_BOOT - STACK_BOOT_SIZE);
     bzero(idle_pcb, sizeof(pcb_t));
+    idle_pcb->stack0_ = (uint32_t *)STACK_BOOT;
 
     bzero(&__idle_node, sizeof(node_t));
     __idle_node.data_ = idle_pcb;                           // idle node points to its pcb
@@ -46,7 +56,7 @@ kernel_idle_thread() {
  * @brief construct the init thread
  */
 void
-kernel_init_thread() {
+user_init_thread() {
     /*
      ************************************
      * kernel stack of idle thread :    *
@@ -55,7 +65,7 @@ kernel_init_thread() {
      * ├───────────────────────────────┤*
      * │  interrupt stack used by os   │*
      * ├───────────────────────────────┤*
-     * │         thread stack          │*
+     * │          thread stack         │*
      * ├───────────────────────────────┤*
      * │                               │*
      * │                               │*
@@ -113,9 +123,10 @@ kernel_init_thread() {
     workerth->retaddr_ = isr_part3;
 
     // setup the thread pcb
-    pcb_t *init_pcb = (pcb_t *)&__init_stack;
+    pcb_t *init_pcb = (pcb_t *)&__init_stack;               // pcb lies at the bottom of the stack
     bzero(init_pcb, sizeof(pcb_t));
-    init_pcb->thread_stack_ = (uint32_t *)pstack;
+    init_pcb->stack_ = (uint32_t *)pstack;
+    init_pcb->stack0_ = (uint32_t *)((uint32_t)__init_stack + sizeof(__init_stack));
 
     // setup to the ready queue waiting to execute
     bzero(&__init_node, sizeof(node_t));
@@ -130,16 +141,6 @@ kernel_init_thread() {
 void
 init_thread() {
     while (1) {
-        wait(&__spinlock_disp);
-        kprint_char('B');
-        signal(&__spinlock_disp);
+        user++;
     }
-}
-
-/**
- * @brief displaying resource lock initialization
- */
-void
-init_disp_locks() {
-    spinlock_init(&__spinlock_disp);
 }

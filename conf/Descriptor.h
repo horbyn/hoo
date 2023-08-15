@@ -16,11 +16,11 @@
 #define DS_SELECTOR_USER    0x23                            // 10_0011
 
 /**
- * @brief definition of access byte field in gdt
+ * @brief definition of access byte field of those
+ * descriptor not system segment
  */
-typedef struct AccessByteGdt {
+typedef struct AccessByteNotsys {
     /*
-     * used for GDT        
      * ┌─┬──┬─┬─┬─┬──┬──┬─┐
      * │7│ 6│5│4│3│ 2│ 1│0│
      * ├─┼──┴─┼─┼─┼──┼──┼─┤
@@ -32,16 +32,40 @@ typedef struct AccessByteGdt {
     uint8_t rw_  :1;                                        // readable or writable
     uint8_t dc_  :1;                                        // direction or conforming
     uint8_t e_   :1;                                        // executable
-    uint8_t sys_ :1;                                        // sys segment: set if it is
+    uint8_t sys_ :1;                                        // sys segment: clear if it is
     uint8_t dpl_ :2;                                        // privilege
     uint8_t ps_  :1;                                        // present: set if in memory
     
-} __attribute__ ((packed)) AcsGdt_t;
+} __attribute__ ((packed)) AcsNotsys_t;
+
+/**
+ * @brief definition of access byte field in tss
+ * which is belong to system segment
+ */
+typedef struct AccessByteTss {
+    /*
+     * used for TSS        
+     * ┌─┬──┬─┬─┬─┬─┬─┬─┐
+     * │7│ 6│5│4│3│2│1│0│
+     * ├─┼──┴─┼─┼─┼─┼─┼─┤
+     * │P│DPL │S│1│0│B│1│
+     * └─┴────┴─┴─┴─┴─┴─┘
+     */
+
+    uint8_t type1_ :1;                                      // fixed with 1
+    uint8_t type2_ :1;                                      // busy: set if the task is executing
+    uint8_t type3_ :1;                                      // fixed with 0
+    uint8_t type4_ :1;                                      // fixed with 1
+    uint8_t sys_   :1;                                      // sys segment: clear if it is
+    uint8_t dpl_   :2;                                      // privilege
+    uint8_t ps_    :1;                                      // present: set if in memory
+    
+} __attribute__ ((packed)) AcsTss_t;
 
 /**
  * @brief gdt definition
  */
-typedef struct Gdt {
+typedef struct Descriptor {
     uint16_t  limit_15_0_;
     uint16_t  base_15_0_;
     uint8_t   base_23_16_;
@@ -53,8 +77,11 @@ typedef struct Gdt {
      * └─┴────┴─┴─┴──┴──┴─┘
      */
 
-    AcsGdt_t  access_bytes_;
-    uint8_t   limit_19_16_ :4;
+    union {
+        AcsNotsys_t  code_or_data_;
+        AcsTss_t     tss_;
+    } access_bytes_;
+    uint8_t      limit_19_16_ :4;
     /*
      * ┌─┬──┬─┬────────┐
      * │3│ 2│1│       0│
@@ -63,19 +90,19 @@ typedef struct Gdt {
      * └─┴──┴─┴────────┘
      */
 
-    uint8_t   rsv_  : 1;                                    // reserved
+    uint8_t   avl_  : 1;                                    // avilable for use by os(here is not so always clear)
     uint8_t   long_ : 1;                                    // long mode if set
     uint8_t   db_   : 1;                                    // protected mode
     uint8_t   g_    : 1;                                    // granularity
     uint8_t   base_31_24_;
-} __attribute__ ((packed)) Gdt_t;
+} __attribute__ ((packed)) Desc_t;
 
 /**
  * @brief definition of GDTR
  */
 typedef struct GdtRegister {
     uint16_t size_;                                         // gdt size
-    Gdt_t *linear_;                                         // gdt linear base
+    Desc_t *linear_;                                        // gdt linear base
 } __attribute__ ((packed)) Gdtr_t;
 
 #endif

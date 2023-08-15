@@ -7,9 +7,10 @@
 #include "Config.h"
 
 __attribute__ ((section(".config"))) static
-    Gdt_t __gdt[SIZE_GDT];
+    Desc_t __gdt[SIZE_GDT];
 __attribute__ ((section(".config"))) static
     Gdtr_t __gdtr;
+__attribute__ ((section(".config"))) Tss_t __tss;
 __attribute__ ((section(".config"))) static
     ppg_range_t __kphymm;
 __attribute__ ((section(".config"))) static
@@ -26,7 +27,8 @@ __attribute__ ((section(".page"))) static
  */
 void
 kernel_config(void) {
-    config_lgdt();
+    config_gdt();
+    config_tss();
     config_free_list();
     config_paging();
 }
@@ -35,7 +37,7 @@ kernel_config(void) {
  * @brief load gdt
  */
 void
-config_lgdt(void) {
+config_gdt(void) {
     set_gdt(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);         // #0 null
     set_gdt(1, 0xfffff, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1);   // #1 kernel code
     set_gdt(2, 0xfffff, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1);   // #2 kernel data
@@ -43,6 +45,21 @@ config_lgdt(void) {
     set_gdt(4, 0xfffff, 0, 0, 1, 0, 0, 1, 3, 1, 0, 1, 1);   // #4 user data
 
     set_gdtr();
+}
+
+/**
+ * @brief setup tss
+ */
+void
+config_tss(void) {
+    // #5 tss
+    set_gdt(5, sizeof(Tss_t), (uint32_t)&__tss, 1, 0, 0, 1, 0, 3, 1, 0, 1, 0);
+
+    // load tr with seletor #5
+    // note that the busy field of tss descriptor will always be set once
+    // `ltr` its corresponding selector whatever this field set or clear
+    __asm__ ("movw $((5 * 8) | 3), %ax\n\t"
+        "ltr %ax");
 }
 
 /**
@@ -132,22 +149,34 @@ uint8_t rw, uint8_t dc, uint8_t exe, uint8_t sys, uint8_t dpl,
 uint8_t ps, uint8_t l, uint8_t db, uint8_t g) {
     ASSERT(idx >= SIZE_GDT);
 
-    __gdt[idx].limit_15_0_        = (uint16_t)limit;
-    __gdt[idx].limit_19_16_       = (uint8_t)(limit >> 16);
-    __gdt[idx].base_15_0_         = (uint16_t)base;
-    __gdt[idx].base_23_16_        = (uint8_t)(base >> 16);
-    __gdt[idx].base_31_24_        = (uint8_t)(base >> 24);
-    __gdt[idx].access_bytes_.a_   = a;
-    __gdt[idx].access_bytes_.rw_  = rw;
-    __gdt[idx].access_bytes_.dc_  = dc;
-    __gdt[idx].access_bytes_.e_   = exe;
-    __gdt[idx].access_bytes_.sys_ = sys;
-    __gdt[idx].access_bytes_.dpl_ = dpl;
-    __gdt[idx].access_bytes_.ps_  = ps;
-    __gdt[idx].rsv_               = 0;
-    __gdt[idx].long_              = l;
-    __gdt[idx].db_                = db;
-    __gdt[idx].g_                 = g;
+    __gdt[idx].limit_15_0_                          = (uint16_t)limit;
+    __gdt[idx].limit_19_16_                         = (uint8_t)(limit >> 16);
+    __gdt[idx].base_15_0_                           = (uint16_t)base;
+    __gdt[idx].base_23_16_                          = (uint8_t)(base >> 16);
+    __gdt[idx].base_31_24_                          = (uint8_t)(base >> 24);
+    if (sys != 0) {
+        // not system segment
+        __gdt[idx].access_bytes_.code_or_data_.a_   = a;
+        __gdt[idx].access_bytes_.code_or_data_.rw_  = rw;
+        __gdt[idx].access_bytes_.code_or_data_.dc_  = dc;
+        __gdt[idx].access_bytes_.code_or_data_.e_   = exe;
+        __gdt[idx].access_bytes_.code_or_data_.sys_ = 1;
+        __gdt[idx].access_bytes_.code_or_data_.dpl_ = dpl;
+        __gdt[idx].access_bytes_.code_or_data_.ps_  = ps;
+    } else {
+        // system segment
+        __gdt[idx].access_bytes_.tss_.type1_        = 1;
+        __gdt[idx].access_bytes_.tss_.type2_        = rw;
+        __gdt[idx].access_bytes_.tss_.type3_        = 0;
+        __gdt[idx].access_bytes_.tss_.type4_        = 1;
+        __gdt[idx].access_bytes_.tss_.sys_          = 0;
+        __gdt[idx].access_bytes_.tss_.dpl_          = dpl;
+        __gdt[idx].access_bytes_.tss_.ps_           = ps;
+    }
+    __gdt[idx].avl_                                 = 0;
+    __gdt[idx].long_                                = l;
+    __gdt[idx].db_                                  = db;
+    __gdt[idx].g_                                   = g;
 }
 
 /**

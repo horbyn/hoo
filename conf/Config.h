@@ -8,15 +8,19 @@
 #ifndef __CONF_CONFIG_H__
 #define __CONF_CONFIG_H__
 
-#include "Gdt.h"
+#include "Descriptor.h"
 #include "Page.h"
 #include "preconf.h"
+#include "Tss.h"
 #include "kern/assert.h"
 
 #define SIZE_GDT    8                                       // the gdt descriptors amount
 
+extern Tss_t __tss;
+
 void kernel_config(void);
-void config_lgdt(void);
+void config_gdt(void);
+void config_tss(void);
 void config_free_list(void);
 void config_paging(void);
 void set_gdt(size_t idx, uint32_t limit, uint32_t base,

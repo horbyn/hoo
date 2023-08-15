@@ -6,8 +6,6 @@
  ************************************/
 #include "kernel.h"
 
-extern uint8_t __kern_base[], __kern_end[];
-
 /**
  * @brief kernel run!
  */
@@ -46,7 +44,7 @@ void
 idle(void) {
     while (1) {
         wait(&__spinlock_disp);
-        kprint_char('A');
+        kprintf("%x ", user);
         signal(&__spinlock_disp);
     }
 }

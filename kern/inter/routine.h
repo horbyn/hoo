@@ -16,11 +16,13 @@
 #ifndef __KERN_INTER_ROUTINE_H__
 #define __KERN_INTER_ROUTINE_H__
 
+#include "conf/Config.h"
 #include "kern/types.h"
 #include "kern/disp/disp.h"
 #include "kern/sched/tasksop.h"
 
 extern void scheduler(node_t *, node_t *);
+extern Tss_t __tss;
 
 void info(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,

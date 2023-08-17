@@ -18,8 +18,10 @@
 
 #include "conf/Config.h"
 #include "kern/types.h"
+#include "kern/assert.h"
 #include "kern/disp/disp.h"
 #include "kern/sched/tasksop.h"
+#include "kern/syscall/Stuffsysc.h"
 
 extern void scheduler(node_t *, node_t *);
 extern Tss_t __tss;
@@ -31,5 +33,6 @@ uint32_t, uint32_t, uint32_t);
 void isr_default(void);
 void divide_error(void);		                            // #0
 void timer(void);				                            // #32
+extern void syscall(void);                                  // #80
 
 #endif

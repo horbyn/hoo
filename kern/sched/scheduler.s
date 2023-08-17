@@ -56,7 +56,7 @@ mode_ring3:
     movl 0x4(%ebp),      %eax   # fetch user stack
     pushl $((4 * 8) | 3)        # push ss
     pushl %eax                  # push user stack(esp)
-    pushf                       # push eflags as ring0's
+    pushf                       # push eflags as same as ring0's
     pushl $((3 * 8) | 3)
     movl 0x8(%ebp),      %eax   # fetch user entry
     pushl %eax

@@ -129,4 +129,3 @@ timer(void) {
 
     scheduler(cur, next);
 }
-

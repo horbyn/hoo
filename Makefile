@@ -55,7 +55,7 @@ fd1_44M.img: bootsect kernel.elf
 	dd if=bootsect of=fd1_44M.img bs=512 count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
 	dd if=kernel of=fd1_44M.img bs=512 count=896 seek=1 conv=notrunc
-	objdump -SD -m i386 kernel.elf > kernel.elf.d
+	objdump -SD -m i386 kernel.elf > kernel.elf.dis
 
 # --oformat: output the pure binary format
 # -e: entry is `_start` by default, but this option can specify other entrys
@@ -83,4 +83,4 @@ $(OBJC): %.o: %.c
 # -rm: some maybe not exist but we dont care
 clean:
 	-rm -r $(OBJS) $(OBJC) ./boot/bootsect.o bootsect \
-	./kernel ./kernel.elf ./kernel.elf.d ./kernel.map fd1_44M.img
+	./kernel ./kernel.elf ./kernel.elf.dis ./kernel.map fd1_44M.img

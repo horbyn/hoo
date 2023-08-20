@@ -28,6 +28,14 @@
 #define EFLAGS_OF   0x800                                   // overflow flag: overflow if 1
 
 /**
+ * @brief enum of privilege level
+ */
+typedef enum privilege_level {
+    PL_KERN = 0,
+    PL_USER = 3
+} privilege_t;
+
+/**
  * @brief enable intrrupt
  */
 static inline void

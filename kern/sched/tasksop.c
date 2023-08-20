@@ -142,5 +142,6 @@ void
 init_thread() {
     while (1) {
         user++;
+        printf("%x ", user);
     }
 }

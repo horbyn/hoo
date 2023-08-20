@@ -15,6 +15,7 @@
 #include "kern/lib/lib.h"
 #include "kern/lib/queue.h"
 #include "kern/disp/disp.h"
+#include "user/user.h"
 
 extern void isr_part3();
 extern void mode_ring3(uint32_t *, void *);

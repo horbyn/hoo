@@ -55,6 +55,7 @@ ISRNOERR 30
 ISRNOERR 31
 ISRNOERR 32
 ISRNOERR 33
+ISRNOERR 128
 
 # isr array
 isr_part1:
@@ -69,8 +70,10 @@ isr_part1:
     .long isr_part1_24, isr_part1_25, isr_part1_26
     .long isr_part1_27, isr_part1_28, isr_part1_29
     .long isr_part1_30, isr_part1_31
-    .long isr_part1_32  # timer
-    .long isr_part1_33  # default
+    .long isr_part1_32                  # timer
+    .long isr_part1_33                  # default
+    .zero ((127 - 34 + 1) * 4)          # fill with 0
+    .long isr_part1_128                 # system call
 
 # trampoline routine entry
 isr_part2:

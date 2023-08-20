@@ -70,27 +70,25 @@ static char *__exception_names[] = {
  * @param eflags 
  */
 void
-info(uint32_t isr_ebp, uint32_t isr_to_part2, uint32_t edi,
-uint32_t esi, uint32_t ebp, uint32_t esp, uint32_t ebx,
-uint32_t edx, uint32_t ecx, uint32_t eax, uint32_t ss,
-uint32_t gs,  uint32_t fs,  uint32_t es, uint32_t ds,
-uint32_t idx, uint32_t ecode, uint32_t eip, uint32_t cs,
-uint32_t eflags) {
-    clear_screen();
-    set_cursor(0, 0);
+info(uint32_t prev_stackframe_ebp, uint32_t prev_stackframe_retaddr,
+uint32_t edi, uint32_t esi, uint32_t ebp, uint32_t esp, uint32_t ebx,
+uint32_t edx, uint32_t ecx, uint32_t eax, uint32_t ss,  uint32_t gs,
+uint32_t fs,  uint32_t es,  uint32_t ds,  uint32_t idx, uint32_t ecode,
+uint32_t eip, uint32_t cs,  uint32_t eflags) {
 
-    kprintf(">>>>> %s <<<<<\n\n", __exception_names[idx]);
-    kprintf("\nEFLAGS = %x\nCS = %x\nEIP = %x"
-        "\nECODE = %x\n", eflags, (cs & 0xffff),
-        eip, ecode);
-    kprintf("DS = %x\nES = %x\nFS = %x\nGS = %x\n"
-        "SS = %x\n", (ds & 0xffff), (es & 0xffff),
-        (fs & 0xffff), (gs & 0xffff), (ss & 0xffff));
-    kprintf("EAX = %x\nECX = %x\nEDX = %x\nEBX = %x\n"
-        "ESP = %x\nEBP = %x\nESI = %x\nEDI = %x\n",
-        eax, ecx, edx, ebx, esp, ebp, esi, edi);
-    kprintf("ISR2PART2 = %x\nISP_EBP = %x\n",
-        isr_to_part2, isr_ebp);
+    idx = idx <= (NELEMS(__exception_names) - 2) ?
+        idx : (NELEMS(__exception_names) - 2);
+    kprintf("\n>>>>> %d: %s <<<<<\n", idx, __exception_names[idx]);
+    kprintf("\nEFLAGS = %x\nCS = %x\nEIP = %x\nECODE = %x\n",
+        eflags, (cs & 0xffff), eip, ecode);
+    kprintf("DS = %x\nES = %x\nFS = %x\nGS = %x\nSS = %x\n",
+        (ds & 0xffff), (es & 0xffff), (fs & 0xffff), (gs & 0xffff),
+        (ss & 0xffff));
+    kprintf("EAX = %x\nECX = %x\nEDX = %x\nEBX = %x\nESP = %x\n"
+        "EBP = %x\nESI = %x\nEDI = %x\n", eax, ecx, edx, ebx, esp,
+        ebp, esi, edi);
+    kprintf("PREV_STACKFRAME_RET = %x\nPREV_STACKFRAME_EBP = %x\n",
+        prev_stackframe_retaddr, prev_stackframe_ebp);
 }
 
 /**

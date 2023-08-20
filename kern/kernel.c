@@ -43,8 +43,8 @@ kernel_init(void) {
 void
 idle(void) {
     while (1) {
-        wait(&__spinlock_disp);
-        kprintf("%x ", user);
-        signal(&__spinlock_disp);
+        //wait(&__spinlock_disp);
+        //kprintf("%x ", user);
+        //signal(&__spinlock_disp);
     }
 }

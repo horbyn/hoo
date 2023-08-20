@@ -23,6 +23,10 @@
 #include "kern/sched/tasksop.h"
 #include "kern/syscall/Stuffsysc.h"
 
+#define ISR0_DIVISION_ERROR     0
+#define ISR32_TIMER             32
+#define ISR128_SYSCALL          128
+
 extern void scheduler(node_t *, node_t *);
 extern Tss_t __tss;
 

@@ -12,6 +12,8 @@
  */
 void
 queue_init(queue_t *q) {
+    ASSERT(q == null);
+
     q->null_.data_ = null;
     q->null_.next_ = null;
 
@@ -27,17 +29,21 @@ queue_init(queue_t *q) {
  */
 bool
 queue_isempty(queue_t *q) {
+    ASSERT(q == null);
+
     return (q->head_ == q->tail_);
 }
 
 /**
- * @brief enqueuing
+ * @brief enqueuing (tail-enqueue)
  * 
  * @param q the queue needed to operate
  * @param n the enqueuing node
  */
 void
 queue_push(queue_t *q, node_t *n) {
+    ASSERT(q == null || n == null);
+
     n->next_ = null;
 
     q->tail_->next_ = n;
@@ -52,6 +58,8 @@ queue_push(queue_t *q, node_t *n) {
  */
 node_t *
 queue_pop(queue_t *q) {
+    ASSERT(q == null);
+
     if (queue_isempty(q))    return null;
 
     node_t *del = q->head_->next_;

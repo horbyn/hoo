@@ -9,6 +9,7 @@
 #define __KERN_LIB_QUEUE_H__
 
 #include "kern/types.h"
+#include "kern/assert.h"
 
 /**
  * @brief definition of queue node

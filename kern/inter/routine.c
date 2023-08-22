@@ -76,9 +76,9 @@ uint32_t edx, uint32_t ecx, uint32_t eax, uint32_t ss,  uint32_t gs,
 uint32_t fs,  uint32_t es,  uint32_t ds,  uint32_t idx, uint32_t ecode,
 uint32_t eip, uint32_t cs,  uint32_t eflags) {
 
-    idx = idx <= (NELEMS(__exception_names) - 2) ?
+    uint32_t arr_idx = idx <= (NELEMS(__exception_names) - 2) ?
         idx : (NELEMS(__exception_names) - 2);
-    kprintf("\n>>>>> %d: %s <<<<<\n", idx, __exception_names[idx]);
+    kprintf("\n>>>>> %d: %s <<<<<\n", idx, __exception_names[arr_idx]);
     kprintf("\nEFLAGS = %x\nCS = %x\nEIP = %x\nECODE = %x\n",
         eflags, (cs & 0xffff), eip, ecode);
     kprintf("DS = %x\nES = %x\nFS = %x\nGS = %x\nSS = %x\n",
@@ -114,16 +114,25 @@ divide_error(void) {
  */
 void
 timer(void) {
-    // change two tasks queue
     node_t *cur = queue_pop(&__queue_running);
     node_t *next = queue_pop(&__queue_ready);
 
-    queue_push(&__queue_running, next);
-    queue_push(&__queue_ready, cur);
+    if (next) {
+        queue_push(&__queue_running, next);
 
-    // update tss
-    __tss.ss0_ = DS_SELECTOR_KERN;
-    __tss.esp0_ = (uint32_t)((pcb_t *)next->data_)->stack0_;
+        // update tss
+        __tss.ss0_ = DS_SELECTOR_KERN;
+        __tss.esp0_ = (uint32_t)((pcb_t *)next->data_)->stack0_;
 
-    scheduler(cur, next);
+        // only change tasks when the `next` task exists
+        if (cur)
+            queue_push(&__queue_ready, cur);
+        
+        scheduler(cur, next);
+    } // need not to change when `next` not exists
+    else {
+        // no `next` task while `cur` exists, then enqueuing `cur` back
+        if (cur)    queue_push(&__queue_running, cur);
+    }
+
 }

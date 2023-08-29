@@ -58,7 +58,6 @@ static char *__exception_names[] = {
  * @param edx 
  * @param ecx 
  * @param eax 
- * @param ss 
  * @param gs 
  * @param fs 
  * @param es 
@@ -72,18 +71,20 @@ static char *__exception_names[] = {
 void
 info(uint32_t prev_stackframe_ebp, uint32_t prev_stackframe_retaddr,
 uint32_t edi, uint32_t esi, uint32_t ebp, uint32_t esp, uint32_t ebx,
-uint32_t edx, uint32_t ecx, uint32_t eax, uint32_t ss,  uint32_t gs,
-uint32_t fs,  uint32_t es,  uint32_t ds,  uint32_t idx, uint32_t ecode,
+uint32_t edx, uint32_t ecx, uint32_t eax, uint32_t gs,  uint32_t fs,
+uint32_t es,  uint32_t ds,  uint32_t idx, uint32_t ecode,
 uint32_t eip, uint32_t cs,  uint32_t eflags) {
+    uint32_t vec = 0;
+    __asm__ ("movl 64(%%ebp), %0": "=a"(vec) ::);
+    if (vec == 0x27 || vec == 0x2f)    return;              // spurious interrupt is not int'
 
     uint32_t arr_idx = idx <= (NELEMS(__exception_names) - 2) ?
         idx : (NELEMS(__exception_names) - 2);
-    kprintf("\n>>>>> %d: %s <<<<<\n", idx, __exception_names[arr_idx]);
+    kprintf("\n>>>>> %x: %s <<<<<\n", idx, __exception_names[arr_idx]);
     kprintf("\nEFLAGS = %x\nCS = %x\nEIP = %x\nECODE = %x\n",
         eflags, (cs & 0xffff), eip, ecode);
-    kprintf("DS = %x\nES = %x\nFS = %x\nGS = %x\nSS = %x\n",
-        (ds & 0xffff), (es & 0xffff), (fs & 0xffff), (gs & 0xffff),
-        (ss & 0xffff));
+    kprintf("DS = %x\nES = %x\nFS = %x\nGS = %x\n",
+        (ds & 0xffff), (es & 0xffff), (fs & 0xffff), (gs & 0xffff));
     kprintf("EAX = %x\nECX = %x\nEDX = %x\nEBX = %x\nESP = %x\n"
         "EBP = %x\nESI = %x\nEDI = %x\n", eax, ecx, edx, ebx, esp,
         ebp, esi, edi);
@@ -96,15 +97,6 @@ uint32_t eip, uint32_t cs,  uint32_t eflags) {
  */
 void
 isr_default(void) {
-    __asm__ volatile ("call info\n\t"::);
-    __asm__ volatile ("hlt\n\t"::);
-}
-
-/**
- * @brief handling division of zero
- */
-void
-divide_error(void) {
     __asm__ volatile ("call info\n\t"::);
     __asm__ volatile ("hlt\n\t"::);
 }

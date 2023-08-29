@@ -24,6 +24,7 @@ typedef enum icw1 {
  * @brief x86 icw4 command
  */
 typedef enum icw4 {
+    ICW4_NONE = 0,
     ICW4_AUTO = 2,                                          // Auto (normal) EOI
     ICW4_BUF_SLAVE = 8,                                     // Buffered mode/slave
     ICW4_BUF_MASTER = 0xc,                                  // Buffered mode/master

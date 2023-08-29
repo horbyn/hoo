@@ -115,7 +115,6 @@ user_init_thread() {
     workeros->edx_ = 0;
     workeros->ecx_ = 0;
     workeros->eax_ = 0;
-    workeros->ss_ = DS_SELECTOR_KERN;
     workeros->gs_ = DS_SELECTOR_KERN;
     workeros->fs_ = DS_SELECTOR_KERN;
     workeros->es_ = DS_SELECTOR_KERN;
@@ -141,7 +140,7 @@ user_init_thread() {
 void
 init_thread() {
     while (1) {
-        user++;
-        printf("%x ", user);
+        //user++;
+        printf("User ");
     }
 }

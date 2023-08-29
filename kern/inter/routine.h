@@ -23,7 +23,6 @@
 #include "kern/sched/tasksop.h"
 #include "kern/syscall/Stuffsysc.h"
 
-#define ISR0_DIVISION_ERROR     0
 #define ISR32_TIMER             32
 #define ISR128_SYSCALL          128
 
@@ -33,9 +32,8 @@ extern Tss_t __tss;
 void info(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-uint32_t, uint32_t, uint32_t);
+uint32_t, uint32_t);
 void isr_default(void);
-void divide_error(void);		                            // #0
 void timer(void);				                            // #32
 extern void syscall(void);                                  // #80
 

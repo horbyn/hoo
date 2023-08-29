@@ -23,7 +23,6 @@ typedef struct interrupt_stack_os {
     uint32_t edx_;
     uint32_t ecx_;
     uint32_t eax_;
-    uint32_t ss_;
     uint32_t gs_;
     uint32_t fs_;
     uint32_t es_;

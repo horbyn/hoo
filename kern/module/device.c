@@ -14,15 +14,15 @@ init_pic(void) {
     set_icw1(ICW1_ICW4);                                    // level; cascade; icw4
     set_icw2(0x20, 0x28);
     set_icw3(2);
-    set_icw4(ICW4_AUTO);                                    // CFNM; no-buffer; auto EOI
+    set_icw4(ICW4_AUTO);                                    // CFNM; no-buffer; normal EOI
 
     enable_mask_ocw1(IRQ_TIMER);                            // irq#0
     disable_mask_ocw1(IRQ_KEYBOARD);                        // irq#1
-    enable_mask_ocw1(IRQ_CASCADE);                          // irq#2
+    disable_mask_ocw1(IRQ_CASCADE);                         // irq#2
     disable_mask_ocw1(IRQ_COM2);                            // irq#3
     disable_mask_ocw1(IRQ_COM1);                            // irq#4
     disable_mask_ocw1(IRQ_LPT2);                            // irq#5
-    enable_mask_ocw1(IRQ_FLOPPY);                           // irq#6
+    disable_mask_ocw1(IRQ_FLOPPY);                          // irq#6
     disable_mask_ocw1(IRQ_LPT1);                            // irq#7
     disable_mask_ocw1(IRQ_CMOS_RTC);                        // irq#8
     disable_mask_ocw1(IRQ_ACPI);                            // irq#9

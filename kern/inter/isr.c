@@ -21,20 +21,16 @@ init_isr_idt(void) {
     for (size_t i = 0; i < IDT_ENTRIES_NUM; ++i)
         set_isr_entry(i, (uint32_t)isr_default);
 
-    // set __isr[0]; __isr[IDT_NEED_TO_INIT_NUM - 1]
-    set_isr_entry(ISR0_DIVISION_ERROR, (uint32_t)divide_error);
+    // set timer(), syscall()
     set_isr_entry(ISR32_TIMER, (uint32_t)timer);
     set_isr_entry(ISR128_SYSCALL, (uint32_t)syscall);
 
     // set __idt[]
-    // the first cycle makes the former 33 idts point to their corresponding isr;
-    // the last cycle makes all the rest idts point to the default handling;
+    // all the idts point to the default handling;
     // after that, idt #128 that corresponding to isr #34 points to system call
     // which need dpl 3
-    for (size_t i = 0; i < IDT_NEED_TO_INIT_NUM; ++i)
+    for (size_t i = 0; i < IDT_ENTRIES_NUM; ++i)
         set_idt_entry(PL_KERN, i, (uint32_t)isr_part1[i]);
-    for (size_t i = IDT_NEED_TO_INIT_NUM; i < IDT_ENTRIES_NUM; ++i)
-        set_idt_entry(PL_KERN, i, (uint32_t)isr_part1[IDT_NEED_TO_INIT_NUM]);
     set_idt_entry(PL_USER, ISR128_SYSCALL, (uint32_t)isr_part1[ISR128_SYSCALL]);
 
     // load idtr

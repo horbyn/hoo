@@ -45,6 +45,7 @@ idle(void) {
     while (1) {
         //wait(&__spinlock_disp);
         //kprintf("%x ", user);
+        kprintf("Kernel ");
         //signal(&__spinlock_disp);
     }
 }

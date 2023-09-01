@@ -140,7 +140,8 @@ user_init_thread() {
 void
 init_thread() {
     while (1) {
-        //user++;
-        printf("User ");
+        user++;
+        printf("%x ", user);
+        //printf("User ");
     }
 }

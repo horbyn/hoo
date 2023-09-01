@@ -11,10 +11,6 @@
 #include "types.h"
 #include "conf/Config.h"
 
-// Descriptor type
-
-#define GATE_INTERRUPT  0x0e
-
 // Eflags
 
 #define EFLAGS_CP   0x1                                     // carry flag: carry if 1
@@ -34,6 +30,14 @@ typedef enum privilege_level {
     PL_KERN = 0,
     PL_USER = 3
 } privilege_t;
+
+/**
+ * @brief enum of gate descriptor
+ */
+typedef enum gate_descriptor {
+    INTER_GATE = 0x0e,
+    TRAP_GATE = 0x0f
+} gatedesc_t;
 
 /**
  * @brief enable intrrupt

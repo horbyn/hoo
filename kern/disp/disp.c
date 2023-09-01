@@ -6,220 +6,66 @@
  ************************************/
 #include "disp.h"
 
+static spinlock_t __slock_cga;
+
 /**
- * @brief clear screen
+ * @brief cga hardware initialization
  */
 void
-clear_screen(void) {
-    uint8_t *p = (uint8_t *)VIDEO_MEM;
-
-    // VGA text mode
-    for (int i = 0; i < VGA_HIGH * VGA_WIDTH; ++i) {
-        *p++ = ' ';
-        *p++ = 0x0f;    // bg: black and fg: white
-    }
+init_cga(void) {
+    spinlock_init(&__slock_cga);
+    clear_screen();
 }
 
 /**
- * @brief Set the cursor
- * 
- * @param row row
- * @param col column
- */
-void
-set_cursor(int row, int col) {
-    // CRT:
-    // addr = 0x3d4; data = 0x3d5
-    // CRT Data
-    // 0xe: cursor location high reg
-    // 0xf: cursor location low reg
-
-    uint16_t pos = ROWCOL_TO_POS(row, col);
-
-    uint8_t low = pos & 0xff;
-    uint16_t hig = pos & 0xff00;
-    hig >>= 8;
-    // set low 8-bit
-    outb(0xf, 0x3d4);
-    outb(low, 0x3d5);
-
-    // set high 8-bit
-    outb(0xe, 0x3d4);
-    outb((uint8_t)hig, 0x3d5);
-}
-
-/**
- * @brief Get the cursor
- * 
- * @return pos the index about the memory that regard as a array
- */
-uint16_t
-get_cursor(void) {
-    uint8_t low;
-    uint16_t hig;
-    outb(0xf, 0x3d4);                                       // low
-    low = inb(0x3d5);
-    outb(0xe, 0x3d4);                                       // high
-    hig = inb(0x3d5);
-
-    return ((hig <<= 8) | low);
-}
-
-/**
- * @brief scroll back a line
- * 
- */
-void
-scroll_back() {
-    // scroll all lines but first line
-    for (size_t i = 1; i <= VGA_HIGH - 1; ++i) {
-        for (int j = 0; j < VGA_WIDTH; ++j) {
-            uint32_t from = VIDEO_MEM + (i * VGA_WIDTH + j) * 2;
-            uint32_t to = VIDEO_MEM + ((i - 1) * VGA_WIDTH + j) * 2;
-            uint16_t *pfrom = (uint16_t *)from;
-            uint16_t *pto = (uint16_t *)to;
-
-            *pto = *pfrom;
-        }
-
-        // last one fill in space
-        if (i == VGA_HIGH - 1) {
-            uint16_t *pv = (uint16_t *)VIDEO_MEM;
-            pv += (VGA_HIGH - 1) * VGA_WIDTH;
-            for (size_t j = 0; j < VGA_WIDTH; ++j, ++pv)
-                *pv = 0xf20;
-        }
-    }
-
-}
-
-/**
- * @brief print a character
- * 
- * @param ch character
+ * @brief kernel print character
+ * @param ch the character to be printed
  */
 void
 kprint_char(char ch) {
-
-    uint16_t *pv = (uint16_t *)VIDEO_MEM;
-    uint16_t pos = get_cursor();
-    int row = POS_TO_ROW(pos), col = POS_TO_COL(pos);
-
-    // text mode
-    uint16_t tch = 0;
-    tch |= 0xf00;
-
-    // special: `\b` `\t` `\n`
-    if (ch == '\b') {
-        if (!(row == 0 && col == 0)) {
-            do {
-                pos--;
-
-                // new v.m. addr
-                pv = (uint16_t *)VIDEO_MEM;
-                pv += pos;
-                tch |= ' ';
-                *pv = tch;
-
-                if (col - 1 < 0) {
-                    col = VGA_WIDTH - 1;
-                    row--;
-                } else    col -= 1;
-            } while ((*(pv - 1) | 0xff20) == 0xff20);
-        }
-    } else if (ch == '\t') {
-        // mod 4
-        int spaces = SIZE_TAG - (pos % SIZE_TAG);
-        tch |= ' ';
-
-        // fill with spaces
-        pv += pos;
-        for (size_t i = 0; i < spaces; ++i, ++pv)
-            *pv = tch;
-        
-        // update col, row
-        if (col + spaces >= VGA_WIDTH) {
-            row++;
-            col = 0;
-        } else    col += spaces;
-    } else if (ch == '\n') {
-        // only affect cursor
-        if (row <= VGA_HIGH - 2)    row++;
-        else    scroll_back();
-
-        col = 0;
-    } else {
-        pv += pos;
-        tch |= ch;
-        *pv = tch;
-
-        if (col + 1 >= VGA_WIDTH) {
-            col = 0;
-            if (row <= VGA_HIGH - 2)    row++;
-            else    scroll_back();
-        } else    col += 1;
-    }
-
-    set_cursor(row, col);
-
+    wait(&__slock_cga);
+    cga_putc(ch);
+    signal(&__slock_cga);
 }
 
+/**
+ * @brief kernel print string
+ * @param str the string to be printed
+ */
 void
 kprint_str(const char *str) {
-    size_t str_len = strlen(str);
-
-    for (size_t i = 0; i < str_len; ++i)
-        kprint_char(str[i]);
+    wait(&__slock_cga);
+    cga_putstr(str, strlen(str));
+    signal(&__slock_cga);
 }
 
+/**
+ * @brief kernel print decimal digit
+ * @param dig the dig to be printed
+ */
 void
 kprint_int(int dig) {
-    if (dig == 0) {
-        kprint_char('0');
-        return;
-    }
-
-    char arr_dig[32];
-    memset(arr_dig, 0, sizeof(arr_dig));
-
-    int i = 0;
-    while (dig) {
-        int remaider = dig % 10;
-        arr_dig[i] = ('0' + remaider);
-        dig /= 10;
-        ++i;
-    }
-
-    while (i)
-        kprint_char(arr_dig[--i]);
+    wait(&__slock_cga);
+    cga_putint(dig);
+    signal(&__slock_cga);
 }
 
+/**
+ * @brief kernel print hex digit
+ * @param hex the dig to be printed
+ */
 void
-kprint_hex(uint32_t dig) {
-    if (dig == 0) {
-        kprint_char('0');
-        return;
-    }
-
-    char arr_dig[32];
-    memset(arr_dig, 0, sizeof(arr_dig));
-
-    int i = 0;
-    while (dig) {
-        int remaider = dig % 16;
-        if (remaider <= 9)
-            arr_dig[i] = (char)('0' + remaider);
-        else
-            arr_dig[i] = (char)(87 + remaider);
-        dig /= 16;
-        ++i;
-    }
-
-    kprint_str("0x");
-    while (i)
-        kprint_char(arr_dig[--i]);
+kprint_hex(uint32_t hex) {
+    wait(&__slock_cga);
+    cga_puthex(hex);
+    signal(&__slock_cga);
 }
 
+/**
+ * @brief kernel formatting print
+ * @param format formatting string
+ * @param ... other
+ */
 void
 kprintf(const char *format, ...) {
     va_list va;

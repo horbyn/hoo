@@ -11,8 +11,6 @@
 #include "kern/x86.h"
 #include "kern/types.h"
 
-
-
 /**
  * @brief binary somaphore -- spinlock definition
  */

@@ -30,8 +30,8 @@ init_isr_idt(void) {
     // after that, idt #128 that corresponding to isr #34 points to system call
     // which need dpl 3
     for (size_t i = 0; i < IDT_ENTRIES_NUM; ++i)
-        set_idt_entry(PL_KERN, i, (uint32_t)isr_part1[i]);
-    set_idt_entry(PL_USER, ISR128_SYSCALL, (uint32_t)isr_part1[ISR128_SYSCALL]);
+        set_idt_entry(PL_KERN, INTER_GATE, i, (uint32_t)isr_part1[i]);
+    set_idt_entry(PL_USER, TRAP_GATE, ISR128_SYSCALL, (uint32_t)isr_part1[ISR128_SYSCALL]);
 
     // load idtr
     __idtr.limit = sizeof(__idt) - 1;
@@ -46,9 +46,9 @@ init_isr_idt(void) {
  * @param addr routine entry
  */
 void
-set_idt_entry(privilege_t dpl, int id, uint32_t addr) {
+set_idt_entry(privilege_t dpl, gatedesc_t gate, int id, uint32_t addr) {
     // the high 4 bytes are `P/DPL/0`
-    uint8_t attr = (1 << 7 | dpl << 5 | GATE_INTERRUPT);
+    uint8_t attr = (1 << 7 | dpl << 5 | (uint8_t)gate);
 
     __idt[id].isr_low = (uint16_t)addr;
     __idt[id].selector = CS_SELECTOR_KERN;

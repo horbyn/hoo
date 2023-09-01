@@ -8,19 +8,10 @@
 #ifndef __KERN_DISP_DISP_H__
 #define __KERN_DISP_DISP_H__
 
-#include "conf/preconf.h"
+#include "device/cga.h"
 #include "kern/types.h"
-#include "kern/x86.h"
-#include "kern/lib/lib.h"
 #include "kern/lib/spinlock.h"
 
-#define VIDEO_MEM               (0xb8000+KERN_HIGH_MAPPING) // video mm. base
-#define VGA_WIDTH               80
-#define VGA_HIGH                25
-#define ROWCOL_TO_POS(row, col) ((row)*(VGA_WIDTH)+(col))
-#define POS_TO_ROW(pos)         ((pos)/(VGA_WIDTH))
-#define POS_TO_COL(pos)         ((pos)%(VGA_WIDTH))
-#define SIZE_TAG                4
 #define POINTER_SIZE            (sizeof(const char *))
 #define TYPE_TO_POINTER_SIZE(type) \
     ((sizeof(type) - 1) / POINTER_SIZE + 1)
@@ -35,14 +26,11 @@ typedef char *va_list;
 #define va_end(a)       \
     ((a) = (va_list)0)
 
-void        clear_screen(void);
-void        set_cursor(int, int);
-uint16_t    get_cursor(void);
-void        scroll_back(void);
-void        kprint_char(char);
-void        kprint_str(const char *);
-void        kprint_int(int);
-void        kprint_hex(uint32_t);
-void        kprintf(const char *, ...);
+void init_cga(void);
+void kprint_char(char);
+void kprint_str(const char *);
+void kprint_int(int);
+void kprint_hex(uint32_t);
+void kprintf(const char *, ...);
 
 #endif

@@ -23,16 +23,17 @@ kernel_exec(void) {
  */
 void
 kernel_init(void) {
-    clear_screen();
-    set_cursor(0, 0);
 
     init_pic();
     init_pit();
     init_interrupt();
 
+    init_cga();
+    enable_intr();
     kprintf("kern base = %x\nkern end = %x\n\n",
         (uint32_t)__kern_base, (uint32_t)__kern_end);
 
+    disable_intr();
     init_scheduler();
     enable_intr();
 }

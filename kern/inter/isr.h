@@ -14,7 +14,7 @@
 extern void syscall(void);
 
 void init_isr_idt(void);
-void set_idt_entry(privilege_t, int, uint32_t);
+void set_idt_entry(privilege_t, gatedesc_t, int, uint32_t);
 void set_isr_entry(int, uint32_t);
 
 #endif

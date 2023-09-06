@@ -15,7 +15,7 @@
  * @brief binary somaphore -- spinlock definition
  */
 typedef struct spinlock {
-    bool islock_;                                           // true if someone holds the lock
+    uint32_t islock_;                                       // true if someone holds the lock
 } spinlock_t;
 
 void spinlock_init(spinlock_t *);

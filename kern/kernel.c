@@ -12,6 +12,7 @@
 void
 kernel_exec(void) {
     kernel_init();
+    enable_intr();
     idle();
 
     // DONT RETURN
@@ -27,15 +28,12 @@ kernel_init(void) {
     init_pic();
     init_pit();
     init_interrupt();
-
     init_cga();
-    enable_intr();
+    init_scheduler();
+
     kprintf("kern base = %x\nkern end = %x\n\n",
         (uint32_t)__kern_base, (uint32_t)__kern_end);
 
-    disable_intr();
-    init_scheduler();
-    enable_intr();
 }
 
 /**
@@ -43,10 +41,8 @@ kernel_init(void) {
  */
 void
 idle(void) {
+
     while (1) {
-        //wait(&__spinlock_disp);
-        //kprintf("%x ", user);
         kprintf("Kernel ");
-        //signal(&__spinlock_disp);
     }
 }

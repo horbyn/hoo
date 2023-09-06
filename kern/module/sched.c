@@ -11,9 +11,8 @@
  */
 void
 init_scheduler() {
-    init_disp_locks();
-    init_tasks_queue();
 
+    init_tasks_queue();
     kernel_idle_thread();
     user_init_thread();
 }

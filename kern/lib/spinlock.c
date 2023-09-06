@@ -13,7 +13,7 @@
  */
 void
 spinlock_init(spinlock_t *spin) {
-    spin->islock_ = false;                                  // nobody holds the lock
+    spin->islock_ = 0;                                      // nobody holds the lock
 }
 
 /**
@@ -24,15 +24,12 @@ spinlock_init(spinlock_t *spin) {
 void
 wait(spinlock_t *spin) {
 
-    // wait if the lock is holded by someone
-    while (spin->islock_ == true);
-
-    disable_intr();
-
-    // hold the lock
-    spin->islock_ = true;
-
-    enable_intr();
+    __asm__ ("1:\n\t"
+        "testl $1, %0\n\t"
+        "jnz 1b\n\t"
+        "lock bts $0, %0\n\t"
+        "jc 1b\n\t"
+        : "=m"(*spin) ::);
 }
 
 /**
@@ -42,9 +39,6 @@ wait(spinlock_t *spin) {
  */
 void
 signal(spinlock_t *spin) {
-    disable_intr();
 
-    spin->islock_ = false;
-
-    enable_intr();
+    __asm__ ("movl $0, %0" :: "m"(*spin) :);
 }

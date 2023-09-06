@@ -15,8 +15,6 @@
 #include "kern/module/sched.h"
 
 extern uint8_t __kern_base[], __kern_end[];
-extern spinlock_t __spinlock_disp;
-extern uint32_t user;
 
 void kernel_exec(void);
 void kernel_init(void);

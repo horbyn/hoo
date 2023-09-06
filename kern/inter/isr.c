@@ -23,6 +23,7 @@ init_isr_idt(void) {
 
     // set timer(), syscall()
     set_isr_entry(ISR32_TIMER, (uint32_t)timer);
+    set_isr_entry(ISR38_FLOPPY, (uint32_t)floppy_driver);
     set_isr_entry(ISR128_SYSCALL, (uint32_t)syscall);
 
     // set __idt[]

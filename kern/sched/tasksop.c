@@ -10,9 +10,7 @@ queue_t __queue_ready;                                      // wait to schedule
 queue_t __queue_running;                                    // scheduling
 static node_t __idle_node, __init_node;
 static uint8_t __init_stack[PGSIZE] = { 0 };                // the stack used by init thread
-spinlock_t __spinlock_disp;
 static uint8_t __init_stack_r3[PGSIZE] = { 0 };
-uint32_t user = 0;                                          // used to test user thread switching and will be delete later
 
 /**
  * @brief initialize the tasks queue
@@ -21,14 +19,6 @@ void
 init_tasks_queue() {
     queue_init(&__queue_ready);
     queue_init(&__queue_running);
-}
-
-/**
- * @brief displaying resource lock initialization
- */
-void
-init_disp_locks() {
-    spinlock_init(&__spinlock_disp);
 }
 
 /**
@@ -139,9 +129,9 @@ user_init_thread() {
  */
 void
 init_thread() {
+    uint32_t user = 0;
+
     while (1) {
-        user++;
-        printf("%x ", user);
-        //printf("User ");
+        printf("%x ", ++user);
     }
 }

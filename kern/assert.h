@@ -13,7 +13,8 @@
  */
 #define ASSERT(condition)                               \
     do {                                                \
-        if (condition)    __asm__ __volatile__ ("hlt"); \
+        if (condition)                                  \
+            __asm__ __volatile__ ("cli\n\thlt");        \
     } while(0)
 
 #endif

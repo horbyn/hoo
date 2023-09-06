@@ -90,6 +90,8 @@ uint32_t eip, uint32_t cs,  uint32_t eflags) {
         ebp, esi, edi);
     kprintf("PREV_STACKFRAME_RET = %x\nPREV_STACKFRAME_EBP = %x\n",
         prev_stackframe_retaddr, prev_stackframe_ebp);
+
+    __asm__ volatile ("hlt\n\t"::);
 }
 
 /**
@@ -98,7 +100,6 @@ uint32_t eip, uint32_t cs,  uint32_t eflags) {
 void
 isr_default(void) {
     __asm__ volatile ("call info\n\t"::);
-    __asm__ volatile ("hlt\n\t"::);
 }
 
 /**
@@ -127,4 +128,12 @@ timer(void) {
         if (cur)    queue_push(&__queue_running, cur);
     }
 
+}
+
+/**
+ * @brief floppy controller (stub)
+ */
+void
+floppy_driver(void) {
+    return;
 }

@@ -24,6 +24,7 @@
 #include "kern/syscall/Stuffsysc.h"
 
 #define ISR32_TIMER             32
+#define ISR38_FLOPPY            38
 #define ISR128_SYSCALL          128
 
 extern void scheduler(node_t *, node_t *);
@@ -35,6 +36,7 @@ uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
 uint32_t, uint32_t);
 void isr_default(void);
 void timer(void);				                            // #32
+void floppy_driver(void);				                    // #38
 extern void syscall(void);                                  // #80
 
 #endif

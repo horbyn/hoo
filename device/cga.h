@@ -9,6 +9,7 @@
 #define __DEVICE_CGA_H__
 
 #include "conf/preconf.h"
+#include "kern/assert.h"
 #include "kern/types.h"
 #include "kern/x86.h"
 #include "kern/lib/lib.h"

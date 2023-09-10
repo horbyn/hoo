@@ -65,56 +65,61 @@ cf0:
     # ####              function 3.                ####
     # #### kernel loading from disk to mm.(0x1000) ####
     .set SEG_KERN,      0x100
-    .set SEC_144M,      18  # the specification for sector of 1.44M floppy
+    .set SEC,           63  # the specification for sector of boot device
+    .set HEAD,          16  # the specification for head of boot device
     .set SEC_CR,        896 # the amount of sector to be loaded (≈448KB)
     movw %cs,           %ax
     movw %ax,           %ds
     movw $SEG_KERN,     %ax
     movw %ax,           %es
     xorw %bx,           %bx # load to 0x100:0
+
+    movb $HEAD,         %dl
+    movb $SEC,          %al
+    mulb %dl # result is in %ax
+    movw %ax,           sector_mul_head
+
 load_sect:
     movw lba_base,      %ax
-    movb $SEC_144M,     %dl
+    movb $SEC,          %dl
     divb %dl
     addb $1,            %ah
     movb %ah,           %cl # sector number (cl bit-0~5)
-    andb $1,            %al # judge odd/even
-    je   head0 # judge zf1? (odd & 1 yields 1, zf0; even & 1 yields 0, zf1)
-head1:
-    movb $1,            %dh # head number
-    jmp  1f
-head0:
-    movb $0,            %dh # head number
-1:
+
+    xorw %dx,           %dx
     movw lba_base,      %ax
-    movb $SEC_144M<<1,  %dl
-    divb %dl
+    divw sector_mul_head
     movb %al,           %ch # track number--ch bit-0~5
-    andb $0x3f,         %cl # track number--cl bit-6~7 (track number less than 80)
+    andb $0x3f,         %ch
+    andb $0xc0,         %al
+    orb  %al,           %cl # track number--cl bit-6~7 (track number less than 130)
+
+    movw %dx,           %ax
+    movb $SEC,          %dl
+    divb %dl
+    movb %al,           %dh # head number
+
 after_reset:
-    movb $0,            %dl # floppya driver number is 0
+    movb $0x80,         %dl # floppya driver number is 0
     movb $0x02,         %ah
     movb $1,            %al # load 1 sector every time
     int  $0x13
 
-    jnb  2f # judge cf0 (No error happened)
-    movb $0,            %dl
-    movw $0,            %ax
-    int  $0x13 # reset floppy driver due to fail
-    jmp  after_reset
-2:
+    jnb  1f # judge cf0 (No error happened)
+    hlt                     # failure
+1:
     cmpw $SEC_CR,       lba_base
-    jb   3f # judge cf1 (i.e. $SEC_CR > lba_base)
+    jb   2f # judge cf1 (i.e. $SEC_CR > lba_base)
     jmp  load_sect_ok # othervise completed (lba_base >= $SEC_CR)
-3:
+2:
     addw $0x200,        %bx
     cmpw $0,            %bx
-    jnz  4f
+    jnz  3f
     movw %es,           %bx
     addw $0x1000,       %bx
     movw %bx,           %es
     xorw %bx,           %bx
-4:
+3:
     addw $0x1,          lba_base
     jmp  load_sect
 
@@ -195,6 +200,8 @@ died:
 
 lba_base:
     .word 0x1   # loading from no.2 sector (i.e., LBA is no.1)
+sector_mul_head:
+    .word 0
 boot_gdt:
 	.quad 0x0000000000000000
 	.quad 0x00cf9a000000ffff # exe, no-readable, no-conform

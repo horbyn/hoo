@@ -39,7 +39,7 @@ kernel_idle_thread() {
     __idle_node.next_ = null;
 
     // setup the tasks queue
-    queue_push(&__queue_running, &__idle_node);
+    queue_push(&__queue_running, &__idle_node, TAIL);
 }
 
 /**
@@ -121,7 +121,7 @@ user_init_thread() {
     bzero(&__init_node, sizeof(node_t));
     __init_node.data_ = init_pcb;
     __init_node.next_ = null;
-    queue_push(&__queue_ready, &__init_node);
+    queue_push(&__queue_ready, &__init_node, TAIL);
 }
 
 /**

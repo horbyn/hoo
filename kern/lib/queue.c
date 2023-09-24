@@ -35,19 +35,28 @@ queue_isempty(queue_t *q) {
 }
 
 /**
- * @brief enqueuing (tail-enqueue)
+ * @brief enqueuing
  * 
  * @param q the queue needed to operate
  * @param n the enqueuing node
+ * @param mth the method of enqueuing (supported
+ * tail-enqueuing and head-enqueuing)
  */
 void
-queue_push(queue_t *q, node_t *n) {
+queue_push(queue_t *q, node_t *n, enq_mth_t mth) {
     ASSERT(q == null || n == null);
 
     n->next_ = null;
 
-    q->tail_->next_ = n;
-    q->tail_ = n;
+    if (mth == HEAD && !queue_isempty(q)) {
+        // if use head-enqueuing and the queue is empty
+        // then same as tail-enqueuing
+        n->next_ = q->head_->next_->next_;
+        q->head_->next_->next_ = n;
+    } else {
+        q->tail_->next_ = n;
+        q->tail_ = n;
+    }
 }
 
 /**

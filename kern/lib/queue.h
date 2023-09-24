@@ -27,9 +27,14 @@ typedef struct queue {
     node_t *head_, *tail_;
 } queue_t;
 
+typedef enum enqueue_method {
+    TAIL = 0,
+    HEAD
+} enq_mth_t;
+
 void queue_init(queue_t *);
 bool queue_isempty(queue_t *);
-void queue_push(queue_t *, node_t *);
+void queue_push(queue_t *, node_t *, enq_mth_t);
 node_t *queue_pop(queue_t *);
 
 #endif

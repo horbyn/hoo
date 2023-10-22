@@ -30,7 +30,7 @@ init_pic(void) {
     disable_mask_ocw1(IRQ_OPEN_SCSI_NIC2);                  // irq#11
     disable_mask_ocw1(IRQ_MOUSE);                           // irq#12
     disable_mask_ocw1(IRQ_MATH);                            // irq#13
-    disable_mask_ocw1(IRQ_ATA1);                            // irq#14
+    enable_mask_ocw1(IRQ_ATA1);                             // irq#14
     disable_mask_ocw1(IRQ_ATA2);                            // irq#15
 }
 

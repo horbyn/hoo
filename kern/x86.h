@@ -87,27 +87,33 @@ outb(uint8_t val, uint16_t port) {
 }
 
 /**
- * @brief fetch data from the specified port
+ * @brief data flow reads from the specified port
  * 
- * @param port the specified port
- * @return data
- */
-static inline uint32_t
-inl(uint16_t port) {
-    uint32_t val = 0;
-    __asm__ volatile ("inl %w1, %k0" : "=a"(val) : "d"(port));
-    return val;
-}
-
-/**
- * @brief data write to the specified port
- * 
- * @param val 32-bit data to write
+ * @param flow data flow to write
+ * @param len  size
  * @param port the specified port
  */
 static inline void
-outl(uint32_t val, uint16_t port) {
-    __asm__ volatile ("outl %k0, %w1" : : "a"(val), "d"(port));
+insl(void *flow, size_t len, uint16_t port) {
+    __asm__ volatile ("cld; rep insl" :
+        "=D"(flow), "=c"(len) :
+        "0"(flow), "1"(len), "d"(port) :
+        "memory", "cc");
+}
+
+/**
+ * @brief data flow writes to the specified port
+ * 
+ * @param flow data flow to write
+ * @param len  size
+ * @param port the specified port
+ */
+static inline void
+outsl(const void *flow, size_t len, uint16_t port) {
+    __asm__ volatile ("cld; rep outsl" :
+        "=S"(flow), "=c"(len) :
+        "0"(flow), "1"(len), "d"(port) :
+        "cc");
 }
 
 #endif

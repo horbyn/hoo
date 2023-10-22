@@ -5,8 +5,8 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_SCHED_TASKSOP_H__
-#define __KERN_SCHED_TASKSOP_H__
+#ifndef __KERN_SCHED_TASKSTEST_H__
+#define __KERN_SCHED_TASKSTEST_H__
 
 #include "tasks.h"
 #include "conf/Page.h"
@@ -19,10 +19,7 @@
 
 extern void isr_part3();
 extern void mode_ring3(uint32_t *, void *);
-extern queue_t __queue_ready;
-extern queue_t __queue_running;
 
-void init_tasks_queue();
 void kernel_idle_thread();
 void user_init_thread();
 void init_thread();

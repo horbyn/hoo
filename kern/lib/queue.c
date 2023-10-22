@@ -63,7 +63,7 @@ queue_push(queue_t *q, node_t *n, enq_mth_t mth) {
  * @brief dequeuing
  * 
  * @param q the queue needed to operate
- * @retval null the queue is empty
+ * @retval null if the queue is empty
  */
 node_t *
 queue_pop(queue_t *q) {
@@ -78,4 +78,18 @@ queue_pop(queue_t *q) {
     if (del == q->tail_)    q->tail_ = q->head_;
 
     return del;
+}
+
+/**
+ * @brief check the front of the queue
+ * 
+ * @param q queue to be checked
+ * @return the first node; null if the queue is empty
+ */
+node_t *
+queue_front(queue_t *q) {
+    ASSERT(q == null);
+
+    if (queue_isempty(q))    return null;
+    return q->head_->next_;
 }

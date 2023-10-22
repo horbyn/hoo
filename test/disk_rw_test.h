@@ -5,13 +5,12 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_MODULE_SCHED_H__
-#define __KERN_MODULE_SCHED_H__
+#ifndef __TEST_DISK_RW_TEST_H__
+#define __TEST_DISK_RW_TEST_H__
 
-#include "kern/sched/taskstest.h"
-#include "kern/lib/spinlock.h"
-#include "kern/disp/disp.h"
+#include "device/ide.h"
+#include "kern/lib/lib.h"
 
-void init_scheduler();
+void test_disk_read();
 
 #endif

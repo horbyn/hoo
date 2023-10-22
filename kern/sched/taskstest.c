@@ -4,22 +4,11 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#include "tasksop.h"
+#include "taskstest.h"
 
-queue_t __queue_ready;                                      // wait to schedule
-queue_t __queue_running;                                    // scheduling
 static node_t __idle_node, __init_node;
 static uint8_t __init_stack[PGSIZE] = { 0 };                // the stack used by init thread
 static uint8_t __init_stack_r3[PGSIZE] = { 0 };
-
-/**
- * @brief initialize the tasks queue
- */
-void
-init_tasks_queue() {
-    queue_init(&__queue_ready);
-    queue_init(&__queue_running);
-}
 
 /**
  * @brief construct the idle thread
@@ -31,8 +20,7 @@ kernel_idle_thread() {
     // idle thread, and the stack it used is idle stack
 
     pcb_t *idle_pcb = (pcb_t *)(STACK_BOOT - STACK_BOOT_SIZE);
-    bzero(idle_pcb, sizeof(pcb_t));
-    idle_pcb->stack0_ = (uint32_t *)STACK_BOOT;
+    pcb_fill(idle_pcb, null, (uint32_t *)STACK_BOOT, TIMETICKS);
 
     bzero(&__idle_node, sizeof(node_t));
     __idle_node.data_ = idle_pcb;                           // idle node points to its pcb
@@ -113,9 +101,8 @@ user_init_thread() {
 
     // setup the thread pcb
     pcb_t *init_pcb = (pcb_t *)&__init_stack;               // pcb lies at the bottom of the stack
-    bzero(init_pcb, sizeof(pcb_t));
-    init_pcb->stack_ = (uint32_t *)pstack;
-    init_pcb->stack0_ = (uint32_t *)((uint32_t)__init_stack + sizeof(__init_stack));
+    pcb_fill(init_pcb, (uint32_t *)pstack,
+        (uint32_t *)((uint32_t)__init_stack + sizeof(__init_stack)), TIMETICKS);
 
     // setup to the ready queue waiting to execute
     bzero(&__init_node, sizeof(node_t));

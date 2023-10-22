@@ -107,27 +107,7 @@ isr_default(void) {
  */
 void
 timer(void) {
-    node_t *cur = queue_pop(&__queue_running);
-    node_t *next = queue_pop(&__queue_ready);
-
-    if (next) {
-        queue_push(&__queue_running, next, TAIL);
-
-        // update tss
-        __tss.ss0_ = DS_SELECTOR_KERN;
-        __tss.esp0_ = (uint32_t)((pcb_t *)next->data_)->stack0_;
-
-        // only change tasks when the `next` task exists
-        if (cur)
-            queue_push(&__queue_ready, cur, TAIL);
-        
-        scheduler(cur, next);
-    } // need not to change when `next` not exists
-    else {
-        // no `next` task while `cur` exists, then enqueuing `cur` back
-        if (cur)    queue_push(&__queue_running, cur, TAIL);
-    }
-
+    scheduler();
 }
 
 /**

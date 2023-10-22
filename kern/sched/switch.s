@@ -5,12 +5,12 @@
 
     .text
     .code32
-    .globl scheduler
+    .globl switch_to
     .globl mode_ring3
 
-    # called as a function, `scheduler(node_t *cur_task, node_t *next_task)`
-    # ASSUME that `next_task` IS NOT NULL because no next tasks is need not to schedule
-scheduler:
+    # called as a function, `switch_to(node_t *cur_task, node_t *next_task)`
+    # ASSUME that `next_task` IS NOT NULL because it needs not to schedule without next tasks
+switch_to:
     pushl %ebp
     movl %esp,      %ebp
 

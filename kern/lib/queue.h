@@ -36,5 +36,6 @@ void queue_init(queue_t *);
 bool queue_isempty(queue_t *);
 void queue_push(queue_t *, node_t *, enq_mth_t);
 node_t *queue_pop(queue_t *);
+node_t *queue_front(queue_t *);
 
 #endif

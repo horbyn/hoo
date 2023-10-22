@@ -17,17 +17,19 @@
 #define __KERN_INTER_ROUTINE_H__
 
 #include "conf/Config.h"
+#include "device/ide.h"
 #include "kern/types.h"
 #include "kern/assert.h"
 #include "kern/disp/disp.h"
-#include "kern/sched/tasksop.h"
+#include "kern/sched/tasks.h"
 #include "kern/syscall/Stuffsysc.h"
 
 #define ISR32_TIMER             32
 #define ISR38_FLOPPY            38
+#define ISR46_HARD1             46
 #define ISR128_SYSCALL          128
 
-extern void scheduler(node_t *, node_t *);
+extern void switch_to(node_t *, node_t *);
 extern Tss_t __tss;
 
 void info(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
@@ -37,6 +39,7 @@ uint32_t, uint32_t);
 void isr_default(void);
 void timer(void);				                            // #32
 void floppy_driver(void);				                    // #38
+extern void ide_intr(void);                                 // #46
 extern void syscall(void);                                  // #80
 
 #endif

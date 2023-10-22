@@ -8,7 +8,15 @@
 #ifndef __KERN_SCHED_TASKS_H__
 #define __KERN_SCHED_TASKS_H__
 
+#include "kern/assert.h"
 #include "kern/types.h"
+#include "kern/lib/queue.h"
+#include "kern/lib/lib.h"
+#include "kern/lib/spinlock.h"
+
+extern void switch_to(node_t *, node_t *);
+extern queue_t __queue_ready;                               // wait to schedule
+extern queue_t __queue_running;                             // scheduling
 
 /**
  * @brief definition of os interrupt stack corresponding
@@ -55,6 +63,17 @@ typedef struct thread_stack {
 typedef struct pcb {
     uint32_t *stack_;                                       // either kernel stack or user stack
     uint32_t *stack0_;                                      // kernel stack
+    uint32_t ticks_;                                        // the rest ticks
+    uint32_t tid_;                                          // thread id
 } pcb_t;
+
+#define TIMETICKS   16                                      // switch when the amount arrived
+
+void init_tasks_queue();
+void pcb_fill(pcb_t *, uint32_t *, uint32_t *, uint32_t);
+pcb_t *get_pcb();
+void scheduler();
+void sleep(queue_t *);
+void wakeup(queue_t *);
 
 #endif

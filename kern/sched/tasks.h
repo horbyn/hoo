@@ -15,8 +15,11 @@
 #include "kern/lib/spinlock.h"
 
 extern void switch_to(node_t *, node_t *);
+extern void mode_ring3(uint32_t *, void *);
+extern void isr_part3();
 extern queue_t __queue_ready;                               // wait to schedule
 extern queue_t __queue_running;                             // scheduling
+extern node_t __temp_node;                                  // temp node for testing user thread
 
 /**
  * @brief definition of os interrupt stack corresponding
@@ -70,10 +73,12 @@ typedef struct pcb {
 #define TIMETICKS   16                                      // switch when the amount arrived
 
 void init_tasks_queue();
-void pcb_fill(pcb_t *, uint32_t *, uint32_t *, uint32_t);
+void create_kernel_idle();
+void set_pcb(pcb_t *, uint32_t *, uint32_t *, uint32_t);
 pcb_t *get_pcb();
 void scheduler();
 void sleep(queue_t *);
 void wakeup(queue_t *);
+void create_kthread(uint8_t *, uint8_t *, void *);
 
 #endif

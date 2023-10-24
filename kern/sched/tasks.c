@@ -6,9 +6,11 @@
  ************************************/
 #include "tasks.h"
 
+static node_t __idle_node;
 queue_t __queue_ready, __queue_running;
 static size_t __global_tid;
 static spinlock_t __spinlock_alloc_tid;
+node_t __temp_node;
 
 /**
  * @brief Get the thread id
@@ -37,6 +39,26 @@ init_tasks_queue() {
 }
 
 /**
+ * @brief construct the idle thread
+ */
+void
+create_kernel_idle() {
+    // The executable flow as far from boot to there,
+    // uses the boot stack. Now we call this flow to
+    // idle thread, and the stack it used is idle stack
+
+    pcb_t *idle_pcb = (pcb_t *)(STACK_BOOT - STACK_BOOT_SIZE);
+    set_pcb(idle_pcb, null, (uint32_t *)STACK_BOOT, TIMETICKS);
+
+    bzero(&__idle_node, sizeof(node_t));
+    __idle_node.data_ = idle_pcb;                           // idle node points to its pcb
+    __idle_node.next_ = null;
+
+    // setup the tasks queue
+    queue_push(&__queue_running, &__idle_node, TAIL);
+}
+
+/**
  * @brief fill in pcb
  * 
  * @param pcb       pcb to be filled
@@ -46,7 +68,7 @@ init_tasks_queue() {
  * @param tid       thread id
  */
 void
-pcb_fill(pcb_t *pcb, uint32_t *cur_stack, uint32_t *stack0, uint32_t ticks) {
+set_pcb(pcb_t *pcb, uint32_t *cur_stack, uint32_t *stack0, uint32_t ticks) {
     bzero(pcb, sizeof(pcb_t));
     pcb->stack_ = cur_stack;
     pcb->stack0_ = stack0;
@@ -127,4 +149,95 @@ wakeup(queue_t *q) {
 
     node_t *cur = queue_pop(q);
     if (cur)    queue_push(&__queue_ready, cur, TAIL);
+}
+
+/**
+ * @brief Create a kernel thread (stack always assumed 4MB)
+ * 
+ * @param r0_top top of ring 0 stack
+ * @param r3_top top of ring 3 stack
+ * @param entry  thread entry
+ */
+void
+create_kthread(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
+    /*
+     ************************************
+     * kernel stack of idle thread :    *
+     * ┌───────────────────────────────┐*
+     * │     (4B) DIED INSTRUCTION     │*
+     * ├───────────────────────────────┤*
+     * │    (4B) user thread entry     │*
+     * ├───────────────────────────────┤*
+     * │   (4B) user ring3 stack top   │*
+     * ├───────────────────────────────┤*
+     * │  interrupt stack used by cpu  │*
+     * ├───────────────────────────────┤*
+     * │  interrupt stack used by os   │*
+     * ├───────────────────────────────┤*
+     * │          thread stack         │*
+     * ├───────────────────────────────┤*
+     * │                               │*
+     * │                               │*
+     * │             stack             │*
+     * │                               │*
+     * ├───────────────────────────────┤*
+     * │              pcb              │*
+     * └───────────────────────────────┘*
+     ************************************/
+
+    // setup the kernel stack
+    uint8_t *pstack = r0_top + PGSIZE;
+
+    // always located on the top of new task stack that the `esp`
+    // pointed to when the new task completes its initialization
+    pstack -= sizeof(uint32_t);
+    *((uint32_t *)pstack) = DIED_INSTRUCTION;
+
+    // user mode entry
+    pstack -= sizeof(uint32_t);
+    *((uint32_t *)pstack) = (uint32_t)entry;
+
+    // user mode stack
+    pstack -= sizeof(uint32_t);
+    *((uint32_t *)pstack) = (uint32_t)r3_top + PGSIZE;
+
+    pstack -= sizeof(istackcpu_t);
+    istackcpu_t *workercpu = (istackcpu_t *)pstack;
+
+    pstack -= sizeof(istackos_t);
+    istackos_t *workeros = (istackos_t *)pstack;
+
+    pstack -= sizeof(tstack_t);
+    tstack_t *workerth = (tstack_t *)pstack;
+
+    // setup the thread context
+    workercpu->vec_ = 0;
+    workercpu->errcode_ = 0;
+    workercpu->oldeip_ = (uint32_t *)mode_ring3;
+    workercpu->oldcs_ = CS_SELECTOR_KERN;
+    workercpu->eflags_ = EFLAGS_IF;                         // the new task will enable interrupt
+    workeros->edi_ = 0;
+    workeros->esi_ = 0;
+    workeros->ebp_ = 0;
+    workeros->esp_ = (uint32_t)(((uint32_t *)workercpu) - 5);// skip the 5 segment regs
+    workeros->ebx_ = 0;
+    workeros->edx_ = 0;
+    workeros->ecx_ = 0;
+    workeros->eax_ = 0;
+    workeros->gs_ = DS_SELECTOR_KERN;
+    workeros->fs_ = DS_SELECTOR_KERN;
+    workeros->es_ = DS_SELECTOR_KERN;
+    workeros->ds_ = DS_SELECTOR_KERN;
+    workerth->retaddr_ = isr_part3;
+
+    // setup the thread pcb
+    pcb_t *init_pcb = (pcb_t *)r0_top;                      // pcb lies at the bottom of the stack
+    set_pcb(init_pcb, (uint32_t *)pstack,
+        (uint32_t *)((uint32_t)r0_top + PGSIZE), TIMETICKS);
+
+    // setup to the ready queue waiting to execute
+    bzero(&__temp_node, sizeof(node_t));
+    __temp_node.data_ = init_pcb;
+    __temp_node.next_ = null;
+    queue_push(&__queue_ready, &__temp_node, TAIL);
 }

@@ -6,6 +6,8 @@
  ************************************/
 #include "disk_rw_test.h"
 
+static char buff[BYTES_SECTOR];
+
 /**
  * @brief test the reading from disk
  */
@@ -13,7 +15,6 @@ void
 test_disk_read() {
     ide_init();
 
-    char buff[BYTES_SECTOR];
     bzero(buff, sizeof(buff));
 
     // read lba. 0 (mbr) from disk to buff

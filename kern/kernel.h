@@ -13,11 +13,13 @@
 #include "kern/module/device.h"
 #include "kern/module/inte.h"
 #include "kern/module/sched.h"
+#include "kern/sched/tasks.h"
+#include "test/tasks_test.h"
+#include "test/disk_rw_test.h"
 
 extern uint8_t __kern_base[], __kern_end[];
 
 void kernel_exec(void);
 void kernel_init(void);
-void idle(void);
 
 #endif

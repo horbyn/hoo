@@ -8,7 +8,7 @@
 #ifndef __KERN_MODULE_SCHED_H__
 #define __KERN_MODULE_SCHED_H__
 
-#include "kern/sched/taskstest.h"
+#include "test/tasks_test.h"
 #include "kern/lib/spinlock.h"
 #include "kern/disp/disp.h"
 

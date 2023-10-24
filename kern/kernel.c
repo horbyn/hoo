@@ -13,7 +13,9 @@ void
 kernel_exec(void) {
     kernel_init();
     enable_intr();
-    idle();
+
+    //test_kernel_threads();
+    test_disk_read();
 
     // DONT RETURN
     while(1);
@@ -34,15 +36,5 @@ kernel_init(void) {
     kprintf("kern base = %x\nkern end = %x\n\n",
         (uint32_t)__kern_base, (uint32_t)__kern_end);
 
-}
-
-/**
- * @brief kernel main thread -- idle
- */
-void
-idle(void) {
-
-    while (1) {
-        kprintf("Kernel ");
-    }
+    create_kernel_idle();
 }

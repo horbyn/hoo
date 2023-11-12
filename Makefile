@@ -43,7 +43,7 @@ debug: CFLAGS += -g -DDEBUG
 debug: image $(OBJS) $(OBJC) $(DISK) run
 
 run:
-	DISPLAY=:0 /usr/bin/bochs -q
+	/usr/bin/bochs -q
 
 # -f: dont generate the file if exists
 # 1.44M floppy: 80(C) * 2(H) * 18(S) * 512 = 1474560

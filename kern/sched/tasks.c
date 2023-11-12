@@ -7,10 +7,11 @@
 #include "tasks.h"
 
 static node_t __idle_node;
+node_t __temp_node;
 queue_t __queue_ready, __queue_running;
 static size_t __global_tid;
-static spinlock_t __spinlock_alloc_tid;
-node_t __temp_node;
+static spinlock_t __spinlock_alloc_tid;                     // serially access thread id
+static spinlock_t __spinlock_tasks_queue;                   // serially access task queues
 
 /**
  * @brief Get the thread id
@@ -36,6 +37,7 @@ init_tasks_queue() {
     queue_init(&__queue_ready);
     queue_init(&__queue_running);
     spinlock_init(&__spinlock_alloc_tid);
+    spinlock_init(&__spinlock_tasks_queue);
 }
 
 /**
@@ -55,7 +57,9 @@ create_kernel_idle() {
     __idle_node.next_ = null;
 
     // setup the tasks queue
+    wait(&__spinlock_tasks_queue);
     queue_push(&__queue_running, &__idle_node, TAIL);
+    signal(&__spinlock_tasks_queue);
 }
 
 /**
@@ -83,7 +87,9 @@ set_pcb(pcb_t *pcb, uint32_t *cur_stack, uint32_t *stack0, uint32_t ticks) {
  */
 pcb_t *
 get_pcb() {
+    wait(&__spinlock_tasks_queue);
     node_t *cur = queue_front(&__queue_running);
+    signal(&__spinlock_tasks_queue);
     ASSERT(!cur);
 
     pcb_t *cur_pcb = (pcb_t *)cur->data_;
@@ -97,12 +103,16 @@ get_pcb() {
  */
 void
 scheduler() {
+    if (test(&__spinlock_tasks_queue))    return;
+
     // to check whether ticks expired
     // we just need the first queue node
+    wait(&__spinlock_tasks_queue);
     node_t *cur = queue_front(&__queue_running);
     if (cur) {
         if (((pcb_t *)cur->data_)->ticks_ > 0) {
             ((pcb_t *)cur->data_)->ticks_--;
+            signal(&__spinlock_tasks_queue);
             return;
         } else    ((pcb_t *)cur->data_)->ticks_ = TIMETICKS;
     }
@@ -121,6 +131,7 @@ scheduler() {
         
         switch_to(cur, next);
     }
+    signal(&__spinlock_tasks_queue);
 }
 
 /**
@@ -130,12 +141,14 @@ scheduler() {
  */
 void
 sleep(queue_t *q) {
+    wait(&__spinlock_tasks_queue);
     ASSERT(!queue_front(&__queue_running));
 
     // drop current tasks and enqueue sleep queue
 
     node_t *cur = queue_pop(&__queue_running);
     if (cur)    queue_push(q, cur, TAIL);
+    signal(&__spinlock_tasks_queue);
 }
 
 /**
@@ -148,11 +161,16 @@ wakeup(queue_t *q) {
     ASSERT(!queue_front(q));
 
     node_t *cur = queue_pop(q);
-    if (cur)    queue_push(&__queue_ready, cur, TAIL);
+    if (cur) {
+        wait(&__spinlock_tasks_queue);
+        queue_push(&__queue_ready, cur, TAIL);
+        signal(&__spinlock_tasks_queue);
+    }
 }
 
 /**
  * @brief Create a kernel thread (stack always assumed 4MB)
+ * if ring-3 stack specified, then is a user mode thread
  * 
  * @param r0_top top of ring 0 stack
  * @param r3_top top of ring 3 stack
@@ -162,7 +180,7 @@ void
 create_kthread(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
     /*
      ************************************
-     * kernel stack of idle thread :    *
+     * kernel stack of a thread :       *
      * ┌───────────────────────────────┐*
      * │     (4B) DIED INSTRUCTION     │*
      * ├───────────────────────────────┤*
@@ -193,13 +211,15 @@ create_kthread(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
     pstack -= sizeof(uint32_t);
     *((uint32_t *)pstack) = DIED_INSTRUCTION;
 
-    // user mode entry
-    pstack -= sizeof(uint32_t);
-    *((uint32_t *)pstack) = (uint32_t)entry;
+    if (r3_top) {
+        // user mode entry
+        pstack -= sizeof(uint32_t);
+        *((uint32_t *)pstack) = (uint32_t)entry;
 
-    // user mode stack
-    pstack -= sizeof(uint32_t);
-    *((uint32_t *)pstack) = (uint32_t)r3_top + PGSIZE;
+        // user mode stack
+        pstack -= sizeof(uint32_t);
+        *((uint32_t *)pstack) = (uint32_t)r3_top + PGSIZE;
+    }
 
     pstack -= sizeof(istackcpu_t);
     istackcpu_t *workercpu = (istackcpu_t *)pstack;
@@ -213,7 +233,8 @@ create_kthread(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
     // setup the thread context
     workercpu->vec_ = 0;
     workercpu->errcode_ = 0;
-    workercpu->oldeip_ = (uint32_t *)mode_ring3;
+    workercpu->oldeip_ = r3_top ?
+        (uint32_t *)mode_ring3 : (uint32_t *)entry;
     workercpu->oldcs_ = CS_SELECTOR_KERN;
     workercpu->eflags_ = EFLAGS_IF;                         // the new task will enable interrupt
     workeros->edi_ = 0;
@@ -231,13 +252,15 @@ create_kthread(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
     workerth->retaddr_ = isr_part3;
 
     // setup the thread pcb
-    pcb_t *init_pcb = (pcb_t *)r0_top;                      // pcb lies at the bottom of the stack
-    set_pcb(init_pcb, (uint32_t *)pstack,
+    pcb_t *pcb = (pcb_t *)r0_top;                           // pcb lies at the bottom of the stack
+    set_pcb(pcb, (uint32_t *)pstack,
         (uint32_t *)((uint32_t)r0_top + PGSIZE), TIMETICKS);
 
     // setup to the ready queue waiting to execute
     bzero(&__temp_node, sizeof(node_t));
-    __temp_node.data_ = init_pcb;
+    __temp_node.data_ = pcb;
     __temp_node.next_ = null;
+    wait(&__spinlock_tasks_queue);
     queue_push(&__queue_ready, &__temp_node, TAIL);
+    signal(&__spinlock_tasks_queue);
 }

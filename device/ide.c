@@ -18,6 +18,11 @@ static spinlock_t __spinlock_ide;                           // control the acces
  */
 static void
 ide_set_cmd(uint32_t lba, uint8_t cr, ider_cmd_t cmd) {
+    // error checking
+    while ((inb(IDE_CMDMAP_STATUS_COMMAND) & (BSY | READY)) != READY);
+    outb(0, 0x3f6);
+
+    // real operation
     outb(cr, IDE_CMDMAP_SECTORCR);
     outb((uint8_t)(lba & 0xff), IDE_CMDMAP_LBALOW);
     outb((uint8_t)((lba >> 8) & 0xff), IDE_CMDMAP_LBAMID);
@@ -43,13 +48,14 @@ ide_init() {
  */
 void
 ide_rw(idebuff_t *buff) {
-    wait(&__spinlock_ide);
 
     // 1. stash the buff into queue
     node_t node;
     bzero(&node, sizeof(node_t));
     node.data_ = buff;
+    wait(&__spinlock_ide);
     queue_push(&__queue_ide, &node, TAIL);
+    signal(&__spinlock_ide);
 
     // 2. set register
     ide_set_cmd(buff->lba_, buff->len_ / BYTES_SECTOR, buff->cmd_);
@@ -60,15 +66,15 @@ ide_rw(idebuff_t *buff) {
     sleep(&__queue_ide_sleep);
     scheduler();
 
-    signal(&__spinlock_ide);
 }
 
 void
 ide_intr() {
-    wait(&__spinlock_ide);
 
     // 1. check the head what command used
+    wait(&__spinlock_ide);
     node_t *done = queue_pop(&__queue_ide);
+    signal(&__spinlock_ide);
     if (done) {
         idebuff_t *buff = done->data_;
         ASSERT(!buff);
@@ -80,7 +86,6 @@ ide_intr() {
     // 2. wakeup the asleep thread
     wakeup(&__queue_ide_sleep);
 
-    signal(&__spinlock_ide);
 }
 
 void

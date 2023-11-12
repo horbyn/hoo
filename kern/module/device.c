@@ -18,7 +18,7 @@ init_pic(void) {
 
     enable_mask_ocw1(IRQ_TIMER);                            // irq#0
     disable_mask_ocw1(IRQ_KEYBOARD);                        // irq#1
-    disable_mask_ocw1(IRQ_CASCADE);                         // irq#2
+    enable_mask_ocw1(IRQ_CASCADE);                          // irq#2
     disable_mask_ocw1(IRQ_COM2);                            // irq#3
     disable_mask_ocw1(IRQ_COM1);                            // irq#4
     disable_mask_ocw1(IRQ_LPT2);                            // irq#5

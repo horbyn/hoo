@@ -15,3 +15,5 @@ kernel
 *.elf
 
 .vscode/
+
+*.json

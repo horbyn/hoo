@@ -23,13 +23,15 @@ spinlock_init(spinlock_t *spin) {
  */
 void
 wait(spinlock_t *spin) {
+    __asm__ ("1:");
 
-    __asm__ ("1:\n\t"
-        "testl $1, %0\n\t"
-        "jnz 1b\n\t"
+    // return 1 if the spin was occupied
+    while (test(spin));
+
+    __asm__ ("\n\t"
         "lock bts $0, %0\n\t"
-        "jc 1b\n\t"
-        : "=m"(*spin) ::);
+        "jc 1b"
+        : "=m"(*spin) :: "cc");
 }
 
 /**

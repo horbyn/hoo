@@ -129,8 +129,10 @@ scheduler() {
         __tss.ss0_ = DS_SELECTOR_KERN;
         __tss.esp0_ = (uint32_t)((pcb_t *)next->data_)->stack0_;
         
+        signal(&__spinlock_tasks_queue);
         switch_to(cur, next);
     }
+
     signal(&__spinlock_tasks_queue);
 }
 

@@ -94,11 +94,9 @@ outb(uint8_t val, uint16_t port) {
  * @param port the specified port
  */
 static inline void
-insl(void *flow, size_t len, uint16_t port) {
-    __asm__ volatile ("cld; rep insl" :
-        "=D"(flow), "=c"(len) :
-        "0"(flow), "1"(len), "d"(port) :
-        "memory", "cc");
+insw(void *flow, size_t len, uint16_t port) {
+    __asm__ volatile ("cld; rep insw" ::
+        "D"(flow), "c"(len), "d"(port));
 }
 
 /**
@@ -109,11 +107,9 @@ insl(void *flow, size_t len, uint16_t port) {
  * @param port the specified port
  */
 static inline void
-outsl(const void *flow, size_t len, uint16_t port) {
-    __asm__ volatile ("cld; rep outsl" :
-        "=S"(flow), "=c"(len) :
-        "0"(flow), "1"(len), "d"(port) :
-        "cc");
+outsw(const void *flow, size_t len, uint16_t port) {
+    __asm__ volatile ("cld; rep outsw" ::
+        "S"(flow), "c"(len), "d"(port));
 }
 
 #endif

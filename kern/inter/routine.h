@@ -17,9 +17,9 @@
 #define __KERN_INTER_ROUTINE_H__
 
 #include "conf/Config.h"
-#include "device/ide.h"
+#include "device/ata.h"
 #include "kern/types.h"
-#include "kern/assert.h"
+#include "kern/debug.h"
 #include "kern/disp/disp.h"
 #include "kern/sched/tasks.h"
 #include "kern/syscall/Stuffsysc.h"
@@ -39,7 +39,7 @@ uint32_t, uint32_t);
 void isr_default(void);
 void timer(void);				                            // #32
 void floppy_driver(void);				                    // #38
-extern void ide_intr(void);                                 // #46
+extern void ata_intr(void);                                 // #46
 extern void syscall(void);                                  // #80
 
 #endif

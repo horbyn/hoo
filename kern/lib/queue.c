@@ -12,7 +12,7 @@
  */
 void
 queue_init(queue_t *q) {
-    ASSERT(q == null);
+    if (q == null)    panic("queue_init: null queue");
 
     q->null_.data_ = null;
     q->null_.next_ = null;
@@ -29,7 +29,7 @@ queue_init(queue_t *q) {
  */
 bool
 queue_isempty(queue_t *q) {
-    ASSERT(q == null);
+    if (q == null)    panic("queue_isempty(): null queue");
 
     return (q->head_ == q->tail_);
 }
@@ -44,7 +44,8 @@ queue_isempty(queue_t *q) {
  */
 void
 queue_push(queue_t *q, node_t *n, enq_mth_t mth) {
-    ASSERT(q == null || n == null);
+    if (q == null || n == null)
+        panic("queue_push(): null queue or node");
 
     n->next_ = null;
 
@@ -67,7 +68,7 @@ queue_push(queue_t *q, node_t *n, enq_mth_t mth) {
  */
 node_t *
 queue_pop(queue_t *q) {
-    ASSERT(q == null);
+    if (q == null)    panic("queue_pop(): null queue");
 
     if (queue_isempty(q))    return null;
 
@@ -88,7 +89,7 @@ queue_pop(queue_t *q) {
  */
 node_t *
 queue_front(queue_t *q) {
-    ASSERT(q == null);
+    if (q == null)    panic("queue_front(): null queue");
 
     if (queue_isempty(q))    return null;
     return q->head_->next_;

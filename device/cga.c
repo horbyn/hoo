@@ -30,7 +30,8 @@ clear_screen(void) {
  */
 void
 set_cursor(int row, int col) {
-    ASSERT(row >= CGA_HIGH || col >= CGA_WIDTH);
+    if (row >= CGA_HIGH || col >= CGA_WIDTH)
+        panic("set_cursor(): cga features to be setup are invalid");
     // 0x3b0-0x3bf MDA
     // 0x3c0-0x3cf CGA
     // 0x3d0-0x3df EGA/VGA

@@ -90,10 +90,10 @@ get_pcb() {
     wait(&__spinlock_tasks_queue);
     node_t *cur = queue_front(&__queue_running);
     signal(&__spinlock_tasks_queue);
-    ASSERT(!cur);
+    if (!cur)    panic("get_pcb(): no current task");
 
     pcb_t *cur_pcb = (pcb_t *)cur->data_;
-    ASSERT(!cur_pcb);
+    if (!cur_pcb)    panic("get_pcb(): current task is null");
 
     return cur_pcb;
 }
@@ -144,7 +144,8 @@ scheduler() {
 void
 sleep(queue_t *q) {
     wait(&__spinlock_tasks_queue);
-    ASSERT(!queue_front(&__queue_running));
+    if (!queue_front(&__queue_running))
+        panic("sleep(): no current task");
 
     // drop current tasks and enqueue sleep queue
 
@@ -160,7 +161,8 @@ sleep(queue_t *q) {
  */
 void
 wakeup(queue_t *q) {
-    ASSERT(!queue_front(q));
+    if (!queue_front(q))
+        panic("wakeup(): no sleeping task");
 
     node_t *cur = queue_pop(q);
     if (cur) {
@@ -180,6 +182,9 @@ wakeup(queue_t *q) {
  */
 void
 create_kthread(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
+#ifdef DEBUG
+    kprintf("create_kthread(): %x %x %x\n", r0_top, r3_top, entry);
+#endif
     /*
      ************************************
      * kernel stack of a thread :       *

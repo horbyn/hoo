@@ -4,15 +4,20 @@
  *        (hoRbyn4zZ@outlook.com)   *
  *                                  *
  ************************************/
-#pragma once
-#ifndef __TEST_DISK_RW_TEST_H__
-#define __TEST_DISK_RW_TEST_H__
+#include "debug.h"
 
-#include "kern/driver/ata_driver.h"
-#include "kern/disp/disp.h"
-#include "kern/lib/lib.h"
-#include "kern/sched/tasks.h"
-
-void test_disk_read();
-
+/**
+ * @brief display some messages in collapse
+ * 
+ * @param msg 
+ */
+void
+panic(const char *msg) {
+#ifdef DEBUG
+    if (msg)    kprintf(msg);
+#else
+    (void)msg;
 #endif
+
+    __asm__ __volatile__ ("cli\n\thlt");
+}

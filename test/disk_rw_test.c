@@ -14,15 +14,18 @@ static uint8_t stack[PGSIZE] = { 0 };
  */
 void
 disk_reading() {
-    ide_init();
+#ifdef DEBUG
+    kprintf("disk_reading()\n");
+#endif
 
+    ata_driver_init();
     bzero(buff, sizeof(buff));
 
     // read lba. 0 (mbr) from disk to buff
-    idebuff_t ibuff;
-    bzero(&ibuff, sizeof(idebuff_t));
-    idebuff_set(&ibuff, buff, sizeof(buff), 0, READ);
-    ide_rw(&ibuff);
+    atabuff_t ata_buff;
+    bzero(&ata_buff, sizeof(atabuff_t));
+    atabuff_set(&ata_buff, buff, sizeof(buff), 0, ATA_CMD_IO_READ);
+    ata_rw(&ata_buff);
 
     for (size_t i = 0; i < sizeof(buff); ++i)
         kprintf("%x ", buff[i]);
@@ -33,6 +36,9 @@ disk_reading() {
  */
 void
 test_disk_read() {
+#ifdef DEBUG
+    kprintf("test_disk_read()\n");
+#endif
     // assign to the other thread
     create_kthread(stack, null, disk_reading);
 

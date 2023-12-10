@@ -12,7 +12,7 @@
 #include "Page.h"
 #include "preconf.h"
 #include "Tss.h"
-#include "kern/assert.h"
+#include "kern/debug.h"
 
 #define SIZE_GDT    8                                       // the gdt descriptors amount
 

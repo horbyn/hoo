@@ -8,7 +8,7 @@
 #ifndef __KERN_SCHED_TASKS_H__
 #define __KERN_SCHED_TASKS_H__
 
-#include "kern/assert.h"
+#include "kern/debug.h"
 #include "kern/types.h"
 #include "kern/lib/queue.h"
 #include "kern/lib/lib.h"

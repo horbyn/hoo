@@ -33,8 +33,10 @@ kernel_init(void) {
     init_cga();
     init_scheduler();
 
-    kprintf("kern base = %x\nkern end = %x\n\n",
+    kprintf("================ KERNEL IMAGE ================\n"
+        "kern base = %x,  kern end = %x\n\n",
         (uint32_t)__kern_base, (uint32_t)__kern_end);
 
+    init_ata();
     create_kernel_idle();
 }

@@ -147,7 +147,8 @@ void
 set_gdt(size_t idx, uint32_t limit, uint32_t base, uint8_t a,
 uint8_t rw, uint8_t dc, uint8_t exe, uint8_t sys, uint8_t dpl,
 uint8_t ps, uint8_t l, uint8_t db, uint8_t g) {
-    ASSERT(idx >= SIZE_GDT);
+    if (idx >= SIZE_GDT)
+        panic("set_gdt(): gdt index beyond the bound");
 
     __gdt[idx].limit_15_0_                          = (uint16_t)limit;
     __gdt[idx].limit_19_16_                         = (uint8_t)(limit >> 16);
@@ -201,9 +202,12 @@ void
 create_pgtbl_map(void *pgt, size_t ent_base, void *
 pg_phy_addr_base, size_t n) {
     // DONOT handle the following condition temporary
-    ASSERT(pgt == null);
-    ASSERT(ent_base < 0 || ent_base > PGDIR_SIZE);
-    ASSERT(n > PGTBL_SIZE);
+    if (pgt == null)
+        panic("create_pgtbl_map(): page table invalid");
+    if (ent_base < 0 || ent_base > PGDIR_SIZE)
+        panic("create_pgtbl_map(): page table entry beyond bound");
+    if (n > PGTBL_SIZE)
+        panic("create_pgtbl_map(): page table entries are too much");
 
     if (n == 0)    return;
 
@@ -229,8 +233,10 @@ pg_phy_addr_base, size_t n) {
  */
 void
 create_ptdir_map(void *pgd, size_t ent, void *pgt) {
-    ASSERT(pgd == null);
-    ASSERT(ent < 0 || ent > PGDIR_SIZE);
+    if (pgd == null)
+        panic("create_ptdir_map(): page dir invalid");
+    if (ent < 0 || ent > PGDIR_SIZE)
+        panic("create_ptdir_map(): page dir entry beyond bound");
 
     if (pgt == null)    return;
 

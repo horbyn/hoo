@@ -5,16 +5,11 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_MODULE_DEVICE_H__
-#define __KERN_MODULE_DEVICE_H__
+#ifndef __KERN_DEBUG_H__
+#define __KERN_DEBUG_H__
 
-#include "device/8259a.h"
-#include "device/8253.h"
-#include "device/ata.h"
-#include "kern/types.h"
+#include "disp/disp.h"
 
-void init_pic(void);
-void init_pit(void);
-void init_ata(void);
+void panic(const char *msg);
 
 #endif

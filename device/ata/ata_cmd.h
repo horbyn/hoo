@@ -5,8 +5,8 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __DEVICE_CMD_ATA_H__
-#define __DEVICE_CMD_ATA_H__
+#ifndef __DEVICE_ATA_ATA_CMD_H__
+#define __DEVICE_ATA_ATA_CMD_H__
 
 // ata port base
 #define ATA_PRIMARY_PORT_IO_BASE        0x1f0

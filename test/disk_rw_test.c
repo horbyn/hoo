@@ -18,14 +18,14 @@ disk_reading() {
     kprintf("disk_reading()\n");
 #endif
 
-    ata_driver_init();
+    ata_driver_init(ATA_METHOD_IRQ);
     bzero(buff, sizeof(buff));
 
     // read lba. 0 (mbr) from disk to buff
     atabuff_t ata_buff;
     bzero(&ata_buff, sizeof(atabuff_t));
     atabuff_set(&ata_buff, buff, sizeof(buff), 0, ATA_CMD_IO_READ);
-    ata_rw(&ata_buff);
+    ata_driver_rw(&ata_buff);
 
     for (size_t i = 0; i < sizeof(buff); ++i)
         kprintf("%x ", buff[i]);

@@ -56,13 +56,18 @@ disable_intr() {
 }
 
 /**
+ * @brief port definition
+ */
+typedef uint16_t port_t;
+
+/**
  * @brief fetch data from the specified port
  * 
  * @param port the specified port
  * @return data
  */
 static inline uint8_t
-inb(uint16_t port) {
+inb(port_t port) {
     uint8_t val;
     // %al --> val
     // port --> %dx
@@ -79,7 +84,7 @@ inb(uint16_t port) {
  * @param port the specified port
  */
 static inline void
-outb(uint8_t val, uint16_t port) {
+outb(uint8_t val, port_t port) {
     // val --> %al
     // port --> %dx
     // data from %al is transported to port %dx pointed to
@@ -94,7 +99,7 @@ outb(uint8_t val, uint16_t port) {
  * @param port the specified port
  */
 static inline void
-insw(void *flow, size_t len, uint16_t port) {
+insw(void *flow, size_t len, port_t port) {
     __asm__ volatile ("cld; rep insw" ::
         "D"(flow), "c"(len), "d"(port));
 }
@@ -107,7 +112,7 @@ insw(void *flow, size_t len, uint16_t port) {
  * @param port the specified port
  */
 static inline void
-outsw(const void *flow, size_t len, uint16_t port) {
+outsw(const void *flow, size_t len, port_t port) {
     __asm__ volatile ("cld; rep outsw" ::
         "S"(flow), "c"(len), "d"(port));
 }

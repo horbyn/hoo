@@ -9,6 +9,7 @@
 #define __KERN_DRIVER_ATA_DRIVER_H__
 
 #include "device/ata/ata_irq.h"
+#include "device/ata/ata_polling.h"
 #include "kern/debug.h"
 #include "kern/types.h"
 #include "kern/x86.h"

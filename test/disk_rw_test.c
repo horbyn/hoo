@@ -6,7 +6,7 @@
  ************************************/
 #include "disk_rw_test.h"
 
-static char buff[BYTES_SECTOR];
+static uint8_t buff[BYTES_SECTOR];
 static uint8_t stack[PGSIZE] = { 0 };
 
 /**
@@ -14,11 +14,9 @@ static uint8_t stack[PGSIZE] = { 0 };
  */
 void
 disk_reading() {
-#ifdef DEBUG
-    kprintf("disk_reading()\n");
-#endif
 
-    ata_driver_init(ATA_METHOD_IRQ);
+    //ata_driver_init(ATA_METHOD_IRQ); // not completely implement; don't use
+    ata_driver_init(ATA_METHOD_POLLING);
     bzero(buff, sizeof(buff));
 
     // read lba. 0 (mbr) from disk to buff
@@ -36,9 +34,7 @@ disk_reading() {
  */
 void
 test_disk_read() {
-#ifdef DEBUG
-    kprintf("test_disk_read()\n");
-#endif
+
     // assign to the other thread
     create_kthread(stack, null, disk_reading);
 

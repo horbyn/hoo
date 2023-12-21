@@ -81,7 +81,7 @@ typedef struct ata_device {
  */
 typedef struct ata_space {
     size_t device_amount_;
-    int current_select_;                                    // -1 indicate no selection
+    int current_select_;
     ata_device_t *device_info_;
 } ata_space_t;
 extern ata_space_t ata_space;
@@ -98,12 +98,11 @@ typedef struct ata_buff {
 } atabuff_t;
 
 void atabuff_set(atabuff_t *, void *, size_t, size_t, ata_cmd_t);
-void ata_set_cmd(uint32_t, uint8_t, ata_cmd_t);
+void ata_set_cmd(uint32_t, uint32_t, uint8_t, ata_cmd_t, bool);
 void ata_disable_irqs();
 void ata_enable_irqs();
 void ata_wait_not_busy_but_ready();
-void ata_detect(void);
-void ata_select(size_t, uint8_t);
-bool ata_is_selected();
+void ata_wait_not_busy();
+void ata_space_init(void);
 
 #endif

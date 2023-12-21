@@ -143,6 +143,7 @@ scheduler() {
  */
 void
 sleep(queue_t *q) {
+
     wait(&__spinlock_tasks_queue);
     if (!queue_front(&__queue_running))
         panic("sleep(): no current task");
@@ -152,6 +153,8 @@ sleep(queue_t *q) {
     node_t *cur = queue_pop(&__queue_running);
     if (cur)    queue_push(q, cur, TAIL);
     signal(&__spinlock_tasks_queue);
+
+    scheduler();
 }
 
 /**
@@ -182,9 +185,7 @@ wakeup(queue_t *q) {
  */
 void
 create_kthread(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
-#ifdef DEBUG
-    kprintf("create_kthread(): %x %x %x\n", r0_top, r3_top, entry);
-#endif
+
     /*
      ************************************
      * kernel stack of a thread :       *

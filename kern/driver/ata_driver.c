@@ -15,16 +15,13 @@ static enum_ata_method __ata_driver_method;
  */
 void
 ata_driver_init(enum_ata_method method) {
-#ifdef DEBUG
-    kprintf("ata_driver_init()\n");
-#endif
 
     __ata_driver_method = method;
 
     switch (__ata_driver_method) {
     case ATA_METHOD_IRQ: ata_irq_init(); break;
     // polling default
-    default: break;
+    default: ata_polling_init(); break;
     }
 }
 
@@ -35,14 +32,11 @@ ata_driver_init(enum_ata_method method) {
  */
 void
 ata_driver_rw(atabuff_t *buff) {
-#ifdef DEBUG
-    kprintf("ata_driver_rw()\n");
-#endif
 
     switch (__ata_driver_method) {
-    case ATA_METHOD_IRQ: ata_irq_rw(buff); break;
+    case ATA_METHOD_IRQ: ata_irq_rw(buff, true); break;
     // polling default
-    default: break;
+    default: ata_polling_rw(buff, false); break;
     }
 
 }

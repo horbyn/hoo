@@ -48,20 +48,13 @@ init_pit(void) {
 */
 void
 init_ata(void) {
-    ata_detect();
+    ata_space_init();
 
-#ifdef DEBUG
-    kprintf("======================= ATA DEVICE =======================\n");
-    ata_device_t *dev_info = ata_space.device_info_;
-    if (dev_info == null)    panic("no ATA device info detected\n");
-
+    // select the first valid device (device no. is 0 default)
     for (size_t i = 0; i < ata_space.device_amount_; ++i) {
-        kprintf("dev[%d]:  channel: %s, channel-wire: %s, type: %s\n",
-            i, ENUM2STR_ATA_TYPE_BUS(dev_info[i].bus_),
-            ENUM2STR_ATA_TYPE_BUS_WIRE(dev_info[i].bus_wire_),
-            ENUM2STR_ATA_TYPE_DEVICE(dev_info[i].device_type_));
+        if (ata_space.device_info_[i].valid_) {
+            ata_space.current_select_ = i;
+            break;
+        }
     }
-
-    kprintf("\n\n");
-#endif
 }

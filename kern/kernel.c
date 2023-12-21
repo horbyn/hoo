@@ -34,7 +34,7 @@ kernel_init(void) {
     init_scheduler();
 
     kprintf("================ KERNEL IMAGE ================\n"
-        "kern base = %x,  kern end = %x\n\n",
+        "kern base = 0x%x,  kern end = 0x%x\n\n",
         (uint32_t)__kern_base, (uint32_t)__kern_end);
 
     init_ata();

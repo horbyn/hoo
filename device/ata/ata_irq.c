@@ -12,9 +12,7 @@ static spinlock_t __spinlock_ata;                           // control the acces
 
 void
 ata_irq_init() {
-#ifdef DEBUG
-    kprintf("ata_irq_init()\n");
-#endif
+
     queue_init(&__queue_ata);
     queue_init(&__queue_ata_sleep);
     spinlock_init(&__spinlock_ata);
@@ -22,9 +20,6 @@ ata_irq_init() {
 
 void
 ata_irq_intr() {
-#ifdef DEBUG
-    kprintf("ata_irq_intr()\n");
-#endif
 
     // 1. check the head what command used
     wait(&__spinlock_ata);
@@ -35,19 +30,20 @@ ata_irq_intr() {
         if (!buff)    panic("ata_irq_intr(): idebuff not set");
 
         if (buff->cmd_ == ATA_CMD_IO_READ) {
-            insw(buff->buff_, buff->len_ / 2,
+            insw(buff->buff_, buff->len_ / sizeof(uint16_t),
                 ata_space.device_info_[ata_space.current_select_].io_port_
                 + ATA_IO_RW_OFFSET_DATA);
         }
     }
 
     // 2. wakeup the asleep thread
+    if (!queue_isempty(&__queue_ata_sleep))
         wakeup(&__queue_ata_sleep);
 
 }
 
 void
-ata_irq_rw(atabuff_t *buff){
+ata_irq_rw(atabuff_t *buff, bool is_irq) {
 
     // 1. stash the buff into queue
     node_t node;
@@ -58,13 +54,14 @@ ata_irq_rw(atabuff_t *buff){
     signal(&__spinlock_ata);
 
     // 2. set register
-    ata_set_cmd(buff->lba_, buff->len_ / BYTES_SECTOR, buff->cmd_);
+    ata_set_cmd(ata_space.current_select_, buff->lba_,
+        buff->len_ / BYTES_SECTOR, buff->cmd_, is_irq);
     if (buff->cmd_ == ATA_CMD_IO_WRITE)
-        outsw(buff->buff_, buff->len_ / 4,
+        outsw(buff->buff_, buff->len_ / sizeof(uint16_t),
             ata_space.device_info_[ata_space.current_select_].io_port_
             + ATA_IO_RW_OFFSET_DATA);
 
     // 3. sleep (give up CPU)
-    sleep(&__queue_ata_sleep);
-    scheduler();
+    if (!queue_isempty(&__queue_ata))
+        sleep(&__queue_ata_sleep);
 }

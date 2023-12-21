@@ -6,7 +6,6 @@
  ************************************/
 #include "ata.h"
 
-const static int ATA_SELECT_NO = -1;
 ata_space_t ata_space;
 static ata_device_t ata_devices[ATA_MAX_SUPPORTED_DEVICES];
 
@@ -24,21 +23,25 @@ ata_wait_register_400ns(uint16_t reg) {
 }
 
 /**
- * @brief send the select command
+ * @brief check if device invalid
  * 
- * @param master whether it is master
- * @param port_io io port base
- * @param port_ctrl control port base
- * @param lba_hi4 lba number high 4-bit
+ * @param dev_no device no.
  */
 static void
-ata_send_select_cmd(bool master, uint16_t port_io, uint16_t port_ctrl, uint8_t lba_hi4) {
-    uint8_t flag = master ? 0 : 1;
-    outb(0x0a | ATA_DEV_IO_MOD_LBA | (flag << 4) | (lba_hi4 & 0x0f),
-        port_io + ATA_IO_RW_OFFSET_DRIVE_SELECT);
-    ata_wait_register_400ns(port_ctrl);
+ata_check_invalid(uint32_t dev_no) {
+    if (ata_space.device_amount_ != 0 && dev_no >= ata_space.device_amount_)
+        panic("ata_check_invalid(): device invalid");
 }
 
+/**
+ * @brief setup ata buffer
+ * 
+ * @param ibuff ata buffer pointer
+ * @param buff  ata data read from/write to device
+ * @param len   ata data length
+ * @param lba   lba begins from 0
+ * @param cmd   read/write
+ */
 void
 atabuff_set(atabuff_t *ibuff, void *buff, size_t len,
 size_t lba, ata_cmd_t cmd) {
@@ -53,31 +56,36 @@ size_t lba, ata_cmd_t cmd) {
 /**
  * @brief write command to ide register
  * 
- * @param lba lba no
+ * @param dev device no.
+ * @param lba lba no.
  * @param cr  the sector amount
  * @param cmd commnd
  */
 void
-ata_set_cmd(uint32_t lba, uint8_t cr, ata_cmd_t cmd) {
+ata_set_cmd(uint32_t dev, uint32_t lba, uint8_t cr, ata_cmd_t cmd, bool is_irq) {
 
-    if (!ata_is_selected())
-        panic("ata_set_cmd(): not selected device\n");
+    ata_check_invalid(dev);
 
     port_t io_port =
-        ata_space.device_info_[ata_space.current_select_].io_port_;
+        ata_space.device_info_[dev].io_port_;
 
-    // error checking
-    ata_wait_not_busy_but_ready();
+    if (is_irq)    ata_enable_irqs();
+    else    ata_disable_irqs();
 
-    ata_disable_irqs();
+    // select device
+    uint8_t master =
+        (ata_devices[dev].bus_wire_ == ATA_TYPE_BUS_WIRE_LOW) ? 0 : 1;
+    outb(0xa0 | ATA_DEV_IO_MOD_LBA | (master << 4) | (uint8_t)((lba >> 24) & 0xf),
+        io_port + ATA_IO_RW_OFFSET_DRIVE_SELECT);
+    ata_wait_register_400ns(ata_space.device_info_[dev].ctrl_port_);
 
     // real operation
     outb(cr, io_port + ATA_IO_RW_OFFSET_SECTOR_COUNT);
     outb((uint8_t)(lba & 0xff), io_port + ATA_IO_RW_OFFSET_LBA_LOW);
     outb((uint8_t)((lba >> 8) & 0xff), io_port + ATA_IO_RW_OFFSET_LBA_MID);
     outb((uint8_t)((lba >> 16) & 0xff), io_port + ATA_IO_RW_OFFSET_LBA_HIGH);
-    ata_select(ata_space.current_select_, (uint8_t)((lba >> 24) & 0xf));
     outb((uint8_t)cmd, io_port + ATA_IO_W_OFFSET_COMMAND);
+    ata_wait_not_busy();
 
 }
 
@@ -120,19 +128,32 @@ ata_wait_not_busy_but_ready() {
 }
 
 /**
+ * @brief wait the status to be not busy but ready
+ */
+void
+ata_wait_not_busy() {
+    port_t io_port =
+        ata_space.device_info_[ata_space.current_select_].io_port_;
+
+    // wait not busy
+    while ((inb(io_port + ATA_IO_R_OFFSET_STATUS) & ATA_STATUS_BSY));
+}
+
+/**
  * @brief detect ata device
  */
 void
-ata_detect(void) {
+ata_space_init(void) {
 
     bzero(&ata_space, sizeof(ata_space_t));
-    ata_space.current_select_ = ATA_SELECT_NO;
     bzero(ata_devices, sizeof(ata_device_t) * ATA_MAX_SUPPORTED_DEVICES);
+    ata_space.device_info_ = ata_devices;
 
-    // disable IRQs during detection
+    // disable IRQs during initialization
     ata_disable_irqs();
 
-    uint16_t port_io = 0, port_ctrl = 0;
+    port_t port_io = 0, port_ctrl = 0;
+    size_t device_no = 0;
     // enumerate all buses
     for (size_t i = 0; i < ATA_TYPE_BUS_MAX; ++i) {
         port_io = i == 0 ?
@@ -141,8 +162,7 @@ ata_detect(void) {
             ATA_PRIMARY_PORT_CTRL_BASE : ATA_SECONDARY_PORT_CTRL_BASE;
 
         for (size_t j = 0; j < ATA_TYPE_BUS_WIRE_MAX; ++j) {
-            ata_devices[ata_space.device_amount_].device_no_ =
-                ata_space.device_amount_;
+            ata_devices[ata_space.device_amount_].device_no_ = device_no++;
             ata_devices[ata_space.device_amount_].bus_       = i == 0 ?
                 ATA_TYPE_BUS_PRIMARY : ATA_TYPE_BUS_SECONDARY;
             ata_devices[ata_space.device_amount_].bus_wire_  = j == 0 ?
@@ -151,7 +171,10 @@ ata_detect(void) {
             ata_devices[ata_space.device_amount_].ctrl_port_ = port_ctrl;
 
             // select device
-            ata_send_select_cmd((j == 0 ? true : false), port_io, port_ctrl, 0);
+            uint8_t flag = (j == 0) ? 0 : 1;
+            outb(0xa0 | ATA_DEV_IO_MOD_LBA | (flag << 4),
+                port_io + ATA_IO_RW_OFFSET_DRIVE_SELECT);
+            ata_wait_register_400ns(port_ctrl);
 
             // send ata IDENTIFY command
             outb(ATA_CMD_IO_IDENTIFY, port_io + ATA_IO_W_OFFSET_COMMAND);
@@ -184,46 +207,6 @@ ata_detect(void) {
         } // end for(j)
     } // end for(i)
 
-    // select the first valid device
-    for (size_t i = 0; i < ata_space.device_amount_; ++i) {
-        if (ata_devices[i].valid_) {
-            ata_select(i, 0);
-            break;
-        }
-    }
-
-    ata_space.device_info_ = ata_devices;
     ata_enable_irqs();
 
-}
-
-/**
- * @brief select the specified ata device
- * 
- * @param device_no ata device number
- * @param lba_hi4 lba number high 4-bit
- */
-void
-ata_select(size_t device_no, uint8_t lba_hi4) {
-    if (!ata_devices[device_no].valid_)
-        panic("ata_select(): invalid device no\n");
-
-    bool master =
-        (ata_devices[device_no].bus_wire_ == ATA_TYPE_BUS_WIRE_LOW) ?
-        true : false;
-    ata_send_select_cmd(master, ata_devices[device_no].io_port_,
-        ata_devices[device_no].ctrl_port_, lba_hi4);
-
-    ata_space.current_select_ = device_no;
-}
-
-/**
- * @brief whether the current ata device was selected
- * 
- * @return true yes
- * @return false no
- */
-bool
-ata_is_selected() {
-    return (ata_space.current_select_ != ATA_SELECT_NO);
 }

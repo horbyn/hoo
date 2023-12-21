@@ -232,7 +232,6 @@ cga_puthex(uint32_t dig) {
         ++i;
     }
 
-    cga_putstr("0x", 2);
     while (i)
         cga_putc(__arr_dig[--i]);
 }

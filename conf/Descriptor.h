@@ -36,7 +36,7 @@ typedef struct AccessByteNotsys {
     uint8_t dpl_ :2;                                        // privilege
     uint8_t ps_  :1;                                        // present: set if in memory
     
-} __attribute__ ((packed)) AcsNotsys_t;
+} __attribute__((packed)) AcsNotsys_t;
 
 /**
  * @brief definition of access byte field in tss

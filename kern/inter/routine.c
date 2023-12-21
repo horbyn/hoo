@@ -80,15 +80,15 @@ uint32_t eip, uint32_t cs,  uint32_t eflags) {
 
     uint32_t arr_idx = idx <= (NELEMS(__exception_names) - 2) ?
         idx : (NELEMS(__exception_names) - 2);
-    kprintf("\n>>>>> %x: %s <<<<<\n", idx, __exception_names[arr_idx]);
-    kprintf("\nEFLAGS = %x\nCS = %x\nEIP = %x\nECODE = %x\n",
+    kprintf("\n>>>>> 0x%x: %s <<<<<\n", idx, __exception_names[arr_idx]);
+    kprintf("\nEFLAGS = 0x%x\nCS = 0x%x\nEIP = 0x%x\nECODE = 0x%x\n",
         eflags, (cs & 0xffff), eip, ecode);
-    kprintf("DS = %x\nES = %x\nFS = %x\nGS = %x\n",
+    kprintf("DS = 0x%x\nES = 0x%x\nFS = 0x%x\nGS = 0x%x\n",
         (ds & 0xffff), (es & 0xffff), (fs & 0xffff), (gs & 0xffff));
-    kprintf("EAX = %x\nECX = %x\nEDX = %x\nEBX = %x\nESP = %x\n"
-        "EBP = %x\nESI = %x\nEDI = %x\n", eax, ecx, edx, ebx, esp,
+    kprintf("EAX = 0x%x\nECX = 0x%x\nEDX = 0x%x\nEBX = 0x%x\nESP = 0x%x\n"
+        "EBP = 0x%x\nESI = 0x%x\nEDI = 0x%x\n", eax, ecx, edx, ebx, esp,
         ebp, esi, edi);
-    kprintf("PREV_STACKFRAME_RET = %x\nPREV_STACKFRAME_EBP = %x\n",
+    kprintf("PREV_STACKFRAME_RET = 0x%x\nPREV_STACKFRAME_EBP = 0x%x\n",
         prev_stackframe_retaddr, prev_stackframe_ebp);
 
     __asm__ volatile ("hlt\n\t"::);

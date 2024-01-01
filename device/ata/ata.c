@@ -8,6 +8,7 @@
 
 ata_space_t ata_space;
 static ata_device_t ata_devices[ATA_MAX_SUPPORTED_DEVICES];
+static ata_identify_data_t identify;
 
 /**
  * @brief wait 400 ns
@@ -187,19 +188,16 @@ ata_space_init(void) {
             } else {
                 ata_devices[ata_space.device_amount_].valid_ = true;
 
-                while (1) {
-                    uint8_t status = inb(port_io + ATA_IO_R_OFFSET_STATUS);
-                    if ((status & ATA_STATUS_ERR)) {
-                        ata_devices[ata_space.device_amount_].device_type_ =
-                            ATA_TYPE_DEVICE_UNKNOWN;
-                        break;
-                    }
-                    if (!(status & ATA_STATUS_BSY) && (status & ATA_STATUS_DRQ)) {
-                        ata_devices[ata_space.device_amount_].device_type_ =
-                            ATA_TYPE_DEVICE_ATA;
-                        break;
-                    }
-                }
+                insw(&identify, sizeof(ata_identify_data_t),
+                    port_io + ATA_IO_RW_OFFSET_DATA);
+                ata_devices[ata_space.device_amount_].device_type_ =
+                    ata_get_device_type(&identify);
+                ata_devices[ata_space.device_amount_].total_sectors_ =
+                    ata_get_sectors(&identify);
+                ata_get_serial_number(&identify,
+                    &ata_devices[ata_space.device_amount_].dev_serial_);
+                ata_get_model_number(&identify,
+                    &ata_devices[ata_space.device_amount_].dev_model_);
 
                 ++ata_space.device_amount_;                 // increase after founded
             }

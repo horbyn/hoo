@@ -57,4 +57,14 @@ init_ata(void) {
             break;
         }
     }
+
+    size_t select = ata_space.current_select_;
+    kprintf("dev info:\n\tdev no.: %d\n\tserial no.: %s\n\t"
+        "model no.: %s\n\ttype: %s\n\ttotal sectors: %d\n",
+        ata_space.device_info_[select].device_no_,
+        (char *)&(ata_space.device_info_[select].dev_serial_),
+        (char *)&(ata_space.device_info_[select].dev_model_),
+        ENUM2STR_ATA_TYPE_DEVICE(
+            ata_space.device_info_[select].device_type_),
+        ata_space.device_info_[select].total_sectors_);
 }

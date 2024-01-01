@@ -14,5 +14,6 @@ uint32_t strlen(const char *);
 void memset(void *, uint8_t, size_t);
 void bzero(void *, size_t);
 int memmove(void *, const void *, size_t);
+bool memcmp(const void *, const void *, size_t);
 
 #endif

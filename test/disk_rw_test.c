@@ -17,10 +17,18 @@ disk_reading() {
 
     //ata_driver_init(ATA_METHOD_IRQ); // not completely implement; don't use
     ata_driver_init(ATA_METHOD_POLLING);
-    bzero(buff, sizeof(buff));
 
-    // read lba. 0 (mbr) from disk to buff
     atabuff_t ata_buff;
+    bzero(buff, sizeof(buff));
+    for (size_t i = 0; i < sizeof(buff); ++i)
+        buff[i] = (uint8_t)i;
+
+    // write data to lba-0 of disk
+    bzero(&ata_buff, sizeof(atabuff_t));
+    atabuff_set(&ata_buff, buff, sizeof(buff), 0, ATA_CMD_IO_WRITE);
+    ata_driver_rw(&ata_buff);
+
+    // read lba-0 from disk to buff
     bzero(&ata_buff, sizeof(atabuff_t));
     atabuff_set(&ata_buff, buff, sizeof(buff), 0, ATA_CMD_IO_READ);
     ata_driver_rw(&ata_buff);

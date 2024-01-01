@@ -67,3 +67,24 @@ memmove(void *dst, const void *src, size_t size) {
 
     return 0;
 }
+
+/**
+ * @brief compare two buffer
+ * 
+ * @param a buffer a
+ * @param b buffer b
+ * @param max_cmp_size the max size to be compared
+ * @return true same
+ * @return false not same
+ */
+bool
+memcmp(const void *a, const void *b, size_t max_cmp_size) {
+    const uint8_t *pa = a, *pb = b;
+
+    size_t i = 0;
+    for (; i < max_cmp_size; i++) {
+        if (pa[i] != pb[i])    break;
+    }
+
+    return i == max_cmp_size ? true : false;
+}

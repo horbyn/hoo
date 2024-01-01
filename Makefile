@@ -1,4 +1,5 @@
-DISK := hd64M.img
+BOOT_IMG := fd1_44M.img
+DISK     := hd.img
 
 # SSRC: the `.s` set, which is used the `find` command to find out all the `.s`
 #       in current dir and all the recursive sub-dir
@@ -37,28 +38,29 @@ LDFLAGS := -m elf_i386 -Map kernel.map
 
 # keep the depencement `.img` in the first command pleaze, that `make` will
 #    execute all the command by default
-nop: image $(OBJS) $(OBJC) $(DISK) run
+nop: image $(OBJS) $(OBJC) $(BOOT_IMG) run
 
 debug: CFLAGS += -g -DDEBUG
-debug: image $(OBJS) $(OBJC) $(DISK) run
+debug: image $(OBJS) $(OBJC) $(BOOT_IMG) run
 
 run:
 	/usr/bin/bochs -q
 
 # -f: dont generate the file if exists
-# 1.44M floppy: 80(C) * 2(H) * 18(S) * 512 = 1474560
-# hard disk:	130(C) * 16(H) * 63(S) * 512 = 67092480
+# 1.44M floppy: 80(C) * 2(H) * 18(S) * 512 =   1,474,560
+# hard disk:	             1057222 * 512 = 541,297,664
 image:
-	if [ ! -f "$(DISK)" ]; then \
-		dd if=/dev/zero of=$(DISK) bs=67092480 count=1; \
+	if [ ! -f "$(BOOT_IMG)" ]; then \
+		dd if=/dev/zero of=$(BOOT_IMG) bs=1474560 count=1; \
 	fi
+	dd if=/dev/zero of=$(DISK) bs=541297664 count=1
 
 # objdump -S: disassemble the text segment in a source intermixed style
 #         -D: disassemble all the segments
-$(DISK): bootsect kernel.elf
-	dd if=bootsect of=$(DISK) bs=512 count=1 conv=notrunc
+$(BOOT_IMG): bootsect kernel.elf
+	dd if=bootsect of=$(BOOT_IMG) bs=512 count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
-	dd if=kernel of=$(DISK) bs=512 count=896 seek=1 conv=notrunc
+	dd if=kernel of=$(BOOT_IMG) bs=512 count=896 seek=1 conv=notrunc
 	objdump -SD -m i386 kernel.elf > kernel.elf.dis
 
 # --oformat: output the pure binary format
@@ -87,4 +89,4 @@ $(OBJC): %.o: %.c
 # -rm: some maybe not exist but we dont care
 clean:
 	-rm -r $(OBJS) $(OBJC) ./boot/bootsect.o bootsect \
-	./kernel ./kernel.elf ./kernel.elf.dis ./kernel.map $(DISK)
+	./kernel ./kernel.elf ./kernel.elf.dis ./kernel.map $(BOOT_IMG) $(DISK)

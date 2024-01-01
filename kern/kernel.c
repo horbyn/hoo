@@ -15,7 +15,7 @@ kernel_exec(void) {
     enable_intr();
 
     //test_kernel_threads();
-    test_disk_read();
+    //test_disk_read();
 
     // DONT RETURN
     while(1);

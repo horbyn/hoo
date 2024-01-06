@@ -48,12 +48,14 @@ run:
 
 # -f: dont generate the file if exists
 # 1.44M floppy: 80(C) * 2(H) * 18(S) * 512 =   1,474,560
-# hard disk:	             1057222 * 512 = 541,297,664
+# hard disk:	             1057478 * 512 = 541,428,736
 image:
 	if [ ! -f "$(BOOT_IMG)" ]; then \
 		dd if=/dev/zero of=$(BOOT_IMG) bs=1474560 count=1; \
 	fi
-	dd if=/dev/zero of=$(DISK) bs=541297664 count=1
+	if [ ! -f "$(DISK)" ]; then \
+		dd if=/dev/zero of=$(DISK) bs=541428736 count=1; \
+	fi
 
 # objdump -S: disassemble the text segment in a source intermixed style
 #         -D: disassemble all the segments

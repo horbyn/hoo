@@ -1,7 +1,7 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
 #pragma once
@@ -13,6 +13,7 @@
 #include "kern/module/device.h"
 #include "kern/module/inte.h"
 #include "kern/module/sched.h"
+#include "kern/module/fs.h"
 #include "kern/sched/tasks.h"
 #include "test/tasks_test.h"
 #include "test/disk_rw_test.h"

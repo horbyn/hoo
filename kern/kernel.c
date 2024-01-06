@@ -1,7 +1,7 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
 #include "kernel.h"
@@ -39,4 +39,5 @@ kernel_init(void) {
 
     init_ata();
     create_kernel_idle();
+    init_fs();
 }

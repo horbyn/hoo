@@ -10,6 +10,7 @@
 
 #include "kern/types.h"
 
+#define MAX_FS_ACCESS_LEVEL         3
 #define MAX_INODE_BLOCKS            8
 #define MAX_INODES                  64
 #define FS_HOO_MAGIC                0x1905e14d
@@ -23,5 +24,14 @@
  * @brief the size of LBA index
  */
 typedef uint32_t lba_index_t;
+
+/**
+ * @brief index level
+ */
+typedef enum index_level {
+    INDEX_LEVEL0 = 0,                                       // direct
+    INDEX_LEVEL1,                                           // single indirect
+    INDEX_LEVEL2                                            // double indirect
+} enum_index_level_t;
 
 #endif

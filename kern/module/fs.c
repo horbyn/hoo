@@ -7,19 +7,6 @@
 #include "fs.h"
 
 /**
- * @brief Set up the free blocks map
- */
-static void
-setup_free_map() {
-    uint8_t sect[BYTES_SECTOR];
-    bzero(sect, sizeof(sect));
-    atabuff_t ata_buff;
-    atabuff_set(&ata_buff, sect, sizeof(sect),
-        FS_LAYOUT_BASE_MAP_FREE, ATA_CMD_IO_WRITE);
-    ata_driver_rw(&ata_buff);
-}
-
-/**
  * @brief initialize the disk layout
  */
 void
@@ -41,16 +28,13 @@ init_fs(void) {
 
     super_block_t super_block;
     bzero(&super_block, sizeof(super_block_t));
-    uint32_t free_lba = get_necessary_sectors(&super_block, dev_sectors);
-    if (free_lba == 0)    panic("init_fs()");
-    setup_super_block(&super_block, free_lba);
 
-    if (super_block.magic_ != FS_HOO_MAGIC) {
-        // a new disk
-        setup_inode(true);
-        setup_free_map();
-        setup_root_dir();
+    init_free_layout();
+    const free_layout_t *free_layout = get_free_layout(dev_sectors);
+    uint32_t free_lba = FS_LAYOUT_BASE_MAP_FREE + free_layout->bitmap_free_;
+    bool is_new = setup_super_block(&super_block, free_lba, free_layout->level_);
 
-        super_block.magic_ = FS_HOO_MAGIC;
-    }
+    setup_inode(is_new);
+    setup_free_map(is_new);
+    setup_root_dir();
 }

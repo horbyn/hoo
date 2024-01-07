@@ -37,7 +37,7 @@ bitmap_set(void *map, idx_t idx) {
     idx_t byte = idx / BITS_PER_BYTE;
     idx_t bit = idx % BITS_PER_BYTE;
 
-    return (m[byte] |= ((uint8_t)true << bit));
+    m[byte] |= ((uint8_t)true << bit);
 }
 
 /**
@@ -53,5 +53,5 @@ bitmap_clear(void *map, idx_t idx) {
     idx_t byte = idx / BITS_PER_BYTE;
     idx_t bit = idx % BITS_PER_BYTE;
 
-    return (m[byte] &= ~((uint8_t)true << bit));
+    m[byte] &= ~((uint8_t)true << bit);
 }

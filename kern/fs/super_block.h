@@ -14,15 +14,6 @@
 #include "kern/lib/lib.h"
 
 /**
- * @brief index level
- */
-typedef enum index_level {
-    INDEX_LEVEL0 = 0,                                       // direct
-    INDEX_LEVEL1,                                           // single indirect
-    INDEX_LEVEL2                                            // double indirect
-} enum_index_level_t;
-
-/**
  * @brief super block
  */
 typedef struct super_block {
@@ -36,7 +27,6 @@ typedef struct super_block {
     enum_index_level_t index_level_;
 } super_block_t;
 
-uint32_t get_necessary_sectors(super_block_t *, uint32_t);
-void setup_super_block(super_block_t *, uint32_t);
+bool setup_super_block(super_block_t *, uint32_t, enum_index_level_t);
 
 #endif

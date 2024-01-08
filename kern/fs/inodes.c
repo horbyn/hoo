@@ -7,17 +7,45 @@
 #include "inodes.h"
 
 static uint8_t __fs_map_inodes[BYTES_SECTOR];               // inodes map in-memory c
-static inode_t __fs_inodes[MAX_INODES];                     // inodes in-memory cache
+inode_t __fs_inodes[MAX_INODES];                            // inodes in-memory cache
 
-inode_t *
-get_root_inode(void) {
-    return &(__fs_inodes[0]);
+lba_index_t
+inode_allocate() {
+    return null;
 }
 
-inode_t *
-inode_allocate()
-{
-    return null;
+/**
+ * @brief fill in inode structure
+ * 
+ * @param inode inode to be filled
+ * @param size blocks size
+ * @param base_lba blocks where it begins
+ */
+void
+set_inode(inode_t *inode, size_t size, lba_index_t base_lba) {
+    if (inode == null)    panic("set_inode(): invalid inode");
+    if (base_lba < __super_block.lba_free_)
+        panic("set_inode(): invalid lba");
+
+    inode->size_ = size;
+    size_t i = 0;
+    for (; i < MAX_INODE_BLOCKS; ++i) {
+        if (inode->iblock_[i] == 0) {
+            inode->iblock_[i] = base_lba;
+            break;
+        }
+    }
+
+    if (i == MAX_INODE_BLOCKS)
+        panic("set_inode(): no enough iblock space");
+}
+
+void
+inode_to_disk(lba_index_t lba) {
+    atabuff_t atabuff;
+    atabuff_set(&atabuff, &__fs_inodes[lba], sizeof(inode_t),
+        __super_block.lba_inodes_ + lba, ATA_CMD_IO_WRITE);
+    ata_driver_rw(&atabuff);
 }
 
 /**

@@ -27,6 +27,8 @@ typedef struct super_block {
     enum_index_level_t index_level_;
 } super_block_t;
 
-bool setup_super_block(super_block_t *, uint32_t, enum_index_level_t);
+extern super_block_t __super_block;
+
+bool setup_super_block();
 
 #endif

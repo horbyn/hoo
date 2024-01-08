@@ -23,18 +23,8 @@ init_fs(void) {
      * NOTE : the first sector will, if necessary, use for Partition            *
      ****************************************************************************/
 
-    uint32_t dev_sectors =
-        ata_space.device_info_[ata_space.current_select_].total_sectors_;
-
-    super_block_t super_block;
-    bzero(&super_block, sizeof(super_block_t));
-
-    init_free_layout();
-    const free_layout_t *free_layout = get_free_layout(dev_sectors);
-    uint32_t free_lba = FS_LAYOUT_BASE_MAP_FREE + free_layout->bitmap_free_;
-    bool is_new = setup_super_block(&super_block, free_lba, free_layout->level_);
-
+    bool is_new = setup_super_block();
     setup_inode(is_new);
     setup_free_map(is_new);
-    setup_root_dir();
+    create_root_dir();
 }

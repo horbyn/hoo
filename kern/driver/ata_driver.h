@@ -24,6 +24,6 @@ typedef enum ata_method {
 } enum_ata_method;
 
 void ata_driver_init(enum_ata_method);
-void ata_driver_rw(atabuff_t *);
+void ata_driver_rw(void *buff, size_t bufflen, idx_t lba, ata_cmd_t cmd);
 
 #endif

@@ -55,3 +55,26 @@ bitmap_clear(void *map, idx_t idx) {
 
     m[byte] &= ~((uint8_t)true << bit);
 }
+
+/**
+ * @brief scan the bitmap to search empty bit
+ * 
+ * @param map bitmap
+ * @param len the length to be scanned
+ * @return the bit first empty
+ */
+uint32_t
+bitmap_scan(void *map, uint32_t len) {
+    uint32_t bit = 0;
+
+    for (; bit < len; ++bit) {
+        if (bitmap_test(map, bit) == false) {
+            bitmap_set(map, bit);
+            break;
+        }
+    }
+
+    if (bit == len)
+        panic("bitmap_scan(): no more free bits");
+    return bit;
+}

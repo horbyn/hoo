@@ -28,15 +28,21 @@ ata_driver_init(enum_ata_method method) {
 /**
  * @brief read sector from ata device
  * 
- * @param buff ata buffer
+ * @param buff buff to read/write
+ * @param bufflen buff length
+ * @param lba lba buff read from/write to
+ * @param cmd operation commands
  */
 void
-ata_driver_rw(atabuff_t *buff) {
+ata_driver_rw(void *buff, size_t bufflen, idx_t lba, ata_cmd_t cmd) {
+
+    atabuff_t atabuff;
+    atabuff_set(&atabuff, buff, bufflen, lba, cmd);
 
     switch (__ata_driver_method) {
-    case ATA_METHOD_IRQ: ata_irq_rw(buff, true); break;
+    case ATA_METHOD_IRQ: ata_irq_rw(&atabuff, true); break;
     // polling default
-    default: ata_polling_rw(buff, false); break;
+    default: ata_polling_rw(&atabuff, false); break;
     }
 
 }

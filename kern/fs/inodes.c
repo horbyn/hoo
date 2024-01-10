@@ -11,7 +11,12 @@ inode_t __fs_inodes[MAX_INODES];                            // inodes in-memory 
 
 lba_index_t
 inode_allocate() {
-    return null;
+
+    uint32_t len = BYTES_SECTOR *
+        (__super_block.lba_inodes_ - __super_block.lba_map_inode_);
+
+    uint32_t bit = bitmap_scan(__fs_map_inodes, len);
+    return (__super_block.lba_inodes_ + bit);
 }
 
 /**
@@ -41,11 +46,14 @@ set_inode(inode_t *inode, size_t size, lba_index_t base_lba) {
 }
 
 void
-inode_to_disk(lba_index_t lba) {
-    atabuff_t atabuff;
-    atabuff_set(&atabuff, &__fs_inodes[lba], sizeof(inode_t),
-        __super_block.lba_inodes_ + lba, ATA_CMD_IO_WRITE);
-    ata_driver_rw(&atabuff);
+inode_rw_disk(idx_t inode_idx, ata_cmd_t cmd) {
+
+    uint8_t sect[BYTES_SECTOR];
+    bzero(sect, sizeof(sect));
+    memmove(sect, &(__fs_inodes[inode_idx]), sizeof(inode_t));
+
+    ata_driver_rw(sect, sizeof(sect),
+        __super_block.lba_inodes_ + inode_idx, cmd);
 }
 
 /**
@@ -61,15 +69,10 @@ setup_inode(bool is_new) {
     bzero(__fs_inodes, sizeof(__fs_inodes));
 
     // inode map layout
-    atabuff_t ata_buff;
-    atabuff_set(&ata_buff, __fs_map_inodes, sizeof(__fs_map_inodes),
+    ata_driver_rw(__fs_map_inodes, sizeof(__fs_map_inodes),
         FS_LAYOUT_BASE_MAP_INODES, cmd);
-    ata_driver_rw(&ata_buff);
 
     // inodes layout
-    for (size_t i = 0; i < MAX_INODES; ++i) {
-        atabuff_set(&ata_buff, &__fs_inodes[i], sizeof(__fs_inodes[i]),
-            FS_LAYOUT_BASE_INODES + i, cmd);
-        ata_driver_rw(&ata_buff);
-    }
+    for (size_t i = 0; i < MAX_INODES; ++i)
+        inode_rw_disk(i, cmd);
 }

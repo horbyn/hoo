@@ -11,7 +11,7 @@
 #include "super_block.h"
 #include "kern/lib/bitmap.h"
 
-uint32_t allocate_free_block();
+uint32_t free_block_allocate();
 void setup_free_map(bool is_new);
 
 #endif

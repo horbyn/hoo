@@ -20,12 +20,12 @@
  */
 typedef struct dir_item {
     enum_inode_type type_;
-    inode_t        *inode_;
+    idx_t           inode_idx_;
     char            name_[16];                              // 13.3 format
-} dir_item_t;
+} __attribute__((packed)) dir_item_t;
 
 void set_dir_item(dir_item_t *dir, enum_inode_type type,
-    inode_t *inode, const char *name);
-void create_root_dir(void);
+    idx_t inode_idx, const char *name);
+void setup_root_dir(bool is_new);
 
 #endif

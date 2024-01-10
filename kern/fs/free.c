@@ -14,20 +14,11 @@ static uint8_t __fs_map_free[BYTES_SECTOR * 259];           // about 130 kb, tem
  * @return lba where the free block is
  */
 uint32_t
-allocate_free_block() {
-    uint32_t bit = 0;
-    uint32_t bitmap_blocks =
-        __super_block.lba_free_ - __super_block.lba_map_free_;
+free_block_allocate() {
+    uint32_t len = BYTES_SECTOR *
+        (__super_block.lba_free_ - __super_block.lba_map_free_);
 
-    for (; bit < bitmap_blocks * BYTES_SECTOR; ++bit) {
-        if (bitmap_test(__fs_map_free, bit) == false) {
-            bitmap_set(__fs_map_free, bit);
-            break;
-        }
-    }
-
-    if (bit == bitmap_blocks * BYTES_SECTOR)
-        panic("allocate_free_block(): no more free blocks");
+    uint32_t bit = bitmap_scan(__fs_map_free, len);
     return (__super_block.lba_free_ + bit);
 }
 
@@ -41,8 +32,6 @@ setup_free_map(bool is_new) {
     ata_cmd_t cmd = is_new ? ATA_CMD_IO_WRITE : ATA_CMD_IO_READ;
     bzero(__fs_map_free, sizeof(__fs_map_free));
 
-    atabuff_t ata_buff;
-    atabuff_set(&ata_buff, __fs_map_free, sizeof(__fs_map_free),
+    ata_driver_rw(__fs_map_free, sizeof(__fs_map_free),
         FS_LAYOUT_BASE_MAP_FREE, cmd);
-    ata_driver_rw(&ata_buff);
 }

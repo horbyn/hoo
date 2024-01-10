@@ -75,10 +75,8 @@ setup_super_block() {
 
     uint8_t sect[BYTES_SECTOR];
     bzero(sect, sizeof(sect));
-    atabuff_t ata_buff;
-    atabuff_set(&ata_buff, sect, sizeof(sect),
+    ata_driver_rw(sect, sizeof(sect),
         FS_LAYOUT_BASE_SUPERBLOCK, ATA_CMD_IO_READ);
-    ata_driver_rw(&ata_buff);
     memmove(&__super_block, sect, sizeof(super_block_t));
 
     if (__super_block.magic_ != FS_HOO_MAGIC) {
@@ -95,9 +93,8 @@ setup_super_block() {
         __super_block.index_level_     = __fs_level;
 
         memmove(sect, &__super_block, sizeof(super_block_t));
-        atabuff_set(&ata_buff, sect, sizeof(sect),
+        ata_driver_rw(sect, sizeof(sect),
             FS_LAYOUT_BASE_SUPERBLOCK, ATA_CMD_IO_WRITE);
-        ata_driver_rw(&ata_buff);
 
         is_new = true;
     }

@@ -14,53 +14,58 @@ dir_item_t __fs_root_dir;
  * 
  * @param dir   the dir structure to be filled in
  * @param type  inode type
- * @param inode inode corresponding to this dir
+ * @param inode_idx inode index
  * @param name  name corresponding to this dir
  */
 void
-set_dir_item(dir_item_t *dir, enum_inode_type type, inode_t *inode,
+set_dir_item(dir_item_t *dir, enum_inode_type type, idx_t inode_idx,
 const char *name) {
 
-    if (name == null)    panic("set_dir_item");
+    if (name == null)    panic("set_dir_item(): invalid dir name");
+    if (inode_idx == MAX_INODES)
+        panic("set_dir_item(): maximum index exceeded");
 
-    dir->type_  = type;
-    dir->inode_ = inode;
-    memmove(dir->name_, name, strlen(name));
+    dir->type_      = type;
+    dir->inode_idx_ = inode_idx;
 }
 
 /**
  * @brief Set up the root dir
+ * 
+ * @param is_new new disk
  */
 void
-create_root_dir() {
+setup_root_dir(bool is_new) {
 
-    // 1. setup dir item
+    // setup dir item
     set_dir_item(&__fs_root_dir, INODE_TYPE_DIR,
-        &__fs_inodes[INODE_INDEX_ROOT], "/");
+        INODE_INDEX_ROOT, "/");
 
-    // 2. setup inode
+    if (is_new) {
+
+        uint8_t sec[BYTES_SECTOR];
+        bzero(sec, sizeof(sec));
+
 #define FUNC_GET_DIR_SIZE(item_amount) \
-    ((item_amount) * sizeof(dir_item_t))
+        ((item_amount) * sizeof(dir_item_t))
 
-    bzero(&__fs_inodes[INODE_INDEX_ROOT], sizeof(inode_t));
-    uint32_t free_block = allocate_free_block();
-    set_inode(&__fs_inodes[INODE_INDEX_ROOT],
-        FUNC_GET_DIR_SIZE(strlen(__fs_dir_basic[FS_DIR_BASIC_PRE])),
-        free_block);
-    inode_to_disk(INODE_INDEX_ROOT);
+        // setup inode
+        bzero(&__fs_inodes[INODE_INDEX_ROOT], sizeof(inode_t));
+        uint32_t free_block = free_block_allocate();
+        set_inode(&__fs_inodes[INODE_INDEX_ROOT],
+            FUNC_GET_DIR_SIZE(strlen(__fs_dir_basic[FS_DIR_BASIC_PRE])),
+            free_block);
+        inode_rw_disk(INODE_INDEX_ROOT, ATA_CMD_IO_WRITE);
 
-    // 3. setup block
-    dir_item_t dir_cur, dir_pre;
-    set_dir_item(&dir_cur, INODE_TYPE_DIR,
-        &__fs_inodes[INODE_INDEX_ROOT], __fs_dir_basic[FS_DIR_BASIC_CUR]);
-    set_dir_item(&dir_pre, INODE_TYPE_DIR, null,
-        __fs_dir_basic[FS_DIR_BASIC_PRE]);
+        // setup block
+        dir_item_t dir_cur, dir_pre;
+        set_dir_item(&dir_cur, INODE_TYPE_DIR,
+            INODE_INDEX_ROOT, __fs_dir_basic[FS_DIR_BASIC_CUR]);
+        set_dir_item(&dir_pre, INODE_TYPE_DIR, null,
+            __fs_dir_basic[FS_DIR_BASIC_PRE]);
 
-    uint8_t sec[BYTES_SECTOR];
-    bzero(sec, sizeof(sec));
-    memmove(sec, &dir_cur, sizeof(dir_item_t));
-    memmove(sec + sizeof(dir_item_t), &dir_pre, sizeof(dir_item_t));
-    atabuff_t atabuff;
-    atabuff_set(&atabuff, sec, sizeof(sec), free_block, ATA_CMD_IO_WRITE);
-    ata_driver_rw(&atabuff);
+        memmove(sec, &dir_cur, sizeof(dir_item_t));
+        memmove(sec + sizeof(dir_item_t), &dir_pre, sizeof(dir_item_t));
+        ata_driver_rw(sec, sizeof(sec), free_block, ATA_CMD_IO_WRITE);
+    }
 }

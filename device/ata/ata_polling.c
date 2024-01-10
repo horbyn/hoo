@@ -15,6 +15,8 @@ ata_polling_init(void) {
 void
 ata_polling_rw(atabuff_t *buff, bool is_irq){
 
+    if (buff->len_ < BYTES_SECTOR)
+        panic("ata_polling_rw(): not meet a sector size");
     if (!is_irq)    ata_disable_irqs();
 
     size_t sectors_to_rw = buff->len_ / BYTES_SECTOR;
@@ -36,7 +38,7 @@ ata_polling_rw(atabuff_t *buff, bool is_irq){
                 ata_space.device_info_[ata_space.current_select_].io_port_);
         else    panic("ata_polling_rw()");
 
-        buff->len_ -= BYTES_SECTOR;
+        buff->len_ = (buff->len_ < BYTES_SECTOR) ? 0 : (buff->len_ - BYTES_SECTOR);
         buff->lba_ += 1;
     }
 

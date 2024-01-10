@@ -26,5 +26,5 @@ init_fs(void) {
     bool is_new = setup_super_block();
     setup_inode(is_new);
     setup_free_map(is_new);
-    create_root_dir();
+    setup_root_dir(is_new);
 }

@@ -9,6 +9,7 @@
 #define __KERN_FS_INODES_H__
 
 #include "super_block.h"
+#include "kern/lib/bitmap.h"
 
 #define INODE_INDEX_ROOT            0                       // inode index where the root dir is
 
@@ -33,7 +34,7 @@ extern inode_t __fs_inodes[MAX_INODES];
 
 lba_index_t inode_allocate(void);
 void set_inode(inode_t *inode, size_t size, lba_index_t base_lba);
-void inode_to_disk(lba_index_t lba);
+void inode_rw_disk(idx_t lba, ata_cmd_t cmd);
 void setup_inode(bool);
 
 #endif

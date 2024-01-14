@@ -16,6 +16,9 @@
  */
 bool
 bitmap_test(void *map, idx_t idx) {
+    if (idx == INVALID_INDEX)
+        panic("bitmap_test(): invalid index");
+
     uint8_t *m = (uint8_t *)map;
 
     idx_t byte = idx / BITS_PER_BYTE;
@@ -32,6 +35,9 @@ bitmap_test(void *map, idx_t idx) {
  */
 void
 bitmap_set(void *map, idx_t idx) {
+    if (idx == INVALID_INDEX)
+        panic("bitmap_set(): invalid index");
+
     uint8_t *m = (uint8_t *)map;
 
     idx_t byte = idx / BITS_PER_BYTE;
@@ -48,6 +54,9 @@ bitmap_set(void *map, idx_t idx) {
  */
 void
 bitmap_clear(void *map, idx_t idx) {
+    if (idx == INVALID_INDEX)
+        panic("bitmap_clear(): invalid index");
+
     uint8_t *m = (uint8_t *)map;
 
     idx_t byte = idx / BITS_PER_BYTE;

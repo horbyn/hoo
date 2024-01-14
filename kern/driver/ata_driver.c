@@ -35,6 +35,8 @@ ata_driver_init(enum_ata_method method) {
  */
 void
 ata_driver_rw(void *buff, size_t bufflen, idx_t lba, ata_cmd_t cmd) {
+    if (lba == INVALID_INDEX)
+        panic("ata_driver_rw(): invalid lba");
 
     atabuff_t atabuff;
     atabuff_set(&atabuff, buff, bufflen, lba, cmd);

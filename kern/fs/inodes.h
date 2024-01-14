@@ -28,13 +28,14 @@ typedef struct inode {
     size_t      size_;
     // index table: [0-5] directly; [6] single indirect; [7] double indirect
     lba_index_t iblock_[MAX_INODE_BLOCKS];
-} inode_t;
+} __attribute__((packed)) inode_t;
 
 extern inode_t __fs_inodes[MAX_INODES];
 
-lba_index_t inode_allocate(void);
-void set_inode(inode_t *inode, size_t size, lba_index_t base_lba);
-void inode_rw_disk(idx_t lba, ata_cmd_t cmd);
+idx_t inode_allocate(void);
+void inode_release(idx_t idx);
+void set_inode(idx_t inode_idx, size_t size, lba_index_t base_lba);
+void inodes_rw_disk(idx_t inode_idx, ata_cmd_t cmd);
 void setup_inode(bool);
 
 #endif

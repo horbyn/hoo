@@ -9,7 +9,7 @@
 #define __KERN_FS_DIR_H__
 
 #include "inodes.h"
-#include "free.h"
+#include "blocks.h"
 #include "kern/lib/bitmap.h"
 
 #define FS_DIR_BASIC_CUR    0

@@ -27,6 +27,7 @@ typedef unsigned short uint16_t;
 typedef unsigned int   uint32_t;
 typedef unsigned int   size_t;
 
-typedef uint32_t idx_t;
+typedef int idx_t;
+#define INVALID_INDEX (-1)
 
 #endif

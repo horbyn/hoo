@@ -59,8 +59,12 @@ init_ata(void) {
     }
 
     size_t select = ata_space.current_select_;
-    kprintf("dev info:\n\tdev no.: %d\n\tserial no.: %s\n\t"
-        "model no.: %s\n\ttype: %s\n\ttotal sectors: %d\n",
+    kprintf("================ DEVICE  INFO ================"
+        "\ndev no.:       %d"
+        "\nserial no.:    %s"
+        "\nmodel no.:     %s"
+        "\ntype:          %s"
+        "\ntotal sectors: %d\n\n",
         ata_space.device_info_[select].device_no_,
         (char *)&(ata_space.device_info_[select].dev_serial_),
         (char *)&(ata_space.device_info_[select].dev_model_),

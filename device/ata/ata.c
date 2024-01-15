@@ -61,6 +61,7 @@ size_t lba, ata_cmd_t cmd) {
  * @param lba lba no.
  * @param cr  the sector amount
  * @param cmd commnd
+ * @param is_irq true if method is IRQs
  */
 void
 ata_set_cmd(uint32_t dev, uint32_t lba, uint8_t cr, ata_cmd_t cmd, bool is_irq) {

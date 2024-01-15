@@ -48,6 +48,7 @@ blocks_rw_disk(void *buff, size_t bufflen, lba_index_t base_lba, ata_cmd_t cmd) 
 
     for (size_t i = 0; i <= amount; ++i, p += BYTES_SECTOR) {
         size_t cur = (i == amount) ? last_one : BYTES_SECTOR;
+        if (cur == 0)    break;
 
         if (cmd == ATA_CMD_IO_WRITE) {
             bzero(sect, BYTES_SECTOR);
@@ -62,9 +63,10 @@ blocks_rw_disk(void *buff, size_t bufflen, lba_index_t base_lba, ata_cmd_t cmd) 
         if (cmd == ATA_CMD_IO_WRITE)
             bitmap_set(__fs_map_blocks, bit + i);
         else    bitmap_clear(__fs_map_blocks, bit + i);
-        ata_driver_rw(__fs_map_blocks, sizeof(__fs_map_blocks),
-            __super_block.lba_map_blocks_, cmd);
     } // end for()
+
+    ata_driver_rw(__fs_map_blocks, sizeof(__fs_map_blocks),
+        __super_block.lba_map_blocks_, cmd);
 
 }
 

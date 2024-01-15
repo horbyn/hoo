@@ -34,5 +34,9 @@ typedef enum index_level {
 
     MAX_FS_ACCESS_LEVEL
 } enum_index_level_t;
+#define MACRO_STRING_INDEX_LEVEL(e) \
+    ((e == INDEX_LEVEL0) ? "direct" : \
+     (e == INDEX_LEVEL1) ? "single indirect" : \
+     (e == INDEX_LEVEL2) ? "double indirect" : "unknown")
 
 #endif

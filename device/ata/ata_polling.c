@@ -23,7 +23,7 @@ ata_polling_rw(atabuff_t *buff, bool is_irq){
     if (buff->len_ % BYTES_SECTOR != 0)    sectors_to_rw++;
 
     // r/w sectors one by one
-    for (size_t i = 0; i < sectors_to_rw; i++) {
+    for (size_t i = 0; i < sectors_to_rw && buff->len_ > 0; i++) {
         ata_set_cmd(ata_space.current_select_, buff->lba_,
             1, buff->cmd_, false);
 
@@ -38,8 +38,9 @@ ata_polling_rw(atabuff_t *buff, bool is_irq){
                 ata_space.device_info_[ata_space.current_select_].io_port_);
         else    panic("ata_polling_rw()");
 
-        buff->len_ = (buff->len_ < BYTES_SECTOR) ? 0 : (buff->len_ - BYTES_SECTOR);
         buff->lba_ += 1;
+        buff->len_ -= BYTES_SECTOR;
+        buff->buff_ += BYTES_SECTOR;
     }
 
 }

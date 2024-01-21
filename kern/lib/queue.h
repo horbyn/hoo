@@ -1,23 +1,16 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
 #pragma once
 #ifndef __KERN_LIB_QUEUE_H__
 #define __KERN_LIB_QUEUE_H__
 
+#include "node.h"
 #include "kern/types.h"
 #include "kern/debug.h"
-
-/**
- * @brief definition of queue node
- */
-typedef struct node {
-    void *data_;                                            // data field
-    struct node *next_;
-} node_t;
 
 /**
  * @brief definition of queue

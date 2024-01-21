@@ -36,6 +36,19 @@ inode_release(idx_t idx) {
     bitmap_clear(__fs_map_inodes, idx);
 }
 
+idx_t
+iblocks_search(idx_t inode_idx, int elem) {
+    size_t i = 0;
+    for (; i < MAX_INODE_BLOCKS; ++i) {
+        if (__fs_inodes[inode_idx].iblocks_[i] == elem)
+            break;
+    }
+    if (i == MAX_INODE_BLOCKS)
+        panic("set_inode(): no enough iblock space");
+
+    return i;
+}
+
 /**
  * @brief fill in inode structure
  * 
@@ -44,24 +57,16 @@ inode_release(idx_t idx) {
  * @param base_lba blocks where it begins
  */
 void
-set_inode(idx_t inode_idx, size_t size, lba_index_t base_lba) {
+set_inode(idx_t inode_idx, uint32_t size, lba_index_t base_lba) {
     if (inode_idx == INVALID_INDEX)
         panic("set_inode(): invalid inode");
-    if (base_lba < __super_block.lba_blocks_)
+    if (base_lba < __super_block.lba_free_)
         panic("set_inode(): invalid lba");
 
     inode_t *inode = &__fs_inodes[inode_idx];
+    bzero(inode, sizeof(inode_t));
     inode->size_ = size;
-    size_t i = 0;
-    for (; i < MAX_INODE_BLOCKS; ++i) {
-        if (inode->iblock_[i] == 0) {
-            inode->iblock_[i] = base_lba;
-            break;
-        }
-    }
-
-    if (i == MAX_INODE_BLOCKS)
-        panic("set_inode(): no enough iblock space");
+    inode->iblocks_[iblocks_search(inode_idx, 0)] = base_lba;
 }
 
 void

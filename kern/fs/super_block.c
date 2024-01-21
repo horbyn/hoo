@@ -87,8 +87,8 @@ setup_super_block() {
         __super_block.lba_super_block_ = FS_LAYOUT_BASE_SUPERBLOCK;
         __super_block.lba_map_inode_   = FS_LAYOUT_BASE_MAP_INODES;
         __super_block.lba_inodes_      = FS_LAYOUT_BASE_INODES;
-        __super_block.lba_map_blocks_    = FS_LAYOUT_BASE_MAP_FREE;
-        __super_block.lba_blocks_        = FS_LAYOUT_BASE_MAP_FREE
+        __super_block.lba_map_free_    = FS_LAYOUT_BASE_MAP_FREE;
+        __super_block.lba_free_        = FS_LAYOUT_BASE_MAP_FREE
             + __fs_bitmap_free_sectors;
         __super_block.index_level_     = __fs_level;
 

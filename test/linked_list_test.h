@@ -4,16 +4,12 @@
  *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
-#include "blocks.h"
+#pragma once
+#ifndef __TEST_LINKED_LIST_TEST_H__
+#define __TEST_LINKED_LIST_TEST_H__
 
-static node_t nodes[NODE_NUM];
-static list_t list_blocks;
+#include "kern/lib/list.h"
 
-/**
- * @brief initialize blocks io
- */
-void
-blocks_init(void) {
-    list_init(&list_blocks);
-    bzero(nodes, sizeof(nodes));
-}
+void test_linked_list(void);
+
+#endif

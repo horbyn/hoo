@@ -11,10 +11,12 @@
  */
 void
 init_fs(void) {
+    blocks_init();
+
     /********************************************************************************
      * DISK LAYOUT :                                                                *
      * ┌──────────┬─────────────┬────────────┬────────────┬────────────┬────────┐   *
-     * │ RESERVED │ SUPER_BLOCK │ MAP_INODES │   INODES   │ MAP_BLOCKS │ BLOCKS │   *
+     * │ RESERVED │ SUPER_BLOCK │ MAP_INODES │   INODES   │  MAP_FREE  │  FREE  │   *
      * └──────────┴─────────────┴────────────┴────────────┴────────────┴────────┘   *
      * |          \             \            \            \            \            *
      * | 1 sector  \  1 sector   \  1 sector  \ 64 sectors \ n sectors  \           *
@@ -25,7 +27,7 @@ init_fs(void) {
 
     bool is_new = setup_super_block();
     setup_inode(is_new);
-    setup_blocks_map(is_new);
+    setup_free_map(is_new);
     setup_root_dir(is_new);
 
     kprintf("================ FILE  SYSTEM ================"
@@ -35,11 +37,11 @@ init_fs(void) {
         "\n    super block: %d"
         "\n    inode map:   %d"
         "\n    inodes:      %d"
-        "\n    block map:   %d"
-        "\n    blocks:      %d\n\n",
+        "\n    free map:    %d"
+        "\n    free:        %d\n\n",
         (is_new ? "new" : "old"),
         MACRO_STRING_INDEX_LEVEL(__super_block.index_level_),
         __super_block.lba_super_block_, __super_block.lba_map_inode_,
-        __super_block.lba_inodes_, __super_block.lba_map_blocks_,
-        __super_block.lba_blocks_);
+        __super_block.lba_inodes_, __super_block.lba_map_free_,
+        __super_block.lba_free_);
 }

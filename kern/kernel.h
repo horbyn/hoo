@@ -16,6 +16,7 @@
 #include "kern/module/fs.h"
 #include "kern/sched/tasks.h"
 #include "test/tasks_test.h"
+#include "test/linked_list_test.h"
 #include "test/disk_rw_test.h"
 
 extern uint8_t __kern_base[], __kern_end[];

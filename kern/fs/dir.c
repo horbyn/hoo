@@ -28,6 +28,85 @@ const char *name) {
     memmove(dir->name_, name, strlen(name) + 1);
 }
 
+void
+set_dir_block(dir_block_t *blocks, size_t block_size,
+const dir_item_t *items, uint32_t item_amount) {
+    if (blocks == null)    panic("set_dir_block(): invalid blocks");
+    if (items == null || item_amount == 0)    return;
+
+    /*
+     * the dir block array like below:
+     * ┌───────────┬────────────┐ ┌───────────┬────────────┐
+     * │ amount(x) │ dir_item_t │-│ amount(0) │ dir_item_t │- ...
+     * └───────────┴────────────┘ └───────────┴────────────┘
+     */
+}
+
+/**
+ * @brief directory items writes to disk
+ * 
+ * @param dest destination of directory item
+ * @param to_write directory items to write
+ * @param amount directory amounts
+ */
+void
+dirs_write_disk(dir_item_t *dest, dir_item_t *to_write, uint32_t amount) {
+    if (dest == null)    panic("dirs_rw_disk(): invalid dir");
+    if (to_write == null)    return;
+
+    /*
+     * the directory items in disk like below:
+     *
+     * ┌────────┬─────────────────────────────┐
+     * │ amount │ (21) `dir_item_t` structure │
+     * └────────┴─────────────────────────────┘
+     */
+
+    uint32_t need_size = __fs_inodes[dest->inode_idx_].size_ + amount;
+    const uint32_t MAX_DIRECT = 6,
+        ITEMS_PER_SECTOR = BYTES_SECTOR / sizeof(lba_index_t);
+    const uint32_t LEVEL0_DIR = MAX_INODE_BLOCKS * MAX_DIRITEM_PER_BLOCK,
+        LEVEL1_DIR = (MAX_DIRECT + ITEMS_PER_SECTOR * 2) * MAX_DIRITEM_PER_BLOCK,
+        LEVEL2_DIR = (MAX_DIRECT + ITEMS_PER_SECTOR +
+            ITEMS_PER_SECTOR * ITEMS_PER_SECTOR) * MAX_DIRITEM_PER_BLOCK;
+    if ((__super_block.index_level_ == INDEX_LEVEL0 && need_size > LEVEL0_DIR)
+        || (__super_block.index_level_ == INDEX_LEVEL1 && need_size > LEVEL1_DIR)
+        || (__super_block.index_level_ == INDEX_LEVEL2 && need_size > LEVEL2_DIR))
+        panic("dirs_rw_disk(): no enough space in inode");
+
+    dir_block_t block;
+    bool fchange = false;
+    for (size_t i = 0; amount != 0; ++i) {
+        if (i == MAX_INODE_BLOCKS)    break;
+        bzero(&block, sizeof(dir_block_t));
+
+        lba_index_t lba = __fs_inodes[dest->inode_idx_].iblocks_[i];
+        if (lba < __super_block.lba_free_)
+            panic("dirs_rw_disk(): invalid lba");
+        // dir item needs not to read when `inode.size_` is zero,
+        //   because it is a new dir
+        if (__fs_inodes[dest->inode_idx_].size_ != 0)
+            ata_driver_rw(&block, sizeof(dir_block_t), lba, ATA_CMD_IO_READ);
+
+        for (; block.amount_ < MAX_DIRITEM_PER_BLOCK;) {
+            memmove(&block.dir_[block.amount_], to_write, sizeof(dir_item_t));
+            ++block.amount_;
+            ++to_write;
+            ++__fs_inodes[dest->inode_idx_].size_;
+            fchange = true;
+            --amount;
+            if (amount == 0)    break;
+        } // end for(dir_block)
+
+        if (fchange) {
+            ata_driver_rw(&block, sizeof(dir_block_t), lba, ATA_CMD_IO_WRITE);
+            fchange = false;
+        }
+    } // end for(amount)
+
+    inodes_rw_disk(dest->inode_idx_, ATA_CMD_IO_WRITE);
+}
+
 /**
  * @brief Set up the root dir
  * 
@@ -46,15 +125,11 @@ setup_root_dir(bool is_new) {
         bzero(sec, sizeof(sec));
 
 #define FUNC_GET_DIR_SIZE(item_amount) \
-        ((item_amount) * sizeof(dir_item_t))
+        (item_amount)
 
         // setup inode
-        bzero(&__fs_inodes[INODE_INDEX_ROOT], sizeof(inode_t));
-        lba_index_t free_block = block_allocate();
-        set_inode(INODE_INDEX_ROOT,
-            FUNC_GET_DIR_SIZE(strlen(__fs_dir_basic[FS_DIR_BASIC_PRE])),
-            free_block);
-        inodes_rw_disk(INODE_INDEX_ROOT, ATA_CMD_IO_WRITE);
+        lba_index_t free_block = free_allocate();
+        set_inode(INODE_INDEX_ROOT, 0, free_block);
 
         // setup block
         dir_item_t dir_cur, dir_pre;
@@ -65,6 +140,6 @@ setup_root_dir(bool is_new) {
 
         memmove(sec, &dir_cur, sizeof(dir_item_t));
         memmove(sec + sizeof(dir_item_t), &dir_pre, sizeof(dir_item_t));
-        blocks_rw_disk(sec, sizeof(sec), free_block, ATA_CMD_IO_WRITE);
+        dirs_write_disk(&dir_cur, (dir_item_t *)sec, NELEMS(__fs_dir_basic) - 1);
     }
 }

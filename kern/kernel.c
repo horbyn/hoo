@@ -16,6 +16,7 @@ kernel_exec(void) {
 
     //test_kernel_threads();
     //test_disk_read();
+    //test_linked_list();
 
     // DONT RETURN
     while(1);
@@ -34,8 +35,10 @@ kernel_init(void) {
     init_scheduler();
 
     kprintf("================ KERNEL IMAGE ================\n"
-        "kern base = 0x%x,  kern end = 0x%x\n\n",
-        (uint32_t)__kern_base, (uint32_t)__kern_end);
+        "kern base = 0x%x,  kern end = 0x%x\n"
+        "kern length = %dkb\n\n",
+        (uint32_t)__kern_base, (uint32_t)__kern_end,
+        ((uint32_t)__kern_end - (uint32_t)__kern_base) / 1024);
 
     init_ata();
     create_kernel_idle();

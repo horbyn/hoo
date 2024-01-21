@@ -8,12 +8,19 @@
 #ifndef __KERN_FS_BLOCKS_H__
 #define __KERN_FS_BLOCKS_H__
 
-#include "super_block.h"
-#include "kern/lib/bitmap.h"
+#include "fs_stuff.h"
+#include "kern/lib/list.h"
 
-lba_index_t block_allocate();
-void block_release(lba_index_t index);
-void blocks_rw_disk(void *buff, size_t bufflen, lba_index_t base_lba, ata_cmd_t cmd);
-void setup_blocks_map(bool is_new);
+#define NODE_NUM 10                                         // temporary node for blocks io
+
+/**
+ * @brief blocks
+ */
+typedef struct blocks_t {
+    void            *block_addr_;                           // block address
+    lba_index_t     lba_;                                   // lba
+} __attribute__((packed)) blocks_t;
+
+void blocks_init(void);
 
 #endif

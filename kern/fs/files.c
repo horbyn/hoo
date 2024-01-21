@@ -4,16 +4,12 @@
  *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
-#include "blocks.h"
+#include "files.h"
 
-static node_t nodes[NODE_NUM];
-static list_t list_blocks;
+files_t __fs_files[MAX_OPEN_FILES];
 
-/**
- * @brief initialize blocks io
- */
-void
-blocks_init(void) {
-    list_init(&list_blocks);
-    bzero(nodes, sizeof(nodes));
+bool
+files_create(dir_item_t cur_dir, const char *name,
+void *buff, size_t bufflen) {
+    return false;
 }

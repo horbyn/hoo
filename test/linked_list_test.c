@@ -34,17 +34,17 @@ test_insert(void) {
     node_t node1;
     node1.data_ = &v1;
     node1.next_ = null;
-    list_insert(&list, &node1, 1);
+    list_insert(&list, &node1, list.size_ + 1);
 
     node_t node2;
     node2.data_ = &v2;
     node2.next_ = null;
-    list_insert(&list, &node2, 2);
+    list_insert(&list, &node2, list.size_ + 1);
 
     node_t node3;
     node3.data_ = &v3;
     node3.next_ = null;
-    list_insert(&list, &node3, 3);
+    list_insert(&list, &node3, list.size_ + 1);
 
     list_print(&list);
 }
@@ -62,17 +62,17 @@ test_remove(void) {
     node_t node1;
     node1.data_ = &v1;
     node1.next_ = null;
-    list_insert(&list, &node1, 1);
+    list_insert(&list, &node1, list.size_ + 1);
 
     node_t node2;
     node2.data_ = &v2;
     node2.next_ = null;
-    list_insert(&list, &node2, 2);
+    list_insert(&list, &node2, list.size_ + 1);
 
     node_t node3;
     node3.data_ = &v3;
     node3.next_ = null;
-    list_insert(&list, &node3, 3);
+    list_insert(&list, &node3, list.size_ + 1);
 
     list_remove(&list, 2);
 

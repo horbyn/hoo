@@ -20,7 +20,7 @@ typedef struct list {
     size_t  size_;
 } __attribute__((packed)) list_t;
 
-void list_init(list_t *list);
+void list_init(list_t *list, bool cycle);
 node_t *list_find(list_t *list, idx_t idx);
 void list_insert(list_t *list, node_t *node, idx_t idx);
 node_t *list_remove(list_t *list, idx_t idx);

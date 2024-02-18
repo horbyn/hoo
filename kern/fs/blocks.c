@@ -35,7 +35,7 @@ blocks_node_free(node_t *node) {
  */
 void
 blocks_list_init(blocks_list_t *list) {
-    list_init(list);
+    list_init(list, false);
 }
 
 /**

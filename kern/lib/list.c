@@ -10,13 +10,15 @@
  * @brief list initialization
  * 
  * @param list list
+ * @param cycle true if you want to create a cycle linked-list
  */
 void
-list_init(list_t *list) {
+list_init(list_t *list, bool cycle) {
     if (list == null)    panic("list_init(): empty list");
 
     list->null_.data_ = null;
-    list->null_.next_ = null;
+    if (cycle)    list->null_.next_ = &list->null_;
+    else    list->null_.next_ = null;
     list->size_ = 0;
 }
 

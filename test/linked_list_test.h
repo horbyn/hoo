@@ -8,6 +8,7 @@
 #ifndef __TEST_LINKED_LIST_TEST_H__
 #define __TEST_LINKED_LIST_TEST_H__
 
+#include "kern/disp/disp.h"
 #include "kern/lib/list.h"
 
 void test_linked_list(void);

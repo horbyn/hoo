@@ -1,7 +1,7 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
 #include "routine.h"
@@ -78,19 +78,18 @@ uint32_t eip, uint32_t cs,  uint32_t eflags) {
     __asm__ ("movl 64(%%ebp), %0": "=a"(vec) ::);
     if (vec == 0x27 || vec == 0x2f)    return;              // spurious interrupt is not int'
 
+    // skip compilation warning
+    (void)prev_stackframe_ebp;
+    (void)prev_stackframe_retaddr;
+    (void)edi;(void)esi;(void)ebp;(void)esp;(void)ebx;
+    (void)edx;(void)ecx;(void)eax;(void)gs;(void)fs;
+    (void)es;(void)ds;(void)ecode;(void)eip;(void)cs;
+    (void)eflags;
+
     uint32_t arr_idx = idx <= (NELEMS(__exception_names) - 2) ?
         idx : (NELEMS(__exception_names) - 2);
-    kprintf("\n>>>>> 0x%x: %s <<<<<\n", idx, __exception_names[arr_idx]);
-    kprintf("\nEFLAGS = 0x%x\nCS = 0x%x\nEIP = 0x%x\nECODE = 0x%x\n",
-        eflags, (cs & 0xffff), eip, ecode);
-    kprintf("DS = 0x%x\nES = 0x%x\nFS = 0x%x\nGS = 0x%x\n",
-        (ds & 0xffff), (es & 0xffff), (fs & 0xffff), (gs & 0xffff));
-    kprintf("EAX = 0x%x\nECX = 0x%x\nEDX = 0x%x\nEBX = 0x%x\nESP = 0x%x\n"
-        "EBP = 0x%x\nESI = 0x%x\nEDI = 0x%x\n", eax, ecx, edx, ebx, esp,
-        ebp, esi, edi);
-    kprintf("PREV_STACKFRAME_RET = 0x%x\nPREV_STACKFRAME_EBP = 0x%x\n",
-        prev_stackframe_retaddr, prev_stackframe_ebp);
 
+    trace(__exception_names[arr_idx]);
     __asm__ volatile ("hlt\n\t"::);
 }
 

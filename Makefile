@@ -74,17 +74,14 @@ $(BOOT_IMG): bootsect kernel.elf
 bootsect: ./boot/bootsect.o
 	$(LD) --oformat binary -e _start -Ttext 0x7c00 -m elf_i386 $< -o $@
 
-./boot/bootsect.o: ./boot/bootsect.s
-	$(AS) --32 $< -I boot -o $@
+./boot/bootsect.o: ./boot/bootsect.S
+	$(CC) $(CFLAGS) $< -o $@
 
 kernel.elf: $(OBJS) $(OBJC)
 	$(LD) $(LDFLAGS) -T kernel.ld $^ -o $@
 
-# `OBJS` depand all the `.s(.c)`
-# --32: generate 32 bit code implied the target is `Intel i386`
-#       DETAILS IN https://sourceware.org/binutils/docs/as/i386_002dOptions.html#i386_002dOptions
 $(OBJS): %.o: %.s
-	$(AS) --32 $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 $(OBJC): %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@

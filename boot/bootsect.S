@@ -8,10 +8,12 @@
 # 4. Move died instruction
 # 5. Setup temporary gdt and jump into protected mode
 
+#include "kern_will_use.h"
+
     .text
     .globl _start
     .code16
-    .include "kern_will_use.inc"
+#    .include "kern_will_use.inc"
 
 _start:
     movw $SEG_KSTACK,   %ax

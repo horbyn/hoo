@@ -1,15 +1,19 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
 #pragma once
 #ifndef __KERN_DEBUG_H__
 #define __KERN_DEBUG_H__
 
-#include "disp/disp.h"
+#include "kern/disp/disp.h"
+#include "kern/sched/tasks.h"
+
+extern void isr_part3();
 
 void panic(const char *msg);
+void trace(const char *extra);
 
 #endif

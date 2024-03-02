@@ -18,12 +18,6 @@ kernel_exec(void) {
     //test_disk_read();
     //test_linked_list();
 
-    int a = 10, b = 0;
-    int c = a / b;
-    kprintf("c = %d\n", c);
-
-    // DONT RETURN
-    while(1);
 }
 
 /**

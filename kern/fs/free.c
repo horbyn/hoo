@@ -18,7 +18,7 @@ free_allocate() {
     uint32_t len = BYTES_SECTOR *
         (__super_block.lba_free_ - __super_block.lba_map_free_);
 
-    uint32_t bit = bitmap_scan(__fs_map_free, len);
+    uint32_t bit = bitmap_scan(__fs_map_free, BITMAP_GET_SIZE(sizeof(len)), 0, false);
     return (__super_block.lba_free_ + bit);
 }
 
@@ -33,13 +33,13 @@ free_release(lba_index_t index) {
     if (bit == INVALID_INDEX)
         panic("free_release(): invalid lba");
 
-    bitmap_clear(__fs_map_free, bit);
+    bitmap_clear(__fs_map_free, BITMAP_GET_SIZE(sizeof(__fs_map_free)), bit);
 }
 
 void
 free_rw_disk(void *buff, size_t bufflen, lba_index_t base_lba, ata_cmd_t cmd) {
     idx_t bit = base_lba - __super_block.lba_free_;
-    if (bitmap_test(__fs_map_free, bit) == false)
+    if (bitmap_test(__fs_map_free, BITMAP_GET_SIZE(sizeof(__fs_map_free)), bit) == false)
         panic("free_rw_disk(): not allow to read from an empty block");
 
     uint8_t sect[BYTES_SECTOR], *p = (uint8_t *)buff;
@@ -61,8 +61,8 @@ free_rw_disk(void *buff, size_t bufflen, lba_index_t base_lba, ata_cmd_t cmd) {
             memmove(p, sect, cur);
 
         if (cmd == ATA_CMD_IO_WRITE)
-            bitmap_set(__fs_map_free, bit + i);
-        else    bitmap_clear(__fs_map_free, bit + i);
+            bitmap_set(__fs_map_free, BITMAP_GET_SIZE(sizeof(__fs_map_free)), bit + i);
+        else    bitmap_clear(__fs_map_free, BITMAP_GET_SIZE(sizeof(__fs_map_free)), bit + i);
     } // end for()
 
     ata_driver_rw(__fs_map_free, sizeof(__fs_map_free),

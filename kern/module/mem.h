@@ -5,15 +5,11 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_DEBUG_H__
-#define __KERN_DEBUG_H__
+#ifndef __KERN_MODULE_MEM_H__
+#define __KERN_MODULE_MEM_H__
 
-#include "kern/disp/disp.h"
-#include "kern/sched/inte_stack.h"
+#include "kern/sched/tasks.h"
 
-extern void isr_part3();
-
-void panic(const char *msg);
-void trace(const char *extra);
+void init_virtual_memory();
 
 #endif

@@ -1,15 +1,15 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
 #pragma once
 #ifndef __TEST_TASKS_TEST_H__
 #define __TEST_TASKS_TEST_H__
 
-#include "conf/Page.h"
-#include "conf/preconf.h"
+#include "kern/mem/page.h"
+#include "kern/module/config.h"
 #include "kern/x86.h"
 #include "kern/lib/lib.h"
 #include "kern/lib/queue.h"

@@ -20,7 +20,7 @@ panic(const char *msg) {
 #endif
 
     trace(null);
-    __asm__ __volatile__ ("cli\n\thlt");
+    hlt();
 }
 
 /**

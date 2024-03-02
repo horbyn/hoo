@@ -5,15 +5,15 @@
  *                                  *
  ************************************/
 #pragma once
-#ifndef __KERN_DEBUG_H__
-#define __KERN_DEBUG_H__
+#ifndef __KERN_MEM_MMU_H__
+#define __KERN_MEM_MMU_H__
 
-#include "kern/disp/disp.h"
-#include "kern/sched/inte_stack.h"
+#include "page.h"
+#include "preconf.h"
+#include "paddr.h"
+#include "kern/x86.h"
+#include "kern/debug.h"
 
-extern void isr_part3();
-
-void panic(const char *msg);
-void trace(const char *extra);
+void mapping(pgelem_t *pdir, uint32_t va, uint32_t pa);
 
 #endif

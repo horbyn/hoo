@@ -1,11 +1,11 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
-#include "conf/Config.h"
 #include "kern/kernel.h"
+#include "kern/module/config.h"
 
 void
 entry(void) {
@@ -38,5 +38,4 @@ entry(void) {
      * because it will return to    *
      * DIED instruction             *
      ********************************/
-    __asm__ ("hlt");
 }

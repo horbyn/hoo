@@ -1,18 +1,20 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
 #pragma once
 #ifndef __KERN_SCHED_TASKS_H__
 #define __KERN_SCHED_TASKS_H__
 
+#include "inte_stack.h"
 #include "kern/debug.h"
-#include "kern/types.h"
 #include "kern/lib/queue.h"
 #include "kern/lib/lib.h"
 #include "kern/lib/spinlock.h"
+#include "kern/mem/vaddr.h"
+#include "kern/module/config.h"
 
 extern void switch_to(node_t *, node_t *);
 extern void mode_ring3(uint32_t *, void *);
@@ -22,45 +24,6 @@ extern queue_t __queue_running;                             // scheduling
 extern node_t __temp_node;                                  // temp node for testing user thread
 
 /**
- * @brief definition of os interrupt stack corresponding
- * the order of storing context in `kern/inter/trampoline.s`
- */
-typedef struct interrupt_stack_os {
-    uint32_t edi_;
-    uint32_t esi_;
-    uint32_t ebp_;
-    uint32_t esp_;
-    uint32_t ebx_;
-    uint32_t edx_;
-    uint32_t ecx_;
-    uint32_t eax_;
-    uint32_t gs_;
-    uint32_t fs_;
-    uint32_t es_;
-    uint32_t ds_;
-} __attribute__ ((packed)) istackos_t;
-
-/**
- * @brief definition of cpu interrupt stack that builds
- * the env the cpu executes `iret` instruction
- */
-typedef struct interrupt_stack_cpu {
-    uint32_t vec_;                                          // unused when `iret`ing
-    uint32_t errcode_;                                      // unused when `iret`ing
-    void    *oldeip_;
-    uint32_t oldcs_;
-    uint32_t eflags_;
-
-} __attribute__ ((packed)) istackcpu_t;
-
-/**
- * @brief thread stack
- */
-typedef struct thread_stack {
-    void *retaddr_;
-} tstack_t;
-
-/**
  * @brief definition of Process Control Block
  */
 typedef struct pcb {
@@ -68,6 +31,7 @@ typedef struct pcb {
     uint32_t *stack0_;                                      // kernel stack
     uint32_t ticks_;                                        // the rest ticks
     uint32_t tid_;                                          // thread id
+    vaddr_list_t vspace_;                                   // virtual space manager
 } pcb_t;
 
 #define TIMETICKS   16                                      // switch when the amount arrived

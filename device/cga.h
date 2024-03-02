@@ -8,7 +8,7 @@
 #ifndef __DEVICE_CGA_H__
 #define __DEVICE_CGA_H__
 
-#include "conf/preconf.h"
+#include "kern/module/config.h"
 #include "kern/debug.h"
 #include "kern/types.h"
 #include "kern/x86.h"

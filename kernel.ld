@@ -6,14 +6,13 @@ SECTIONS {
     /* Now paging feature is disable;
        so we need to enable in absolute address */
     . = 0;
+    PROVIDE(__kern_base = .);
     .init.text : {
         kern/entry.o(.text)
         . = ALIGN(4);
-        conf/Config.o(.text)
+        kern/module/config.o(.text)
     }
     .init.data : {
-        . = ALIGN(4);
-        *(.config)
         /* MUST be aligned 4096 because
            we set page dir/page table here */
         . = ALIGN(4096);
@@ -22,9 +21,7 @@ SECTIONS {
 
     /* After paging
      */
-    . = ALIGN(4);
     . += 0xc0000000;
-    PROVIDE(__kern_base = .);
     .text : AT(ADDR(.text) - 0xc0000000) {
         *(.text)
     }
@@ -37,5 +34,5 @@ SECTIONS {
     .bss : AT(ADDR(.bss) - 0xc0000000) {
         *(.bss)
     }
-    PROVIDE(__kern_end = .);
+    PROVIDE(__kern_end = . - 0xc0000000);
 }

@@ -11,9 +11,11 @@
 #include "kern/types.h"
 #include "kern/debug.h"
 
-bool bitmap_test(void *, idx_t);
-void bitmap_set(void *, idx_t);
-void bitmap_clear(void *, idx_t);
-uint32_t bitmap_scan(void *, uint32_t);
+#define BITMAP_GET_SIZE(bitmap_inbytes)  ((bitmap_inbytes) * BITS_PER_BYTE)
+
+bool bitmap_test(void *, uint32_t, idx_t);
+void bitmap_set(void *, uint32_t, idx_t);
+void bitmap_clear(void *, uint32_t, idx_t);
+uint32_t bitmap_scan(void *, uint32_t, idx_t, bool);
 
 #endif

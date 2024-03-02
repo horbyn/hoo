@@ -1,7 +1,7 @@
 /************************************
  *                                  *
- *  Copyright (C)    horbyn, 2023   *
- *        (hoRbyn4zZ@outlook.com)   *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
  *                                  *
  ************************************/
 #pragma once
@@ -9,7 +9,6 @@
 #define __KERN_X86_H__
 
 #include "types.h"
-#include "conf/Config.h"
 
 // Eflags
 
@@ -53,6 +52,14 @@ enable_intr() {
 static inline void
 disable_intr() {
     __asm__ ("cli");
+}
+
+/**
+ * @brief hlt
+ */
+static inline void
+hlt() {
+    __asm__ ("cli\n\thlt");
 }
 
 /**

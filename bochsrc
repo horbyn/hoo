@@ -1,12 +1,15 @@
-megs:        32
+megs:               32
 
-romimage:    file=$BXSHARE/BIOS-bochs-latest
-vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+romimage:           file=$BXSHARE/BIOS-bochs-latest
+vgaromimage:        file=$BXSHARE/VGABIOS-lgpl-latest
 
-boot:        floppy
-floppya:     1_44=fd1_44M.img, status=inserted
+boot:               floppy
+floppya:            image="fd1_44M.img", status=inserted
 
-log:         bochs.out
+log:                bochs.out
 
-mouse:       enabled=0
-keyboard:    keymap=$BXSHARE/keymaps/x11-pc-us.map
+mouse:              enabled=0
+keyboard:           keymap=$BXSHARE/keymaps/x11-pc-us.map
+
+ata0:               enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+ata0-master:        type=disk, path="hd.img", mode=flat

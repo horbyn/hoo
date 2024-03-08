@@ -1,22 +1,41 @@
-#include "disp.h"
-#include "inte.h"
-#include "mm.h"
+/************************************
+ *                                  *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
+ *                                  *
+ ************************************/
+#include "kern/kernel.h"
+#include "kern/module/config.h"
 
-extern uint8_t __kern_base[], __kern_end[];
-
-int
+void
 entry(void) {
-    init_disp();
-    init_pic();
-    init_interrupt();
+    /********************************
+     * ignore the boot environment  *
+     * we reset all registers here  *
+     *                              *
+     * the address is same as       *
+     * `boot/kern_will_use.inc`     *
+     ********************************/
+    __asm__ ("\r\n"
+    "movw $0x10,    %ax\r\n"
+    "movw %ax,      %ds\r\n"
+    "movw %ax,      %es\r\n"
+    "movw %ax,      %fs\r\n"
+    "movw %ax,      %gs\r\n"
+    "movw %ax,      %ss\r\n"
+    "movl $0x80000, %esp\r\n"
+    "pushl $0x77ffc\r\n"                                    // setup DIED INSTRUCTION
+    "pushl $0\r\n"                                          // setup calling convention
+    "movl %esp,     %ebp");
 
-    //kprintf("kern base = %x\nkern end = %x\n\n",
-    //    (uint32_t)__kern_base, (uint32_t)__kern_end);
+    kernel_config();
+    kernel_exec();
 
-    init_phymm();
-
-    // __asm__ volatile ("sti");    // open timer
-    __asm__ ("hlt");
-    // should not return
-    return 0;
+    /********************************
+     * NEED NOT TO RETURN NORMALLY  *
+     *                              *
+     * But return is no problem     *
+     * because it will return to    *
+     * DIED instruction             *
+     ********************************/
 }

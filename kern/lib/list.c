@@ -1,0 +1,85 @@
+/************************************
+ *                                  *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
+ *                                  *
+ ************************************/
+#include "list.h"
+
+/**
+ * @brief list initialization
+ * 
+ * @param list list
+ * @param cycle true if you want to create a cycle linked-list
+ */
+void
+list_init(list_t *list, bool cycle) {
+    if (list == null)    panic("list_init(): empty list");
+
+    list->null_.data_ = null;
+    if (cycle)    list->null_.next_ = &list->null_;
+    else    list->null_.next_ = null;
+    list->size_ = 0;
+}
+
+/**
+ * @brief find the node of the list according to the index
+ * (from 0 to size)
+ * 
+ * @param list list
+ * @param idx index
+ * @return the node to find
+ */
+node_t *
+list_find(list_t *list, idx_t idx) {
+    if (list == null)    panic("list_find(): empty list");
+    if (idx == INVALID_INDEX || 0 > idx || idx > list->size_)
+        panic("list_find(): invalid idx");
+
+    node_t *p = &(list->null_);
+    while (idx != 0 && idx--)    p = p->next_;
+    return p;
+}
+
+/**
+ * @brief insert the node of the list according to the index
+ * (from 1 to size + 1)
+ * 
+ * @param list list
+ * @param node node
+ * @param idx index
+ */
+void
+list_insert(list_t *list, node_t *node, idx_t idx) {
+    if (list == null)    panic("list_insert(): empty list");
+    if (node == null)    panic("list_insert(): empty node");
+    if (idx == INVALID_INDEX || idx < 1 || idx > list->size_ + 1)
+        panic("list_insert(): invalid idx");
+
+    node_t *find = list_find(list, idx - 1);
+    node->next_ = find->next_;
+    find->next_ = node;
+    list->size_++;
+}
+
+/**
+ * @brief remove the node of the list according to the index
+ * (from 1 to size)
+ * 
+ * @param list list
+ * @param idx index
+ * @return the removed node
+ */
+node_t *
+list_remove(list_t *list, idx_t idx) {
+    if (list == null)    panic("list_remove(): empty list");
+    if (idx == INVALID_INDEX || idx < 1 || idx > list->size_)
+        panic("list_remove(): invalid idx");
+
+    node_t *find = list_find(list, idx - 1),
+        *removed = find->next_;
+    find->next_ = removed->next_;
+    removed->next_ = null;
+    list->size_--;
+    return removed;
+}

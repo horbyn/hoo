@@ -1,27 +1,80 @@
+/************************************
+ *                                  *
+ *  Copyright (C)    horbyn, 2024   *
+ *           (horbyn@outlook.com)   *
+ *                                  *
+ ************************************/
+#pragma once
 #ifndef __KERN_X86_H__
 #define __KERN_X86_H__
 
 #include "types.h"
 
-#define CS_SELECTOR    0x08
-#define DS_SELECTOR    0x10
-#define GATE_INTERRUPT 0x0e
-#define GATE_TRAP      0x0f
-#define SIZE_TAG       4
+// Eflags
 
+#define EFLAGS_CP   0x1                                     // carry flag: carry if 1
+#define EFLAGS_PF   0x4                                     // parity flag: parity even if 1
+#define EFLAGS_AF   0x10                                    // auxiliary carry flag: auxiliary carry if 1
+#define EFLAGS_ZF   0x40                                    // zero flag: zero if 1
+#define EFLAGS_SF   0x80                                    // sign flag: negative if 1
+#define EFLAGS_TF   0x100                                   // trap flag
+#define EFLAGS_IF   0x200                                   // interrupt enable flag: enable interrupt if 1
+#define EFLAGS_DF   0x400                                   // direction flag: down if 1
+#define EFLAGS_OF   0x800                                   // overflow flag: overflow if 1
+
+/**
+ * @brief enum of privilege level
+ */
+typedef enum privilege_level {
+    PL_KERN = 0,
+    PL_USER = 3
+} privilege_t;
+
+/**
+ * @brief enum of gate descriptor
+ */
+typedef enum gate_descriptor {
+    INTER_GATE = 0x0e,
+    TRAP_GATE = 0x0f
+} gatedesc_t;
+
+/**
+ * @brief enable intrrupt
+ */
 static inline void
-cli() {
-    __asm__ ("cli\n\t");
+enable_intr() {
+    __asm__ ("sti");
 }
 
+/**
+ * @brief disenable intrrupt
+ */
 static inline void
-sti() {
-    __asm__ ("sti\n\t");
+disable_intr() {
+    __asm__ ("cli");
 }
 
-// fetch data from the specified port
+/**
+ * @brief hlt
+ */
+static inline void
+hlt() {
+    __asm__ ("cli\n\thlt");
+}
+
+/**
+ * @brief port definition
+ */
+typedef uint16_t port_t;
+
+/**
+ * @brief fetch data from the specified port
+ * 
+ * @param port the specified port
+ * @return data
+ */
 static inline uint8_t
-inb(uint16_t port) {
+inb(port_t port) {
     uint8_t val;
     // %al --> val
     // port --> %dx
@@ -31,28 +84,44 @@ inb(uint16_t port) {
     return val;
 }
 
-// data write to the specified port
+/**
+ * @brief data write to the specified port
+ * 
+ * @param val 8-bit data to write
+ * @param port the specified port
+ */
 static inline void
-outb(uint8_t val, uint16_t port) {
+outb(uint8_t val, port_t port) {
     // val --> %al
     // port --> %dx
     // data from %al is transported to port %dx pointed to
     __asm__ volatile ("outb %b0, %w1" : : "a"(val), "d"(port));
 }
 
-// fetch data from the specified port
-static inline uint32_t
-inl(uint16_t port) {
-    uint32_t val = 0;
-    __asm__ volatile ("inl %w1, %k0" : "=a"(val) : "d"(port));
-    return val;
-}
-
-// data write to the specified port
+/**
+ * @brief data flow reads from the specified port
+ * 
+ * @param flow data flow to write
+ * @param len  size
+ * @param port the specified port
+ */
 static inline void
-outl(uint32_t val, uint16_t port) {
-    __asm__ volatile ("outl %k0, %w1" : : "a"(val), "d"(port));
+insw(void *flow, size_t len, port_t port) {
+    __asm__ volatile ("cld; rep insw" ::
+        "D"(flow), "c"(len), "d"(port));
 }
 
+/**
+ * @brief data flow writes to the specified port
+ * 
+ * @param flow data flow to write
+ * @param len  size
+ * @param port the specified port
+ */
+static inline void
+outsw(const void *flow, size_t len, port_t port) {
+    __asm__ volatile ("cld; rep outsw" ::
+        "S"(flow), "c"(len), "d"(port));
+}
 
 #endif

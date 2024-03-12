@@ -5,29 +5,16 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_TYPES_H__
-#define __KERN_TYPES_H__
+#ifndef __KERN_CONF_CONFIG_H__
+#define __KERN_CONF_CONFIG_H__
 
-#ifndef null
-#define null  0
-#endif
+#include "descriptor.h"
+#include "page.h"
+#include "kern/driver/io.h"
+#include "kern/mem/mm.h"
 
-#ifndef bool
-typedef enum { false = 0, true } bool;
-#endif
+#define SIZE_GDT    8
 
-// calculate the array size
-#define NELEMS(x)       (sizeof(x) / sizeof((x)[0]))
-#define BITS_PER_BYTE   8
-
-typedef char  int8_t;
-typedef short int16_t;
-typedef int   int32_t;
-typedef unsigned char  uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int   uint32_t;
-
-typedef int idx_t;
-#define INVALID_INDEX (-1)
+void kernel_config(void);
 
 #endif

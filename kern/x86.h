@@ -1,26 +1,66 @@
-/************************************
- *                                  *
- *  Copyright (C)    horbyn, 2024   *
- *           (horbyn@outlook.com)   *
- *                                  *
- ************************************/
+/**************************************************************************
+ *                                                                        *
+ *                     Copyright (C)    horbyn, 2024                      *
+ *                              (horbyn@outlook.com)                      *
+ *                                                                        *
+ **************************************************************************/
 #pragma once
 #ifndef __KERN_X86_H__
 #define __KERN_X86_H__
 
+#include "boot/config_boot.h"
 #include "types.h"
 
-// Eflags
+#define KERN_HIGH_MAPPING   0xc0000000
+#define MM_BASE             0x100000
+#define STACK_BOOT          ((SEG_KSTACK)*16 + 0x10000)
 
-#define EFLAGS_CP   0x1                                     // carry flag: carry if 1
-#define EFLAGS_PF   0x4                                     // parity flag: parity even if 1
-#define EFLAGS_AF   0x10                                    // auxiliary carry flag: auxiliary carry if 1
-#define EFLAGS_ZF   0x40                                    // zero flag: zero if 1
-#define EFLAGS_SF   0x80                                    // sign flag: negative if 1
-#define EFLAGS_TF   0x100                                   // trap flag
-#define EFLAGS_IF   0x200                                   // interrupt enable flag: enable interrupt if 1
-#define EFLAGS_DF   0x400                                   // direction flag: down if 1
-#define EFLAGS_OF   0x800                                   // overflow flag: overflow if 1
+// the ARDS amount addr
+#define ADDR_ARDS_NUM       (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS_CR))
+
+// the ARDS itself addr
+#define ADDR_ARDS_BASE      (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS))
+#define DIED_INSTRUCTION    (((uint32_t)(SEG_DIED))*16 + (OFF_DIED))
+
+// carry flag: carry if 1
+#define EFLAGS_CP   0x1  
+// parity flag: parity even if 1
+#define EFLAGS_PF   0x4  
+// auxiliary carry flag: auxiliary carry if 1
+#define EFLAGS_AF   0x10 
+// zero flag: zero if 1
+#define EFLAGS_ZF   0x40 
+// sign flag: negative if 1
+#define EFLAGS_SF   0x80 
+// trap flag
+#define EFLAGS_TF   0x100
+// interrupt enable flag: enable interrupt if 1
+#define EFLAGS_IF   0x200
+// direction flag: down if 1
+#define EFLAGS_DF   0x400
+// overflow flag: overflow if 1
+#define EFLAGS_OF   0x800
+
+/**
+ * @brief ards structure
+ */
+typedef struct {
+    uint32_t base_low_;
+    uint32_t base_hig_;
+    uint32_t length_low_;
+    uint32_t length_hig_;
+    uint32_t type_;
+} __attribute__((packed)) ards_t;
+
+/**
+ * @brief ards type
+ */
+typedef enum {
+    // OS can use
+    ards_type_os = 1,
+    // arch reserves
+    ards_type_arch
+} ards_type_t;
 
 /**
  * @brief enum of privilege level
@@ -55,7 +95,7 @@ disable_intr() {
 }
 
 /**
- * @brief hlt
+ * @brief halt the machine
  */
 static inline void
 hlt() {
@@ -106,7 +146,7 @@ outb(uint8_t val, port_t port) {
  * @param port the specified port
  */
 static inline void
-insw(void *flow, size_t len, port_t port) {
+insw(void *flow, uint32_t len, port_t port) {
     __asm__ volatile ("cld; rep insw" ::
         "D"(flow), "c"(len), "d"(port));
 }
@@ -119,7 +159,7 @@ insw(void *flow, size_t len, port_t port) {
  * @param port the specified port
  */
 static inline void
-outsw(const void *flow, size_t len, port_t port) {
+outsw(const void *flow, uint32_t len, port_t port) {
     __asm__ volatile ("cld; rep outsw" ::
         "S"(flow), "c"(len), "d"(port));
 }

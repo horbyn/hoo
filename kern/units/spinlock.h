@@ -5,29 +5,22 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_TYPES_H__
-#define __KERN_TYPES_H__
+#ifndef __KERN_UNITS_SPINLOCK_H__
+#define __KERN_UNITS_SPINLOCK_H__
 
-#ifndef null
-#define null  0
-#endif
+#include "kern/types.h"
+#include "kern/x86.h"
 
-#ifndef bool
-typedef enum { false = 0, true } bool;
-#endif
+/**
+ * @brief binary somaphore -- spinlock definition
+ */
+typedef struct spinlock {
+    // true if someone holds the lock
+    uint32_t islock_;
+} spinlock_t;
 
-// calculate the array size
-#define NELEMS(x)       (sizeof(x) / sizeof((x)[0]))
-#define BITS_PER_BYTE   8
-
-typedef char  int8_t;
-typedef short int16_t;
-typedef int   int32_t;
-typedef unsigned char  uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int   uint32_t;
-
-typedef int idx_t;
-#define INVALID_INDEX (-1)
+void spinlock_init(spinlock_t *spin);
+void wait(spinlock_t *spin);
+void signal(spinlock_t *spin);
 
 #endif

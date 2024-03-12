@@ -1,4 +1,4 @@
-#       Copyright (C)    horbyn, 2023
+#       Copyright (C)    horbyn, 2024
 #             (hoRbyn4zZ@outlook.com)
 #
 # The features of bootsect are as follow:
@@ -7,13 +7,13 @@
 # 3. Load disk
 # 4. Move died instruction
 # 5. Setup temporary gdt and jump into protected mode
+# 6. Paging
 
-#include "kern_will_use.h"
+#include "config_boot.h"
 
     .text
     .globl _start
     .code16
-#    .include "kern_will_use.inc"
 
 _start:
     movw $SEG_KSTACK,   %ax
@@ -22,7 +22,7 @@ _start:
 
     # ####            function 1.           ####
     # #### MBR move to high then exec there ####
-    .set SEG_MBR,       0x7040
+    .set SEG_MBR,       0x7240
     cld                     # direction increment
     xorw %ax,           %ax
     movw %ax,           %ds
@@ -31,7 +31,7 @@ _start:
     movw %ax,           %es
     movw $0x7c00,       %di
     movw $1<<7,         %cx
-    rep movsd               # 0:0x7c00 -> 0x7040:0x7c00
+    rep movsd               # 0:0x7c00 -> 0x7240:0x7c00
 
     jmp $SEG_MBR,       $still
 still:
@@ -124,7 +124,7 @@ load_sect_ok:
     # move kernel to 0
     # the magic value that act as address below
     #    is corresponding to the memory layout
-    #    in `kern_will_use.inc`
+    #    in `config_bot.h`
     movw $SEG_KERN,     %ax
     movw %ax,           %ds
     xorw %ax,           %ax
@@ -164,7 +164,7 @@ move_end:
     movw %ax,           %ds
     movw $died,         %si
     movw %ax,           %es
-    movw $0x7bfc,       %di
+    movw calc_off_died, %di
     movsw                   # move DIED INSTRUCTION to 0x77ffc
 
 
@@ -185,6 +185,35 @@ move_end:
     orl  $1,            %eax
     movl %eax,          %cr0
 
+
+
+
+    # #### function 6. ####
+    # ####   paging    ####
+    movl $0x400,        %ecx
+    movl $0,            %eax
+    movl pgtable_addr,  %ebx
+pgtable:
+    movl %eax,          %edx
+    orl  $7,            %edx
+    movl %edx,          (%ebx)
+    addl $0x1000,       %eax
+    addl $4,            %ebx
+    loop pgtable
+
+    movl $SEG_PGTABLE<<4, %eax
+    orl  $7,            %eax
+    movl pdtable_addr,  %ebx
+    movl %eax,          (%ebx)
+    addl $0xc00,        %ebx
+    movl %eax,          (%ebx)
+
+    movl $SEG_PDTABLE<<4, %eax
+    movl %eax,         %cr3
+    movl %cr0,         %eax
+    orl  $0x80000000,  %eax
+    movl %eax,         %cr0
+
     # #### JUMP INTO KERNEL ####
     ljmp $0x08,         $0
     # ###### BOOT ENDING #######
@@ -197,6 +226,16 @@ died:
 
 lba_base:
     .word 0x1   # loading from no.2 sector (i.e., LBA is no.1)
+calc_off_died:
+    .long SEG_DIED<<4 + OFF_DIED - SEG_MBR<<4
+pdtable_addr:
+    # place after $SEG_PDTABLE<<4, while %ds is $SEG_MBR<<4,
+    #   so the offset is their difference
+    .long SEG_PDTABLE<<4 - SEG_MBR<<4
+pgtable_addr:
+    # place after $SEG_PGTABLE<<4, while %ds is $SEG_MBR<<4,
+    #   so the offset is their difference
+    .long SEG_PGTABLE<<4 - SEG_MBR<<4
 boot_gdt:
 	.quad 0x0000000000000000
 	.quad 0x00cf9a000000ffff # exe, no-readable, no-conform

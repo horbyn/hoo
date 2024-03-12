@@ -43,6 +43,9 @@ nop: boot_image $(OBJS) $(OBJC) $(BOOT_IMG) run
 debug: CFLAGS += -g -DDEBUG
 debug: boot_image $(OBJS) $(OBJC) $(BOOT_IMG) run
 
+test: CFLAGS += -DTEST
+test: debug
+
 run:
 	/usr/bin/bochs -q
 
@@ -65,7 +68,7 @@ $(BOOT_IMG): bootsect kernel.elf
 	dd if=bootsect of=$(BOOT_IMG) bs=512 count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
 	dd if=kernel of=$(BOOT_IMG) bs=512 count=896 seek=1 conv=notrunc
-	objdump -j .init.text -j .init.data -j .text -j .data -SD -m i386 kernel.elf > kernel.elf.dis
+	objdump -j .text -j .rodata -j .data -SD -m i386 kernel.elf > kernel.elf.dis
 
 # --oformat: output the pure binary format
 # -e: entry is `_start` by default, but this option can specify other entrys

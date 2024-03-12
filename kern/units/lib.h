@@ -5,29 +5,15 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_TYPES_H__
-#define __KERN_TYPES_H__
+#ifndef __KERN_UNITS_LIB_H__
+#define __KERN_UNITS_LIB_H__
 
-#ifndef null
-#define null  0
-#endif
+#include "kern/types.h"
 
-#ifndef bool
-typedef enum { false = 0, true } bool;
-#endif
-
-// calculate the array size
-#define NELEMS(x)       (sizeof(x) / sizeof((x)[0]))
-#define BITS_PER_BYTE   8
-
-typedef char  int8_t;
-typedef short int16_t;
-typedef int   int32_t;
-typedef unsigned char  uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int   uint32_t;
-
-typedef int idx_t;
-#define INVALID_INDEX (-1)
+uint32_t strlen(const char *str);
+void     memset(void *buff, uint8_t fill , uint32_t bufflen);
+void     bzero(void *buff, uint32_t bufflen);
+int      memmove(void *dst, const void *src, uint32_t size);
+bool     memcmp(const void *a, const void *b, uint32_t max_cmp_size);
 
 #endif

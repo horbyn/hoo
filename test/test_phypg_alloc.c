@@ -4,8 +4,9 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "kern/mem/mm.h"
+#include "test.h"
 #include "kern/driver/io.h"
+#include "kern/module/mem.h"
 
 static void
 alloc_random() {
@@ -35,7 +36,7 @@ alloc_random() {
     }
     void *another_p1 = phy_alloc_page();
     phy_release_page(another_p1);
-    kprintf(">> 4th page: %x...then release\n", another_p1);
+    kprintf(">> 4th page: %x...then release\n\n", another_p1);
 }
 
 /**
@@ -78,6 +79,7 @@ alloc_continuous() {
 
     for (uint32_t i = 0; i < max100 + max10000; ++i)
         phy_release_page((void *)((uint32_t)beg100 + i * PGSIZE));
+    kprintf("\n\n");
 }
 
 /**

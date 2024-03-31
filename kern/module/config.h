@@ -5,10 +5,16 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __TEST_TEST_H__
-#define __TEST_TEST_H__
+#ifndef __KERN_MODULE_CONFIG_H__
+#define __KERN_MODULE_CONFIG_H__
 
-void test_phypg_alloc(void);
-void test_vspace(void);
+#include "idle.h"
+#include "kern/conf/descriptor.h"
+#include "kern/driver/io.h"
+#include "kern/mem/pm.h"
+
+#define SIZE_GDT    8
+
+void kernel_config(void);
 
 #endif

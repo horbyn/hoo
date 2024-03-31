@@ -5,10 +5,12 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __TEST_TEST_H__
-#define __TEST_TEST_H__
+#ifndef __KERN_MODULE_SCHED_H__
+#define __KERN_MODULE_SCHED_H__
 
-void test_phypg_alloc(void);
-void test_vspace(void);
+#include "kern/mem/vm.h"
+
+void kinit_tasks_system(void);
+void kinit_idle_thread(void);
 
 #endif

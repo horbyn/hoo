@@ -5,10 +5,13 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __TEST_TEST_H__
-#define __TEST_TEST_H__
+#ifndef __KERN_MODULE_IDLE_H__
+#define __KERN_MODULE_IDLE_H__
 
-void test_phypg_alloc(void);
-void test_vspace(void);
+#include "kern/conf/page.h"
+#include "kern/sched/tasks.h"
+
+extern pcb_t *__pcb_idle;
+extern pgelem_t __pgdir_idle[];
 
 #endif

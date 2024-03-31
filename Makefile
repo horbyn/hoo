@@ -44,10 +44,10 @@ debug: CFLAGS += -g -DDEBUG
 debug: boot_image $(OBJS) $(OBJC) $(BOOT_IMG) run
 
 test: CFLAGS += -DTEST
-test: debug
+test: clean debug
 
 run:
-	/usr/bin/bochs -q
+	bochs -q
 
 # -f: dont generate the file if exists
 # 1.44M floppy: 80(C) * 2(H) * 18(S) * 512 =   1,474,560

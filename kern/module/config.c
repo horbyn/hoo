@@ -6,7 +6,6 @@
  **************************************************************************/
 #include "config.h"
 
-static pgelem_t __page_dir[PGDIR_SIZE] __attribute__((aligned(4096)));
 static pgelem_t __page_tbl_4mb[PGDIR_SIZE] __attribute__((aligned(4096)));
 static Desc_t __gdt[SIZE_GDT];
 static Gdtr_t __gdtr;
@@ -19,15 +18,15 @@ static void
 paging() {
     pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
 
-    __page_dir[0] = (pgelem_t)(V2P(__page_tbl_4mb) | flags);
-    __page_dir[PD_INDEX(KERN_HIGH_MAPPING)] = (pgelem_t)(V2P(__page_tbl_4mb) | flags);
-    __page_dir[1023] = (pgelem_t)(V2P(__page_dir) | flags);
+    __pgdir_idle[0] = (pgelem_t)(V2P(__page_tbl_4mb) | flags);
+    __pgdir_idle[PD_INDEX(KERN_HIGH_MAPPING)] = (pgelem_t)(V2P(__page_tbl_4mb) | flags);
+    __pgdir_idle[1023] = (pgelem_t)(V2P(__pgdir_idle) | flags);
 
-    for (uint32_t va = 0, pa = 0, i = 0; pa < MB4; va += PGSIZE, pa += PGSIZE, ++i)
-        mapping(__page_dir, va, pa);
+    for (uint32_t va = 0, pa = 0, i = 0; pa < MM_BASE; va += PGSIZE, pa += PGSIZE, ++i)
+        set_mapping(__pgdir_idle, va, pa);
 
     // paging
-    __asm__ ("movl %0, %%cr3" : :"r"(V2P(__page_dir)));
+    __asm__ ("movl %0, %%cr3" : :"r"(V2P(__pgdir_idle)));
     __asm__ ("\r\n"
         "movl %cr0,       %eax\r\n"
         "orl $0x80000000, %eax\r\n"

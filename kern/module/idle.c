@@ -4,17 +4,7 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_CONF_CONFIG_H__
-#define __KERN_CONF_CONFIG_H__
+#include "idle.h"
 
-#include "descriptor.h"
-#include "page.h"
-#include "kern/driver/io.h"
-#include "kern/mem/mm.h"
-
-#define SIZE_GDT    8
-
-void kernel_config(void);
-
-#endif
+pgelem_t __pgdir_idle[PGDIR_SIZE] __attribute__((aligned(4096)));
+pcb_t *__pcb_idle;

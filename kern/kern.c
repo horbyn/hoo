@@ -16,9 +16,12 @@ kernel_init(void) {
         (uint32_t)__kern_base, (uint32_t)__kern_end,
         ((uint32_t)__kern_end - (uint32_t)__kern_base) / 1024);
 
-    mem_info_init();
+    kinit_memory();
     kernel_config();
+    kinit_tasks_system();
+    kinit_idle_thread();
 #ifdef TEST
-    test_phypg_alloc();
+    // test_phypg_alloc();
+    test_vspace();
 #endif
 }

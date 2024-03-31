@@ -5,10 +5,21 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __TEST_TEST_H__
-#define __TEST_TEST_H__
+#ifndef __KERN_UNITS_NODE_H__
+#define __KERN_UNITS_NODE_H__
 
-void test_phypg_alloc(void);
-void test_vspace(void);
+#include "kern/x86.h"
+#include "kern/driver/io.h"
+
+/**
+ * @brief definition of queue node
+ */
+typedef struct node {
+    // data field
+    void        *data_;
+    struct node *next_;
+} __attribute__((packed)) node_t;
+
+void node_set(node_t *node, void *data, node_t *next);
 
 #endif

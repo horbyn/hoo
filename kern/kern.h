@@ -8,10 +8,10 @@
 #ifndef __KERN_KERN_H__
 #define __KERN_KERN_H__
 
-#include "conf/config.h"
+#include "module/config.h"
+#include "module/mem.h"
+#include "module/sched.h"
 #include "driver/io.h"
-#include "mem/mm.h"
-
 #ifdef TEST
     #include "test/test.h"
 #endif

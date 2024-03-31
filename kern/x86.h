@@ -13,7 +13,8 @@
 
 #define KERN_HIGH_MAPPING   0xc0000000
 #define MM_BASE             0x100000
-#define STACK_BOOT          ((SEG_KSTACK)*16 + 0x10000)
+#define STACK_BOOT_TOP      ((SEG_KSTACK)*16 + 0x10000)
+#define STACK_BOOT_BOTTOM   ((SEG_PGTABLE)*16 + 0x1000)
 
 // the ARDS amount addr
 #define ADDR_ARDS_NUM       (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS_CR))
@@ -23,23 +24,30 @@
 #define DIED_INSTRUCTION    (((uint32_t)(SEG_DIED))*16 + (OFF_DIED))
 
 // carry flag: carry if 1
-#define EFLAGS_CP   0x1  
+#define EFLAGS_CP           0x1  
 // parity flag: parity even if 1
-#define EFLAGS_PF   0x4  
+#define EFLAGS_PF           0x4  
 // auxiliary carry flag: auxiliary carry if 1
-#define EFLAGS_AF   0x10 
+#define EFLAGS_AF           0x10 
 // zero flag: zero if 1
-#define EFLAGS_ZF   0x40 
+#define EFLAGS_ZF           0x40 
 // sign flag: negative if 1
-#define EFLAGS_SF   0x80 
+#define EFLAGS_SF           0x80 
 // trap flag
-#define EFLAGS_TF   0x100
+#define EFLAGS_TF           0x100
 // interrupt enable flag: enable interrupt if 1
-#define EFLAGS_IF   0x200
+#define EFLAGS_IF           0x200
 // direction flag: down if 1
-#define EFLAGS_DF   0x400
+#define EFLAGS_DF           0x400
 // overflow flag: overflow if 1
-#define EFLAGS_OF   0x800
+#define EFLAGS_OF           0x800
+// the task maxinum amount
+#define MAX_TASKS_AMOUNT    1024
+
+/**
+ * @brief thread id
+ */
+typedef uint32_t            tid_t;
 
 /**
  * @brief ards structure

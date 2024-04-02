@@ -44,6 +44,9 @@ void *phy_alloc_page() {
 void
 phy_release_page(void *page_phy_addr) {
     if (page_phy_addr == null)    return;
+    if ((uint32_t)page_phy_addr < MM_BASE)
+        panic("phy_release_page(): cannot release kernel physical memory");
+
     wait(&__spinlock_phymm);
     idx_t i = ((uint32_t)page_phy_addr - MM_BASE) >> 12;
     bitmap_clear(&__bm_phymm, i);
@@ -55,7 +58,7 @@ phy_release_page(void *page_phy_addr) {
  * 
  * @param pdir the corresponding page directory table
  * @param va virtual address
- * @return page table entry
+ * @return page table entry pointer
  */
 pgelem_t *
 get_mapping(pgelem_t *pdir, uint32_t va) {

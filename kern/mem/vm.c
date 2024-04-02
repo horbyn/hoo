@@ -289,8 +289,8 @@ vir_alloc_pages(tid_t tid, vspace_t *vs, uint32_t amount) {
  */
 void
 vir_release_pages(tid_t tid, vspace_t *vs, void *va) {
-    if (vs == null || va == null)
-        panic("vir_release_pages(): invalid virtual space");
+    if (vs == null)
+        panic("vir_release_pages(): paremeter invalid");
 
     // search the `vspace` list according to virtual address
     vspace_t *worker_vs = vs, *prev_vs = null;
@@ -306,34 +306,39 @@ vir_release_pages(tid_t tid, vspace_t *vs, void *va) {
     node_t *worker_node = null;
     idx_t i = 1;
     do {
-        worker_node = list_find(&worker_vs->list_, i++);
+        worker_node = list_find(&worker_vs->list_, i);
         if (worker_node) {
-            if ((uint32_t)va == ((vaddr_t*)(worker_node->data_))->va_)
+            if ((uint32_t)va == ((vaddr_t*)(worker_node->data_))->va_) {
+                list_remove(&worker_vs->list_, i);
                 break;
+            }
         }
+        ++i;
     } while (worker_node);
     // previously, the virtual address is belong to the current list,
     //   so it must exist in current list.
     if (worker_node == null)    panic("vir_release_pages(): bug");
 
     // release pages
+    pcb_t *cur_pcb = get_current_pcb();
     for (uint32_t i = 0; i < ((vaddr_t *)(worker_node->data_))->length_; ++i) {
-        phy_release_page(((vaddr_t *)(worker_node->data_))->va_ + i * PGSIZE);
+        uint32_t va = ((vaddr_t *)(worker_node->data_))->va_;
+        pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, va + i * PGSIZE);
+        phy_release_page((void *)*pa);
     }
 
     // reclaim the metadata
     vmslot_t *vmslot = vmslot_get(tid);
     vmslot_reclaim_vaddr(vmslot, (vaddr_t*)(worker_node->data_));
     vmslot_reclaim_node(vmslot, worker_node);
-    pcb_t *cur_pcb = get_current_pcb();
     if (vmslot->vaddr_cnt_ == vmslot->vaddr_free_->size_) {
         pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)vmslot->vaddr_free_);
-        phy_release_page(pa);
+        phy_release_page((void *)*pa);
         vmslot->vaddr_free_ = null;
     }
     if (vmslot->node_cnt_ == vmslot->node_free_->size_) {
         pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)vmslot->node_free_);
-        phy_release_page(pa);
+        phy_release_page((void *)*pa);
         vmslot->node_free_ = null;
     }
 
@@ -343,7 +348,7 @@ vir_release_pages(tid_t tid, vspace_t *vs, void *va) {
         vmslot_reclaim_vspace(vmslot, worker_vs);
         if (vmslot->vs_cnt_ == vmslot->vs_free_->size_) {
             pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)vmslot->vs_free_);
-            phy_release_page(pa);
+            phy_release_page((void *)*pa);
             vmslot->vs_free_ = null;
         }
     }

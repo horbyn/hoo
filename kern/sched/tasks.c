@@ -5,42 +5,32 @@
  *                                                                        *
  **************************************************************************/
 #include "tasks.h"
-#include "kern/module/idle.h"
 
 // serially access thread id
 static spinlock_t __spinlock_alloc_tid;
+// serially access task queues
+static spinlock_t __spinlock_tasks_queue;
+static queue_t __queue_ready, __queue_running;
 static tid_t __global_tid;
 
 /**
- * @brief setup pcb object
- * 
- * @param pcb the pcb object
- * @param scur current stack
- * @param s0   ring0 stack
- * @param tid  thread id
- * @param pdir_va virtual address of page directory table
+ * @brief get the ready queue of the tasks
+ * @note getting the queue would not hold the spinlock while using would
+ * @return ready queue of the tasks
  */
-void
-pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid, void *pdir_va) {
-
-    if (pcb == null)    panic("pcb_set(): parameter invalid");
-    pcb->stack_cur_ = scur;
-    pcb->stack0_ = s0;
-    pcb->tid_ = tid;
-    pcb->pdir_va_ = pdir_va;
-    bzero(&pcb->vspace_, sizeof(vspace_t));
+queue_t *
+get_idle_ready_queue(void) {
+    return &__queue_ready;
 }
 
 /**
- * @brief get tid of the pcb object
- * 
- * @param pcb pcb object
- * @return thread id
+ * @brief get the running queue of the tasks
+ * @note getting the queue would not hold the spinlock while using would
+ * @return running queue of the tasks
  */
-tid_t
-pcb_get_tid(pcb_t *pcb) {
-    if (pcb == null)    panic("pcb_get_tid(): parameter invalid");
-    return pcb->tid_;
+queue_t *
+get_idle_running_queue(void) {
+    return &__queue_running;
 }
 
 /**
@@ -50,8 +40,17 @@ pcb_get_tid(pcb_t *pcb) {
  */
 pcb_t *
 get_current_pcb() {
-    // TODO
-    return __pcb_idle;
+    wait(&__spinlock_tasks_queue);
+    node_t *cur = queue_front(&__queue_running);
+    signal(&__spinlock_tasks_queue);
+    if (!cur)
+        panic("get_current_pcb(): no current task");
+
+    pcb_t *cur_pcb = (pcb_t *)cur->data_;
+    if (!cur_pcb)
+        panic("get_current_pcb(): current task is null");
+
+    return cur_pcb;
 }
 
 /**
@@ -59,16 +58,19 @@ get_current_pcb() {
  */
 void
 init_tasks_system() {
+    queue_init(&__queue_ready);
+    queue_init(&__queue_running);
     spinlock_init(&__spinlock_alloc_tid);
+    spinlock_init(&__spinlock_tasks_queue);
 }
 
 /**
- * @brief Get the thread id
+ * @brief allocate the thread id
  * 
- * @return id
+ * @return thread id
  */
 tid_t
-tid_get() {
+allocate_tid() {
     tid_t temp = 0;
 
     wait(&__spinlock_alloc_tid);
@@ -76,6 +78,45 @@ tid_get() {
     signal(&__spinlock_alloc_tid);
 
     if (temp >= MAX_TASKS_AMOUNT)
-        panic("tid_get(): thread id overflows");
+        panic("allocate_tid(): thread id overflows");
     return temp;
+}
+
+/**
+ * @brief scheduler two thread
+ */
+void
+scheduler() {
+    if (test(&__spinlock_tasks_queue))    return;
+
+    // to check whether ticks expired
+    // we just need the first queue node
+    wait(&__spinlock_tasks_queue);
+    node_t *cur = queue_front(&__queue_running);
+    if (cur) {
+        if (((pcb_t *)cur->data_)->ticks_ > 0) {
+            ((pcb_t *)cur->data_)->ticks_--;
+            signal(&__spinlock_tasks_queue);
+            return;
+        } else    ((pcb_t *)cur->data_)->ticks_ = TIMETICKS;
+    }
+
+    node_t *next = queue_pop(&__queue_ready);
+    if (next) {
+        cur = queue_pop(&__queue_running);
+        // only change tasks when the `cur` task exists
+        if (cur)
+            queue_push(&__queue_ready, cur, TAIL);
+        queue_push(&__queue_running, next, TAIL);
+
+        // update tss
+        tss_t *tss = get_idle_tss();
+        tss->ss0_ = DS_SELECTOR_KERN;
+        tss->esp0_ = (uint32_t)((pcb_t *)next->data_)->stack0_;
+        
+        signal(&__spinlock_tasks_queue);
+        switch_to(cur, next);
+    }
+
+    signal(&__spinlock_tasks_queue);
 }

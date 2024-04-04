@@ -5,21 +5,13 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_SCHED_TASKS_H__
-#define __KERN_SCHED_TASKS_H__
+#ifndef __KERN_DRIVER_8253_8253_H__
+#define __KERN_DRIVER_8253_8253_H__
 
+#include "cmd_8253.h"
 #include "kern/x86.h"
-#include "kern/conf/descriptor.h"
-#include "kern/module/idle.h"
-#include "kern/units/queue.h"
 
-extern void switch_to(node_t *, node_t *);
-
-queue_t *get_idle_ready_queue(void);
-queue_t *get_idle_running_queue(void);
-pcb_t   *get_current_pcb(void);
-void    init_tasks_system(void);
-tid_t   allocate_tid(void);
-void    scheduler();
+void set_command(sc_t sc, am_t am, om_t om, bm_t bm);
+void set_counter(uint32_t frequency);
 
 #endif

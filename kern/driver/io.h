@@ -10,9 +10,9 @@
 
 #include "cga/cga.h"
 #include "kern/units/spinlock.h"
-#include "kern/inte/inte_stack.h"
+#include "kern/intr/intr_stack.h"
 
-//extern void isr_part3(void);
+extern void isr_part3(void);
 
 #define POINTER_SIZE                (sizeof(const char *))
 #define TYPE_TO_POINTER_SIZE(type)  ((sizeof(type) - 1) / POINTER_SIZE + 1)

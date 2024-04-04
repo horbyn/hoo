@@ -5,21 +5,14 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_SCHED_TASKS_H__
-#define __KERN_SCHED_TASKS_H__
+#ifndef __KERN_INTR_INTR_H__
+#define __KERN_INTR_INTR_H__
 
-#include "kern/x86.h"
+#include "stuff_intr.h"
 #include "kern/conf/descriptor.h"
-#include "kern/module/idle.h"
-#include "kern/units/queue.h"
+#include "kern/driver/io.h"
 
-extern void switch_to(node_t *, node_t *);
-
-queue_t *get_idle_ready_queue(void);
-queue_t *get_idle_running_queue(void);
-pcb_t   *get_current_pcb(void);
-void    init_tasks_system(void);
-tid_t   allocate_tid(void);
-void    scheduler();
+void set_idt_entry(idt_t *idt, privilege_t pvl, gatedesc_t gate, uint32_t addr);
+void set_isr_entry(isr_t *isr, isr_t addr);
 
 #endif

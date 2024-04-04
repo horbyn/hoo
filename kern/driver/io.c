@@ -137,7 +137,7 @@ trace() {
         kprintf("0x%x", ret);
 
         // check whether it is interrupt stack
-        if (ret == (uint32_t)0/*isr_part3*/) {
+        if (ret == (uint32_t)isr_part3) {
             kprintf(" *");
             istackcpu_t *istack = 
                 (istackcpu_t *)(ebp + sizeof(uint32_t) * 2 + sizeof(istackos_t));
@@ -160,5 +160,6 @@ panic(const char *extra) {
     if (extra)
         kprintf("%s\n\n", extra);
     trace();
+    disable_intr();
     hlt();
 }

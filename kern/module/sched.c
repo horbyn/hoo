@@ -23,8 +23,14 @@ kinit_idle_thread(void) {
     // uses the boot stack. Now we call this flow to
     // idle thread, and the stack it used is idle stack
     __pcb_idle = (pcb_t *)STACK_BOOT_BOTTOM;
-    tid_t idle_tid = tid_get();
-    pcb_set(__pcb_idle, null, (uint32_t *)STACK_BOOT_TOP, idle_tid, __pgdir_idle);
+    tid_t idle_tid = allocate_tid();
+    pcb_set(__pcb_idle, null, (uint32_t *)STACK_BOOT_TOP, idle_tid,
+        __pgdir_idle, TIMETICKS);
+    queue_t *running_queue = get_idle_running_queue();
+    if (running_queue == null)    panic("kinit_idle_thread(): bug");
+    static node_t n;
+    node_set(&n, __pcb_idle, null);
+    queue_push(running_queue, &n, TAIL);
 
     // setup virtual space
     vmslot_t *idle_slot = vmslot_get(idle_tid);

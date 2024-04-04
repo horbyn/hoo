@@ -5,8 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_INTE_INTE_STACK_H__
-#define __KERN_INTE_INTE_STACK_H__
+#ifndef __KERN_INTR_INTR_STACK_H__
+#define __KERN_INTR_INTR_STACK_H__
 
 #include "kern/types.h"
 

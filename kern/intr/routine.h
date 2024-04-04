@@ -5,21 +5,19 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_SCHED_TASKS_H__
-#define __KERN_SCHED_TASKS_H__
+#ifndef __KERN_INTR_ROUTINE_H__
+#define __KERN_INTR_ROUTINE_H__
 
 #include "kern/x86.h"
-#include "kern/conf/descriptor.h"
-#include "kern/module/idle.h"
-#include "kern/units/queue.h"
+#include "kern/driver/io.h"
+#include "kern/sched/tasks.h"
 
-extern void switch_to(node_t *, node_t *);
+#define ISR32_TIMER             32
+#define ISR38_FLOPPY            38
+#define ISR46_HARD1             46
+#define ISR128_SYSCALL          128
 
-queue_t *get_idle_ready_queue(void);
-queue_t *get_idle_running_queue(void);
-pcb_t   *get_current_pcb(void);
-void    init_tasks_system(void);
-tid_t   allocate_tid(void);
-void    scheduler();
+void isr_default(void);
+void timer(void);				                            // #32
 
 #endif

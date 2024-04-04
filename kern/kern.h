@@ -9,6 +9,8 @@
 #define __KERN_KERN_H__
 
 #include "module/config.h"
+#include "module/do_intr.h"
+#include "module/driver.h"
 #include "module/mem.h"
 #include "module/sched.h"
 #include "driver/io.h"

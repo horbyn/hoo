@@ -5,21 +5,17 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_SCHED_TASKS_H__
-#define __KERN_SCHED_TASKS_H__
+#ifndef __KERN_MODULE_DO_INTR_H__
+#define __KERN_MODULE_DO_INTR_H__
 
-#include "kern/x86.h"
-#include "kern/conf/descriptor.h"
-#include "kern/module/idle.h"
-#include "kern/units/queue.h"
+#include "kern/intr/intr.h"
+#include "kern/intr/routine.h"
 
-extern void switch_to(node_t *, node_t *);
+// the entrance of isr
+extern uint32_t isr_part1[IDT_ENTRIES_NUM];
+// the isr routines
+extern isr_t __isr[];
 
-queue_t *get_idle_ready_queue(void);
-queue_t *get_idle_running_queue(void);
-pcb_t   *get_current_pcb(void);
-void    init_tasks_system(void);
-tid_t   allocate_tid(void);
-void    scheduler();
+void kinit_isr_idt(void);
 
 #endif

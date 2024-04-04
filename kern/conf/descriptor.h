@@ -165,7 +165,7 @@ typedef struct Tss {
     uint32_t ldt_sel_;
     // io map base
     uint32_t iomap_;
-} __attribute__ ((packed)) Tss_t;
+} __attribute__ ((packed)) tss_t;
 
 void set_gdt(Desc_t *d, uint32_t limit, uint32_t base,uint8_t a, uint8_t rw,
     uint8_t dc, uint8_t exe, uint8_t sys, uint8_t dpl, uint8_t ps, uint8_t l,

@@ -20,6 +20,9 @@ kernel_init(void) {
     kernel_config();
     kinit_tasks_system();
     kinit_idle_thread();
+    kinit_isr_idt();
+    kinit_dirver();
+    enable_intr();
 #ifdef TEST
     // test_phypg_alloc();
     test_vspace();

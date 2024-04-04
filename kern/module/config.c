@@ -9,7 +9,6 @@
 static pgelem_t __page_tbl_4mb[PGDIR_SIZE] __attribute__((aligned(4096)));
 static Desc_t __gdt[SIZE_GDT];
 static Gdtr_t __gdtr;
-static Tss_t __tss;
 
 /**
  * @brief paging
@@ -58,7 +57,8 @@ config_gdt(void) {
 static void
 config_tss(void) {
     // #5 tss
-    set_gdt(&__gdt[5], sizeof(Tss_t), (uint32_t)&__tss, 1, 0, 0, 1, 0, 3, 1, 0, 1, 0);
+    set_gdt(&__gdt[5], sizeof(tss_t), (uint32_t)get_idle_tss(),
+        1, 0, 0, 1, 0, 3, 1, 0, 1, 0);
 
     // load tr with seletor #5
     // note that the busy field of tss descriptor will always be set once

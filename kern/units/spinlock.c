@@ -29,7 +29,7 @@ wait(spinlock_t *spin) {
     while (test(spin));
 
     __asm__ ("\n\t"
-        "lock bts $0, %0\n\t"
+        "lock btsl $0, %0\n\t"
         "jc 1b"
         : "=m"(*spin) :: "cc");
 }

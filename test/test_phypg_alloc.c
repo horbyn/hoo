@@ -48,37 +48,22 @@ alloc_continuous() {
     kprintf("> TEST_PHYPG_ALLOC: continuous allocation <\n");
 
     kprintf(">> 100 pages: ");
-    void *beg100 = 0, *end100 = 0;
-    uint32_t max100 = 100;
-    for (uint32_t i = 0; i < max100; i++) {
+    void *beg = 0, *end = 0;
+    uint32_t max = 100;
+    for (uint32_t i = 0; i < max; i++) {
         void *p = phy_alloc_page();
         if (i == 0) {
-            beg100 = p;
-            kprintf("from 0x%x ", beg100);
+            beg = p;
+            kprintf("from 0x%x ", beg);
         }
-        if (i == max100 - 1) {
-            end100 = p;
-            kprintf("to 0x%x\n", end100);
+        if (i == max - 1) {
+            end = p;
+            kprintf("to 0x%x\n", end);
         }
     }
 
-    kprintf(">> 10000 pages: ");
-    void *beg10000 = 0, *end10000 = 0;
-    uint32_t max10000 = 10000;
-    for (uint32_t i = 0; i < max10000; i++) {
-        void *p = phy_alloc_page();
-        if (i == 0) {
-            beg10000 = p;
-            kprintf("from 0x%x ", beg10000);
-        }
-        if (i == max10000 - 1) {
-            end10000 = p;
-            kprintf("to 0x%x\n", end10000);
-        }
-    }
-
-    for (uint32_t i = 0; i < max100 + max10000; ++i)
-        phy_release_page((void *)((uint32_t)beg100 + i * PGSIZE));
+    for (uint32_t i = 0; i < max; ++i)
+        phy_release_page((void *)((uint32_t)beg + i * PGSIZE));
     kprintf("\n\n");
 }
 

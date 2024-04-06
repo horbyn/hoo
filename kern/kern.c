@@ -17,14 +17,14 @@ kernel_init(void) {
         ((uint32_t)__kern_end - (uint32_t)__kern_base) / 1024);
 
     kinit_memory();
-    kernel_config();
+    kinit_config();
     kinit_tasks_system();
     kinit_idle_thread();
     kinit_isr_idt();
     kinit_dirver();
     enable_intr();
 #ifdef TEST
-    // test_phypg_alloc();
+    test_phypg_alloc();
     test_vspace();
 #endif
 }

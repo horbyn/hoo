@@ -15,6 +15,6 @@
 
 #define SIZE_GDT    8
 
-void kernel_config(void);
+void kinit_config(void);
 
 #endif

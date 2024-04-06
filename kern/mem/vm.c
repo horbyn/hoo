@@ -6,140 +6,18 @@
  **************************************************************************/
 #include "vm.h"
 
-static vmslot_t __vm_slot[MAX_TASKS_AMOUNT];
 static spinlock_t __spinlock_virmm;
-
 /**
- * @brief vmslot object setup thread id
- * 
- * @param slot vmslot object
- * @param tid  thread id
+ * @brief metadata provider of the virtual memory module;
+ * access this structure by macro or functions because
+ * I expect the members are invisiable outside
  */
-void
-vmslot_set_tid(vmslot_t *slot, tid_t tid) {
-    if (slot == null)    panic("vmslot_set_tid(): invalid parameter");
-    slot->tid_ = tid;
-}
-
-/**
- * @brief vmslot object setup virtual address space
- * 
- * @param slot vmslot object
- * @param va virtual address of the virtual address space
- */
-void
-vmslot_set_vspace(vmslot_t *slot, void *va) {
-    if (slot == null)    panic("vmslot_set_vspace(): invalid parameter");
-    GET_FREE_LIST(slot->vs_free_, va, vspace_t);
-    slot->vs_cnt_ = GET_FREE_LIST_LEN(vspace_t);
-}
-
-/**
- * @brief vmslot object setup node
- * 
- * @param slot vmslot object
- * @param va virtual address of the node
- */
-void
-vmslot_set_node(vmslot_t *slot, void *va) {
-    if (slot == null)    panic("vmslot_set_node(): invalid parameter");
-    GET_FREE_LIST(slot->node_free_, va, node_t);
-    slot->node_cnt_ = GET_FREE_LIST_LEN(node_t);
-}
-
-/**
- * @brief vmslot object setup vaddr object
- * 
- * @param slot vmslot object
- * @param va virtual address of the vaddr object
- */
-void
-vmslot_set_vaddr(vmslot_t *slot, void *va) {
-    if (slot == null)    panic("vmslot_set_vaddr(): invalid parameter");
-    GET_FREE_LIST(slot->vaddr_free_, va, vaddr_t);
-    slot->vaddr_cnt_ = GET_FREE_LIST_LEN(vaddr_t);
-}
-
-/**
- * @brief get the slot object according to thread id for storing metadata
- * 
- * @param tid thread id
- * @return slot object (need null verification)
- */
-vmslot_t *
-vmslot_get(tid_t tid) {
-    if (tid >= MAX_TASKS_AMOUNT)    panic("vmslot_get(): invalid thread id");
-    return &__vm_slot[tid];
-}
-
-/**
- * @brief get free vspace object
- * 
- * @param slot vmslot object
- * @return vspace object
- */
-vspace_t *
-vmslot_get_vspace(vmslot_t *slot) {
-    if (slot == null)    panic("vmslot_get_vspace(): invalid parameter");
-    return list_remove(slot->vs_free_, 1)->data_;
-}
-
-/**
- * @brief get free node object
- * 
- * @param slot vmslot object
- * @return node object
- */
-node_t *
-vmslot_get_node(vmslot_t *slot) {
-    if (slot == null)    panic("vmslot_get_node(): invalid parameter");
-    return list_remove(slot->node_free_, 1)->data_;
-}
-
-/**
- * @brief get free vaddr object
- * 
- * @param slot vmslot object
- * @return vaddr object
- */
-vaddr_t *
-vmslot_get_vaddr(vmslot_t *slot) {
-    if (slot == null)    panic("vmslot_get_vaddr(): invalid parameter");
-    return list_remove(slot->vaddr_free_, 1)->data_;
-}
-
-/**
- * @brief reclaim the vspace object into `vmslot`
- * 
- * @param slot `vmslot` object
- * @param vs `vspace` object
- */
-void
-vmslot_reclaim_vspace(vmslot_t *slot, vspace_t *vs) {
-    RECLAIM_METADATA(slot->vs_free_, vs, vspace_t);
-}
-
-/**
- * @brief reclaim the node object into `vmslot`
- * 
- * @param slot `vmslot` object
- * @param node `node` object
- */
-void
-vmslot_reclaim_node(vmslot_t *slot, node_t *node) {
-    RECLAIM_METADATA(slot->node_free_, node, node_t);
-}
-
-/**
- * @brief reclaim the vaddr object into `vmslot`
- * 
- * @param slot `vmslot` object
- * @param vaddr `vaddr` object
- */
-void
-vmslot_reclaim_vaddr(vmslot_t *slot, vaddr_t *vaddr) {
-    RECLAIM_METADATA(slot->vaddr_free_, vaddr, vaddr_t);
-}
+static struct vm_slot {
+    // to specify which thread
+    tid_t     tid_;
+    // the metadata
+    fmtlist_t *vs_free_, *node_free_, *vaddr_free_;
+} __vm_slot[MAX_TASKS_AMOUNT];
 
 /**
  * @brief initialize virtual memory system
@@ -148,6 +26,23 @@ void
 init_virmm_system() {
     spinlock_init(&__spinlock_virmm);
     bzero(__vm_slot, sizeof(__vm_slot));
+}
+
+/**
+ * @brief metadata initialization
+ * 
+ * @param va virtual address of a page
+ * @param mdata_size metadata size
+ */
+static void
+metadata_init(void *va, uint32_t mdata_size) {
+    void *pa = phy_alloc_page();
+    void *v = (void *)PGDOWN((uint32_t)va, PGSIZE);
+    pcb_t *cur_pcb = get_current_pcb();
+    if (cur_pcb != __pcb_idle)
+        panic("metadata_init(): not allow other kernel threads to set mapping");
+    set_mapping(cur_pcb->pdir_va_, (uint32_t)v, (uint32_t)pa);
+    fmtlist_init(v, mdata_size, true);
 }
 
 /**
@@ -164,29 +59,28 @@ vir_alloc_pages(tid_t tid, vspace_t *vs, uint32_t amount) {
     if (vs == null)    panic("vir_alloc_pages(): invalid virtual space");
     if (amount == 0)    panic("vir_alloc_pages(): cannot request 0 page");
 
-    // search the slot
-    vmslot_t *slot = vmslot_get(tid);
-    if (slot == null)
-        panic("vir_alloc_pages(): no free slot for current task");
+    pcb_t *cur_pcb = get_current_pcb();
+    struct vm_slot *slot = __vm_slot + tid;
 
     // need more page to hold the metadata
     bool fvs = false, fnode = false, fvaddr = false;
-    if (ISEMPTY_LIST_VSPACE(slot)) {
+    if (slot->vs_free_ == null) {
         ++amount;
         fvs = true;
     }
-    if (ISEMPTY_LIST_NODE(slot)) {
+    if (slot->node_free_ == null) {
         ++amount;
         fnode = true;
     }
-    if (ISEMPTY_LIST_VADDR(slot)) {
+    if (slot->vaddr_free_ == null) {
         ++amount;
         fvaddr = true;
     }
 
     // traversal the virtual space
-    const uint32_t ADDR_BASE = 0x00000000;
-    uint32_t addr_end = get_current_pcb() == __pcb_idle ?
+    const uint32_t ADDR_BASE = cur_pcb == __pcb_idle ?
+        KERN_HIGH_MAPPING + MM_BASE : 0x00000000;
+    const uint32_t ADDR_END = cur_pcb == __pcb_idle ?
         MAX_VSPACE_IDLE : KERN_HIGH_MAPPING;
     uint32_t last_end = ADDR_BASE, ret = 0;
     vspace_t *worker = vs;
@@ -200,7 +94,7 @@ vir_alloc_pages(tid_t tid, vspace_t *vs, uint32_t amount) {
             worker = worker->next_;
         } else {
             // there is enough space; or there is no next interval
-            if (!worker->next_ && last_end + amount >= addr_end)
+            if (!worker->next_ && last_end + amount >= ADDR_END)
                 panic("vir_alloc_pages(): no enough space");
 
             // virtual address allocation
@@ -215,22 +109,28 @@ vir_alloc_pages(tid_t tid, vspace_t *vs, uint32_t amount) {
                 : null;
 
             // check metadata
-            if (fvs)
-                vmslot_set_vspace(slot, va_mdata_vs);
-            if (fnode)
-                vmslot_set_node(slot, va_mdata_node);
-            if (fvaddr)
-                vmslot_set_vaddr(slot, va_mdata_vaddr);
+            if (fvs) {
+                metadata_init(va_mdata_vs, sizeof(vspace_t));
+                slot->vs_free_ = (fmtlist_t *)va_mdata_vs;
+            }
+            if (fnode) {
+                metadata_init(va_mdata_node, sizeof(node_t));
+                slot->node_free_ = (fmtlist_t *)va_mdata_node;
+            }
+            if (fvaddr) {
+                metadata_init(va_mdata_vaddr, sizeof(vaddr_t));
+                slot->vaddr_free_ = (fmtlist_t *)va_mdata_vaddr;
+            }
 
             vspace_t *temp = list_isempty(&worker->list_) ?
-                vmslot_get_vspace(slot) : worker;
+                (vspace_t *)fmtlist_alloc(slot->vs_free_) : worker;
             node_t   *node_free = null;
             vaddr_t  *vaddr_free = null;
 
             // map metadata
             if (fvs) {
-                node_free = vmslot_get_node(slot);
-                vaddr_free = vmslot_get_vaddr(slot);
+                node_free = (node_t *)fmtlist_alloc(slot->node_free_);
+                vaddr_free = (vaddr_t *)fmtlist_alloc(slot->vaddr_free_);
                 vaddr_set(vaddr_free, (uint32_t)va_mdata_vs, 1);
                 node_set(node_free, vaddr_free, null);
                 list_insert(&temp->list_, node_free, 1);
@@ -239,8 +139,8 @@ vir_alloc_pages(tid_t tid, vspace_t *vs, uint32_t amount) {
                 --amount;
             }
             if (fnode) {
-                node_free = vmslot_get_node(slot);
-                vaddr_free = vmslot_get_vaddr(slot);
+                node_free = (node_t *)fmtlist_alloc(slot->node_free_);
+                vaddr_free = (vaddr_t *)fmtlist_alloc(slot->vaddr_free_);
                 vaddr_set(vaddr_free, (uint32_t)va_mdata_node, 1);
                 node_set(node_free, vaddr_free, null);
                 list_insert(&temp->list_, node_free, 1);
@@ -249,8 +149,8 @@ vir_alloc_pages(tid_t tid, vspace_t *vs, uint32_t amount) {
                 --amount;
             }
             if (fvaddr) {
-                node_free = vmslot_get_node(slot);
-                vaddr_free = vmslot_get_vaddr(slot);
+                node_free = (node_t *)fmtlist_alloc(slot->node_free_);
+                vaddr_free = (vaddr_t *)fmtlist_alloc(slot->vaddr_free_);
                 vaddr_set(vaddr_free, (uint32_t)va_mdata_vaddr, 1);
                 node_set(node_free, vaddr_free, null);
                 list_insert(&temp->list_, node_free, 1);
@@ -259,8 +159,8 @@ vir_alloc_pages(tid_t tid, vspace_t *vs, uint32_t amount) {
                 --amount;
             }
 
-            node_free = vmslot_get_node(slot);
-            vaddr_free = vmslot_get_vaddr(slot);
+            node_free = (node_t *)fmtlist_alloc(slot->node_free_);
+            vaddr_free = (vaddr_t *)fmtlist_alloc(slot->vaddr_free_);
             vaddr_set(vaddr_free, last_end, amount);
             node_set(node_free, vaddr_free, null);
             list_insert(&temp->list_, node_free, 1);
@@ -271,7 +171,7 @@ vir_alloc_pages(tid_t tid, vspace_t *vs, uint32_t amount) {
             }
 
             ret = last_end;
-            worker->end_ += amount * PGSIZE;
+            temp->end_ = last_end + amount * PGSIZE;
             break;
         }
 
@@ -328,28 +228,28 @@ vir_release_pages(tid_t tid, vspace_t *vs, void *va) {
     }
 
     // reclaim the metadata
-    vmslot_t *vmslot = vmslot_get(tid);
-    vmslot_reclaim_vaddr(vmslot, (vaddr_t*)(worker_node->data_));
-    vmslot_reclaim_node(vmslot, worker_node);
-    if (vmslot->vaddr_cnt_ == vmslot->vaddr_free_->size_) {
-        pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)vmslot->vaddr_free_);
+    struct vm_slot *slot = __vm_slot + tid;
+    fmtlist_release(slot->vaddr_free_, worker_node->data_, sizeof(vaddr_t));
+    fmtlist_release(slot->node_free_, worker_node, sizeof(node_t));
+    if (slot->vaddr_free_->total_elems_ == slot->vaddr_free_->list_.size_) {
+        pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)slot->vaddr_free_);
         phy_release_page((void *)*pa);
-        vmslot->vaddr_free_ = null;
+        slot->vaddr_free_ = null;
     }
-    if (vmslot->node_cnt_ == vmslot->node_free_->size_) {
-        pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)vmslot->node_free_);
+    if (slot->node_free_->total_elems_ == slot->node_free_->list_.size_) {
+        pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)slot->node_free_);
         phy_release_page((void *)*pa);
-        vmslot->node_free_ = null;
+        slot->node_free_ = null;
     }
 
     // reclaim `vspace` list
     if (list_isempty(&worker_vs->list_)) {
         vspace_append(prev_vs, worker_vs->next_);
-        vmslot_reclaim_vspace(vmslot, worker_vs);
-        if (vmslot->vs_cnt_ == vmslot->vs_free_->size_) {
-            pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)vmslot->vs_free_);
+        fmtlist_release(slot->vs_free_, worker_vs, sizeof(vspace_t));
+        if (slot->vs_free_->total_elems_ == slot->vs_free_->list_.size_) {
+            pgelem_t *pa = get_mapping(cur_pcb->pdir_va_, (uint32_t)slot->vs_free_);
             phy_release_page((void *)*pa);
-            vmslot->vs_free_ = null;
+            slot->vs_free_ = null;
         }
     }
 }

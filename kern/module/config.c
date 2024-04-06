@@ -71,7 +71,7 @@ config_tss(void) {
  * @brief kernel initialization module for beginning configurations
  */
 void
-kernel_config(void) {
+kinit_config(void) {
     paging();
     config_gdt();
     config_tss();

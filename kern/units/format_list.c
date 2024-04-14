@@ -20,9 +20,9 @@ fmtlist_init(fmtlist_t *page_va, uint32_t type_size, bool is_cycle) {
     uint8_t *p = (uint8_t *)(PGDOWN((uint32_t)page_va, PGSIZE));
     uint32_t head_sz = sizeof(fmtlist_t);
     uint32_t elem_sz = sizeof(node_t) + type_size;
+    uint32_t total_elems = (PGSIZE - head_sz) / elem_sz;
     fmtlist_t *fmtlist = (fmtlist_t *)p;
     fmtlist->type_size_ = type_size;
-    fmtlist->total_elems_ = (PGSIZE - head_sz) / elem_sz;
 
     /*
      * transform to the following formatting
@@ -35,9 +35,10 @@ fmtlist_init(fmtlist_t *page_va, uint32_t type_size, bool is_cycle) {
 
     list_init(&fmtlist->list_, is_cycle);
     p += head_sz;
-    for (uint32_t i = 0; i < fmtlist->total_elems_; ++i) {
+    for (uint32_t i = 0; i < total_elems; ++i) {
         node_t *n = (node_t *)p;
         uint8_t *type_elem = (uint8_t *)(p + sizeof(node_t));
+        bzero(type_elem, type_size);
         p += elem_sz;
         node_set(n, type_elem, (node_t *)p);
         list_insert(&fmtlist->list_, n, LSIDX_AFTAIL(&fmtlist->list_));
@@ -68,6 +69,9 @@ fmtlist_release(fmtlist_t *fmtlist, void *elem, uint32_t elem_size) {
     if (fmtlist == null)    panic("fmtlist_release(): parameter invalid");
     if (elem_size != fmtlist->type_size_)
         panic("fmtlist_release(): element type not match");
+    if ((void *)fmtlist != (void *)PGDOWN((uint32_t)elem, PGSIZE))
+        panic("fmtlist_release(): the element reclaiming "
+              "was not allocate from the list");
 
     if (elem) {
         uint8_t *p = (uint8_t *)elem;

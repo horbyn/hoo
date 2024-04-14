@@ -190,7 +190,7 @@ move_end:
 
     # #### function 6. ####
     # ####   paging    ####
-    movl $0x400,        %ecx
+    movl $0x100,        %ecx
     movl $0,            %eax
     movl pgtable_addr,  %ebx
 pgtable:
@@ -206,6 +206,10 @@ pgtable:
     movl pdtable_addr,  %ebx
     movl %eax,          (%ebx)
     addl $0xc00,        %ebx
+    movl %eax,          (%ebx)
+    movl $SEG_PDTABLE<<4, %eax
+    orl  $7,            %eax
+    addl $0x3fc,        %ebx
     movl %eax,          (%ebx)
 
     movl $SEG_PDTABLE<<4, %eax

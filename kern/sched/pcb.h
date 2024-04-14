@@ -9,6 +9,7 @@
 #define __KERN_SCHED_PCB_H__
 
 #include "kern/x86.h"
+#include "kern/conf/page.h"
 #include "kern/mem/vaddr.h"
 
 // switch when the amount arrived
@@ -27,13 +28,12 @@ typedef struct pcb {
     // virtual address of this thread page directory table
     void         *pdir_va_;
     // virtual space manager
-    vspace_t     vspace_;
+    vsmngr_t     vmngr_;
     // the rest ticks
     uint32_t     ticks_;
 } __attribute__((packed)) pcb_t;
 
-void  pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid, void *pdir_va,
-    uint32_t ticks);
-tid_t pcb_get_tid(pcb_t *pcb);
+void  pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid, void *va_pdir,
+    void *va_vspace, void *va_node, void *va_vaddr, uint32_t ticks);
 
 #endif

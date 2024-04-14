@@ -32,15 +32,13 @@ switch_to:
     movl 0x8(%ebp), %eax    # fetch `node_t` pointer of cur.
     cmpl $0,        %eax
     jz next
-    movl (%eax),    %eax    # fetch `pcb_t` pointer of cur. node
     pushl $return           # push the return addr in order to the prev. task could return here
     movl %esp,      (%eax)  # current `esp` assigns to the value the cur. pcb pointed to
     popl %eax               # discard the prev. return addr
 
 next:
     movl 0xc(%ebp), %eax    # fetch `node_t` pointer of next
-    movl (%eax),    %eax    # fetch `pcb_t` pointer of next node
-    movl (%eax),    %esp    # fecht the value the next pcb pointed to
+    movl (%eax),    %esp    # fetch the value the next pcb pointed to
 
     ret
 return:

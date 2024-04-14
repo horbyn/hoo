@@ -44,7 +44,7 @@ debug: CFLAGS += -g -DDEBUG
 debug: boot_image $(OBJS) $(OBJC) $(BOOT_IMG) run
 
 test: CFLAGS += -DTEST
-test: clean debug
+test: debug
 
 run:
 	bochs -q

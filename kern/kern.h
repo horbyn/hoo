@@ -21,5 +21,6 @@
 extern uint8_t __kern_base[], __kern_end[];
 
 void kernel_init(void);
+void kernel_exec(void);
 
 #endif

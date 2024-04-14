@@ -12,9 +12,8 @@
 #include "kern/conf/page.h"
 #include "kern/sched/pcb.h"
 
-extern pcb_t *__pcb_idle;
-extern pgelem_t __pgdir_idle[];
-
-tss_t *get_idle_tss(void);
+pgelem_t *get_idle_pgdir(void);
+tss_t    *get_idle_tss(void);
+pcb_t    *get_idle_pcb(void);
 
 #endif

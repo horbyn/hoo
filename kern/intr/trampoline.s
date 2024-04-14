@@ -11,8 +11,6 @@
     .globl isr_part3
     .extern __isr
 
-    .long 0
-
 # trampoline routine entry
 isr_part2:
     pushl %ds

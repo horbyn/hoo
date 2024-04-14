@@ -6,6 +6,9 @@
  **************************************************************************/
 #include "kern.h"
 
+/**
+ * @brief kernel initialization
+ */
 void
 kernel_init(void) {
     io_init();
@@ -19,12 +22,21 @@ kernel_init(void) {
     kinit_memory();
     kinit_config();
     kinit_tasks_system();
-    kinit_idle_thread();
     kinit_isr_idt();
     kinit_dirver();
+
+}
+
+/**
+ * @brief kernel run
+ */
+void
+kernel_exec(void) {
     enable_intr();
+
 #ifdef TEST
     test_phypg_alloc();
     test_vspace();
+    // test_schedule();
 #endif
 }

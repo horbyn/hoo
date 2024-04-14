@@ -10,5 +10,6 @@
 
 void test_phypg_alloc(void);
 void test_vspace(void);
+void test_schedule(void);
 
 #endif

@@ -6,8 +6,15 @@
  **************************************************************************/
 #include "idle.h"
 
-pgelem_t __pgdir_idle[PGDIR_SIZE] __attribute__((aligned(4096)));
-pcb_t *__pcb_idle;
+/**
+ * @brief get the page directory table of idle thread
+ * 
+ * @return the page directory
+ */
+pgelem_t *
+get_idle_pgdir(void) {
+    return (pgelem_t *)(SEG_PDTABLE * 16);
+}
 
 /**
  * @brief get the tss object of idle thread
@@ -16,6 +23,16 @@ pcb_t *__pcb_idle;
  */
 tss_t *
 get_idle_tss(void) {
-    static tss_t __tss;
-    return &__tss;
+  static tss_t tss;
+  return &tss;
+}
+
+/**
+ * @brief get the pcb of idle thread
+ * 
+ * @return the pcb
+ */
+pcb_t *
+get_idle_pcb(void) {
+    return (pcb_t *)STACK_BOOT_BOTTOM;
 }

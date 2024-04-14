@@ -12,7 +12,7 @@
  * ****************************************************************************************
  * ************************ the following layout used for boot ****************************
  *                                                                                        *
- * 0x77ffc          0x78000    0x79000    0x7a000   0x7a200  0x7a204  0x7a400     0x80000 *
+ * 0x77ffc          0x78000    0x79000    0x7a000   0x7a200  0x7a204  0x7a400     0x7b000 *
  * ──────┼────────────────┼──────────┼──────────┼─────────┼────────┼────────┼───────────┤ *
  *       │DIED INSTRUCTION│ PD TABLE │ PG TABLE │   MBR   │ARDS NUM│  ARDS  │   STACK   │ *
  * ──────┼────────────────┼──────────┼──────────┼─────────┼────────┼────────┼───────────┤ *
@@ -21,13 +21,13 @@
  */
 
 // kernel stack
-//     Althrough it looks like the stack is set to 0x70000,
+//     Althrough it looks like the stack is set to 0x6b000,
 //     the sp(esp) is subtracted first you know.
 //     So if sp(esp) was 0 and then push stack, you will get
-//     ss:sp(esp) that 0x7000:0xfffe(0xfffc)
+//     ss:sp(esp) that 0x6b00:0xfffe(0xfffc)
 //
-//     This is why 0x7000 below
-#define SEG_KSTACK  0x7000
+//     This is why 0x6b00 below
+#define SEG_KSTACK  0x6b00
 
 // here sets the `jmp .` instruction
 #define SEG_DIED    0x77f0

@@ -7,14 +7,20 @@
 #include "test.h"
 #include "kern/module/sched.h"
 
+__attribute__((aligned(4096))) static uint8_t stack_kt1_r0[PGSIZE] = { 0 },
+                                              stack_kt2_r0[PGSIZE] = { 0 },
+                                              stack_ut1_r0[PGSIZE] = { 0 },
+                                              stack_ut1_r3[PGSIZE] = { 0 };
+static uint32_t user_data = 0;
+
 /**
  * @brief kernel mode thread 1
  */
 static void
-t1(void) {
+kt1(void) {
 
     while (1) {
-        kprintf("1111 ");
+        kprintf("Kernel speaked ");
     }
 }
 
@@ -22,11 +28,23 @@ t1(void) {
  * @brief kernel mode thread 2
  */
 static void
-t2(void) {
+kt2(void) {
 
     while (1) {
-        kprintf("2222_2222 ");
+        kprintf("0x%x ", user_data);
     }
+}
+
+/**
+ * @brief user mode thread 1
+ */
+static void
+ut1(void) {
+
+    while (1) {
+        ++user_data;
+    }
+
 }
 
 /**
@@ -37,8 +55,8 @@ test_schedule() {
     clear_screen();
     kprintf(">          TEST_SCHEDULE          <\n");
 
-    static uint8_t stack_t1_r0[PGSIZE] = { 0 }, stack_t2_r0[PGSIZE] = { 0 };
-    kthread_create(stack_t1_r0, null, t1);
-    kthread_create(stack_t2_r0, null, t2);
+    thread_create(stack_kt1_r0, null, kt1);
+    thread_create(stack_kt2_r0, null, kt2);
+    thread_create(stack_ut1_r0, stack_ut1_r3, ut1);
 
 }

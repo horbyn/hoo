@@ -13,7 +13,7 @@
  */
 pgelem_t *
 get_idle_pgdir(void) {
-    return (pgelem_t *)(SEG_PDTABLE * 16);
+    return (pgelem_t *)(SEG_PDTABLE * 16 + KERN_HIGH_MAPPING);
 }
 
 /**
@@ -23,8 +23,8 @@ get_idle_pgdir(void) {
  */
 tss_t *
 get_idle_tss(void) {
-  static tss_t tss;
-  return &tss;
+    static tss_t tss;
+    return &tss;
 }
 
 /**
@@ -34,5 +34,5 @@ get_idle_tss(void) {
  */
 pcb_t *
 get_idle_pcb(void) {
-    return (pcb_t *)STACK_BOOT_BOTTOM;
+    return (pcb_t *)(STACK_BOOT_BOTTOM + KERN_HIGH_MAPPING);
 }

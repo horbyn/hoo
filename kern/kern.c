@@ -37,6 +37,6 @@ kernel_exec(void) {
 #ifdef TEST
     test_phypg_alloc();
     test_vspace();
-    // test_schedule();
+    test_schedule();
 #endif
 }

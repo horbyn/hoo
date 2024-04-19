@@ -27,6 +27,8 @@ typedef struct pcb {
     tid_t        tid_;
     // virtual address of this thread page directory table
     void         *pdir_va_;
+    // physical address of this thread page directory table
+    void         *pdir_pa_;
     // virtual space manager
     vsmngr_t     vmngr_;
     // the rest ticks
@@ -34,6 +36,6 @@ typedef struct pcb {
 } __attribute__((packed)) pcb_t;
 
 void  pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid, void *va_pdir,
-    void *va_vspace, void *va_node, void *va_vaddr, uint32_t ticks);
+    void *pa_pdir, void *va_vspace, void *va_node, void *va_vaddr, uint32_t ticks);
 
 #endif

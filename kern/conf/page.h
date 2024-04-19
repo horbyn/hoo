@@ -10,6 +10,7 @@
 
 #include "kern/x86.h"
 
+#define V2P(va)             (((uint32_t)(va)) - KERN_HIGH_MAPPING)
 #define PGSIZE              0x1000
 #define PGDOWN(x, align)    ((x) & ~(align - 1))
 #define PGUP(x, align)      (PGDOWN((x + align - 1), align))

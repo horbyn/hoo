@@ -13,7 +13,6 @@
 #include "kern/sched/tasks.h"
 
 #define ISR32_TIMER             32
-#define ISR38_FLOPPY            38
 #define ISR46_HARD1             46
 #define ISR128_SYSCALL          128
 

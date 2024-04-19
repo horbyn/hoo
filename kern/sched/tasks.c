@@ -51,8 +51,8 @@ init_tasks_system() {
     // idle thread, and the stack it used is idle stack
     pcb_t *idle_pcb = get_idle_pcb();
     tid_t idle_tid = allocate_tid();
-    pcb_set(idle_pcb, null, (uint32_t *)STACK_BOOT_TOP, idle_tid,
-        get_idle_pgdir(), mdata_vspace, mdata_node, mdata_vaddr, TIMETICKS);
+    pcb_set(idle_pcb, null, (uint32_t *)STACK_BOOT_TOP, idle_tid, get_idle_pgdir(),
+        (void *)(V2P(get_idle_pgdir())), mdata_vspace, mdata_node, mdata_vaddr, TIMETICKS);
     static node_t n;
     node_set(&n, idle_pcb, null);
     wait(&__spinlock_tasks_queue);

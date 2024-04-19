@@ -25,7 +25,7 @@ paging() {
         set_mapping(pdir, va, pa);
 
     // paging
-    __asm__ ("movl %0, %%cr3" : :"r"(pdir));
+    __asm__ ("movl %0, %%cr3" : :"r"(V2P(pdir)));
     __asm__ ("\r\n"
         "movl %cr0,       %eax\r\n"
         "orl $0x80000000, %eax\r\n"

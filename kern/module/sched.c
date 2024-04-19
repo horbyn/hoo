@@ -26,7 +26,7 @@ kinit_tasks_system(void) {
  * @param entry  thread entry
  */
 void
-kthread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
+thread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
 
     /*
      ************************************
@@ -84,9 +84,8 @@ kthread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
     // the new task will enable interrupt
     workercpu->eflags_ = EFLAGS_IF;
     workercpu->oldcs_  = CS_SELECTOR_KERN;
-    //workercpu->oldeip_ = r3_top ?
-    //    (uint32_t *)mode_ring3 : (uint32_t *)entry;
-    workercpu->oldeip_ = (uint32_t *)entry;
+    workercpu->oldeip_ = r3_top ?
+        (uint32_t *)mode_ring3 : (uint32_t *)entry;
     workercpu->errcode_ = 0;
     workercpu->vec_ = 0;
     workeros->ds_ = DS_SELECTOR_KERN;
@@ -105,16 +104,24 @@ kthread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
     workerth->retaddr_ = isr_part3;
 
     // setup the thread pcb which lies at the bottom of the stack
-    pcb_t *pcb = (pcb_t *)r0_top, *idle_pcb = get_idle_pcb();
+    pcb_t *pcb = (pcb_t *)r0_top;
+    pgelem_t *idle_pd = get_idle_pgdir();
     pcb->tid_ = allocate_tid();
     const uint32_t PAGE4 = 4;
-    void *va = vir_alloc_pages(pcb, PAGE4);
+    void *va = vir_alloc_pages(get_idle_pcb(), PAGE4), *pa_pdir = null;
     for (uint32_t i = 0; i < PAGE4; ++i) {
         void *pa = phy_alloc_page();
-        set_mapping(idle_pcb->pdir_va_, (uint32_t)va + i * PGSIZE, (uint32_t)pa);
+        if (i == 0)    pa_pdir = pa;
+        set_mapping(idle_pd, (uint32_t)va + i * PGSIZE, (uint32_t)pa);
     }
     pcb_set(pcb, (uint32_t *)pstack, (uint32_t *)((uint32_t)r0_top + PGSIZE),
-        pcb->tid_, va, va + PGSIZE, va + 2 * PGSIZE, va + 3 * PGSIZE, TIMETICKS);
+        pcb->tid_, va, pa_pdir, va + PGSIZE, va + 2 * PGSIZE, va + 3 * PGSIZE, TIMETICKS);
+
+    // setup page directory table
+    for (uint32_t i = PD_INDEX(KERN_HIGH_MAPPING); i < (PGSIZE / sizeof(uint32_t)); ++i)
+        ((pgelem_t *)va)[i] = ((idle_pd[i] & 0xfffff000) | (pgelem_t)PGENT_US | PGENT_RW | PGENT_PS);
+    ((pgelem_t *)va)[(PGSIZE / sizeof(uint32_t)) - 1] =
+        (pgelem_t)pa_pdir | PGENT_US | PGENT_RW | PGENT_PS;
 
     // setup to the ready queue waiting to execute
     node_set(__mdata_node + pcb->tid_, pcb, null);

@@ -10,7 +10,9 @@
 
 #include "kern/sched/tasks.h"
 
+extern void mode_ring3(uint32_t *user_stack, void *user_entry);
+
 void kinit_tasks_system(void);
-void kthread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry);
+void thread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry);
 
 #endif

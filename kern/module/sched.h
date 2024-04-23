@@ -11,8 +11,9 @@
 #include "kern/sched/tasks.h"
 
 extern void mode_ring3(uint32_t *user_stack, void *user_entry);
+extern void idle(void);
 
 void kinit_tasks_system(void);
-void thread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry);
+void idle_enter_ring3(void);
 
 #endif

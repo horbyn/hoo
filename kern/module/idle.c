@@ -34,5 +34,5 @@ get_idle_tss(void) {
  */
 pcb_t *
 get_idle_pcb(void) {
-    return (pcb_t *)(STACK_BOOT_BOTTOM + KERN_HIGH_MAPPING);
+    return (pcb_t *)STACK_IDLE_RING3;
 }

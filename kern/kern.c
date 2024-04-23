@@ -32,11 +32,15 @@ kernel_init(void) {
  */
 void
 kernel_exec(void) {
+    idle_enter_ring3();
     enable_intr();
 
 #ifdef TEST
     test_phypg_alloc();
     test_vspace();
+#endif
+
+#ifdef TEST
     test_schedule();
 #endif
 }

@@ -13,8 +13,10 @@
 
 #define KERN_HIGH_MAPPING   0xc0000000
 #define MM_BASE             0x100000
-#define STACK_BOOT_TOP      ((SEG_KSTACK)*16 + 0x10000)
-#define STACK_BOOT_BOTTOM   ((SEG_PGTABLE)*16 + 0x1000)
+#define PGSIZE              0x1000
+#define STACK_BOOT_BOTTOM   ((SEG_PGTABLE)*16 + PGSIZE)
+#define STACK_IDLE_RING3    (STACK_BOOT_BOTTOM + PGSIZE + KERN_HIGH_MAPPING)
+#define STACK_IDLE_RING0    (0x80000 + KERN_HIGH_MAPPING)
 
 // the ARDS amount addr
 #define ADDR_ARDS_NUM       (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS_CR))

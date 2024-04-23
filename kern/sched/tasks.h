@@ -14,6 +14,8 @@
 #include "kern/module/idle.h"
 #include "kern/units/queue.h"
 
+#define KERN_AVAIL_VMBASE   (KERN_HIGH_MAPPING + MM_BASE)
+
 extern void switch_to(node_t *, node_t *);
 
 pcb_t *get_current_pcb(void);

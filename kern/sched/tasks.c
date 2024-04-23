@@ -6,9 +6,6 @@
  **************************************************************************/
 #include "tasks.h"
 
-// metadata
-__attribute__((aligned(4096))) static uint8_t
-    mdata_vspace[PGSIZE], mdata_node[PGSIZE], mdata_vaddr[PGSIZE];
 // serially access thread id
 static spinlock_t __spinlock_alloc_tid;
 // serially access task queues
@@ -45,21 +42,6 @@ init_tasks_system() {
     queue_init(&__queue_running);
     spinlock_init(&__spinlock_alloc_tid);
     spinlock_init(&__spinlock_tasks_queue);
-
-    // The executable flow as far from boot to there,
-    // uses the boot stack. Now we call this flow to
-    // idle thread, and the stack it used is idle stack
-    pcb_t *idle_pcb = get_idle_pcb();
-    tid_t idle_tid = allocate_tid();
-    pcb_set(idle_pcb, null, (uint32_t *)STACK_BOOT_TOP, idle_tid, get_idle_pgdir(),
-        (void *)(V2P(get_idle_pgdir())), mdata_vspace, mdata_node, mdata_vaddr, TIMETICKS);
-    static node_t n;
-    node_set(&n, idle_pcb, null);
-    wait(&__spinlock_tasks_queue);
-    queue_push(&__queue_running, &n, TAIL);
-    signal(&__spinlock_tasks_queue);
-
-    vir_alloc_pages(idle_pcb, (KERN_HIGH_MAPPING + MM_BASE) / PGSIZE);
 }
 
 /**
@@ -111,7 +93,7 @@ scheduler() {
         tss_t *tss = get_idle_tss();
         tss->ss0_ = DS_SELECTOR_KERN;
         tss->esp0_ = (uint32_t)((pcb_t *)next->data_)->stack0_;
-        
+
         signal(&__spinlock_tasks_queue);
         switch_to(cur, next);
     }

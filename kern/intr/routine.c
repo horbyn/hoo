@@ -62,6 +62,33 @@ isr_default(void) {
 }
 
 /**
+ * @brief page fault handler
+ */
+void
+page_fault(void) {
+    uint32_t linear_addr = 0;
+    __asm__ ("movl %%cr2, %0": "=a"(linear_addr) ::);
+    if (linear_addr == 0)    return;
+
+    uint32_t err = 0;
+    __asm__ ("movl 60(%%ebp), %0": "=a"(err) ::);
+    static const uint32_t FLAG_WR = 0x10;
+
+    if ((err & FLAG_WR) == FLAG_WR) {
+        // C.O.W
+
+        //void *va = vir_alloc_pages(get_idle_pcb(), 1);
+        //if (va < KERN_AVAIL_VMBASE)    panic("page_fault(): bug");
+        //void *pa = phy_alloc_page();
+        //set_mapping(get_idle_pgdir(), (uint32_t)va, (uint32_t)pa);
+
+        //memmove(va, (void *)linear_addr, PGSIZE);
+    }
+
+    return;
+}
+
+/**
  * @brief handling system timer
  */
 void

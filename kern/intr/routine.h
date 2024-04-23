@@ -12,11 +12,13 @@
 #include "kern/driver/io.h"
 #include "kern/sched/tasks.h"
 
+#define ISR14_PAGEFAULT         14
 #define ISR32_TIMER             32
 #define ISR46_HARD1             46
 #define ISR128_SYSCALL          128
 
 void isr_default(void);
-void timer(void);				                            // #32
+void page_fault(void);
+void timer(void);
 
 #endif

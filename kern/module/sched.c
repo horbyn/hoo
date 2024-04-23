@@ -18,15 +18,14 @@ kinit_tasks_system(void) {
 }
 
 /**
- * @brief create a kernel thread (stack always assumed 4MB)
- * if ring-3 stack specified, then is a user mode thread
+ * @brief setup the ring0 stack of idle
  * 
  * @param r0_top top of ring 0 stack
  * @param r3_top top of ring 3 stack
  * @param entry  thread entry
  */
-void
-thread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
+static void
+setup_ring0_stack(void *r0_top, void *r3_top, void *entry) {
 
     /*
      ************************************
@@ -54,7 +53,7 @@ thread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
      ************************************/
 
     // setup the kernel stack
-    uint8_t *pstack = r0_top + PGSIZE;
+    uint8_t *pstack = (uint8_t *)r0_top;
 
     // always located on the top of new task stack that the `esp`
     // pointed to when the new task completes its initialization
@@ -68,7 +67,7 @@ thread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
 
         // user mode stack
         pstack -= sizeof(uint32_t);
-        *((uint32_t *)pstack) = (uint32_t)r3_top + PGSIZE;
+        *((uint32_t *)pstack) = (uint32_t)r3_top;
     }
 
     pstack -= sizeof(istackcpu_t);
@@ -82,7 +81,7 @@ thread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
 
     // setup the thread context
     // the new task will enable interrupt
-    workercpu->eflags_ = EFLAGS_IF;
+    workercpu->eflags_ = r3_top ? 0 : EFLAGS_IF;
     workercpu->oldcs_  = CS_SELECTOR_KERN;
     workercpu->oldeip_ = r3_top ?
         (uint32_t *)mode_ring3 : (uint32_t *)entry;
@@ -103,27 +102,29 @@ thread_create(uint8_t *r0_top, uint8_t *r3_top, void *entry) {
     workeros->edi_ = 0;
     workerth->retaddr_ = isr_part3;
 
-    // setup the thread pcb which lies at the bottom of the stack
-    pcb_t *pcb = (pcb_t *)r0_top;
-    pgelem_t *idle_pd = get_idle_pgdir();
-    pcb->tid_ = allocate_tid();
-    const uint32_t PAGE4 = 4;
-    void *va = vir_alloc_pages(get_idle_pcb(), PAGE4), *pa_pdir = null;
-    for (uint32_t i = 0; i < PAGE4; ++i) {
-        void *pa = phy_alloc_page();
-        if (i == 0)    pa_pdir = pa;
-        set_mapping(idle_pd, (uint32_t)va + i * PGSIZE, (uint32_t)pa);
-    }
-    pcb_set(pcb, (uint32_t *)pstack, (uint32_t *)((uint32_t)r0_top + PGSIZE),
-        pcb->tid_, va, pa_pdir, va + PGSIZE, va + 2 * PGSIZE, va + 3 * PGSIZE, TIMETICKS);
+    // metadata
+    __attribute__((aligned(4096))) static uint8_t mdata_vspace[PGSIZE] = { 0 },
+        mdata_node[PGSIZE] = { 0 }, mdata_vaddr[PGSIZE] = { 0 };
 
-    // setup page directory table
-    for (uint32_t i = PD_INDEX(KERN_HIGH_MAPPING); i < (PGSIZE / sizeof(uint32_t)); ++i)
-        ((pgelem_t *)va)[i] = ((idle_pd[i] & 0xfffff000) | (pgelem_t)PGENT_US | PGENT_RW | PGENT_PS);
-    ((pgelem_t *)va)[(PGSIZE / sizeof(uint32_t)) - 1] =
-        (pgelem_t)pa_pdir | PGENT_US | PGENT_RW | PGENT_PS;
+    pcb_t *idle_pcb = get_idle_pcb();
+    pcb_set(idle_pcb, (uint32_t *)pstack, (uint32_t *)STACK_IDLE_RING0,
+        allocate_tid(), get_idle_pgdir(), (void *)V2P(get_idle_pgdir()),
+        mdata_vspace, mdata_node, mdata_vaddr, TIMETICKS);
+    vir_alloc_pages(idle_pcb, KERN_AVAIL_VMBASE / PGSIZE);
+}
+
+/**
+ * @brief make the idle thread to enter ring3
+ */
+void
+idle_enter_ring3(void) {
+    // The executable flow as far from boot to there,
+    // uses the boot stack. Now we call this flow to
+    // idle thread, and the stack it used is idle stack
+    setup_ring0_stack((void *)STACK_IDLE_RING0, (void *)STACK_IDLE_RING3, idle);
 
     // setup to the ready queue waiting to execute
-    node_set(__mdata_node + pcb->tid_, pcb, null);
-    task_ready(__mdata_node + pcb->tid_);
+    pcb_t *idle_pcb = get_idle_pcb();
+    node_set(__mdata_node + idle_pcb->tid_, idle_pcb, null);
+    task_ready(__mdata_node + idle_pcb->tid_);
 }

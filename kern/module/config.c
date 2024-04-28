@@ -14,7 +14,7 @@ static Gdtr_t __gdtr;
  */
 static void
 paging() {
-    pgelem_t *pdir = get_idle_pgdir();
+    pgelem_t *pdir = get_hoo_pgdir();
     pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
 
     pdir[0] = (pgelem_t)((SEG_PGTABLE * 16) | flags);
@@ -57,7 +57,7 @@ config_gdt(void) {
 static void
 config_tss(void) {
     // #5 tss
-    set_gdt(&__gdt[5], sizeof(tss_t), (uint32_t)get_idle_tss(),
+    set_gdt(&__gdt[5], sizeof(tss_t), (uint32_t)get_hoo_tss(),
         1, 0, 0, 1, 0, 3, 1, 0, 1, 0);
 
     // load tr with seletor #5

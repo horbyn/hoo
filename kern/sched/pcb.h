@@ -35,7 +35,8 @@ typedef struct pcb {
     uint32_t     ticks_;
 } __attribute__((packed)) pcb_t;
 
-void  pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid, void *va_pdir,
+void  pcb_set(uint32_t *scur, uint32_t *s0, uint32_t tid, void *va_pdir,
     void *pa_pdir, void *va_vspace, void *va_node, void *va_vaddr, uint32_t ticks);
+pcb_t *pcb_get(tid_t tid);
 
 #endif

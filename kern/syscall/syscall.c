@@ -4,12 +4,15 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_MODULE_SCHED_H__
-#define __KERN_MODULE_SCHED_H__
+#include "syscall.h"
 
-#include "kern/sched/tasks.h"
+/**
+ * @brief system call stub array
+ */
+syscall_t __stub[MAX_SYSCALL] = {
+    // #0
+    (syscall_t)kprintf,
 
-void kinit_tasks_system(void);
-
-#endif
+    // MUST BE null terminated
+    0
+};

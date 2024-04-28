@@ -32,7 +32,7 @@ kernel_init(void) {
  */
 void
 kernel_exec(void) {
-    idle_enter_ring3();
+    init_idle();
     enable_intr();
 
 #ifdef TEST

@@ -5,11 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_MODULE_SCHED_H__
-#define __KERN_MODULE_SCHED_H__
+#ifndef __KERN_TEST_TEST_H__
+#define __KERN_TEST_TEST_H__
 
-#include "kern/sched/tasks.h"
-
-void kinit_tasks_system(void);
+void test_phypg_alloc(void);
+void test_vspace(void);
+void test_schedule(void);
 
 #endif

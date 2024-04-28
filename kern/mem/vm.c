@@ -31,8 +31,8 @@ vir_alloc_pages(pcb_t *pcb, uint32_t amount) {
 
     // traversal the virtual space
     const uint32_t ADDR_BASE = 0x00000000;
-    const uint32_t ADDR_END = pcb == get_idle_pcb() ?
-        MAX_VSPACE_IDLE : KERN_HIGH_MAPPING;
+    const uint32_t ADDR_END = pcb == get_hoo_pcb() ?
+        MAX_VSPACE_HOO : KERN_HIGH_MAPPING;
     uint32_t last_end = ADDR_BASE, ret = 0;
     vspace_t *worker = &pcb->vmngr_.head_;
 

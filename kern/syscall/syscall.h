@@ -5,11 +5,13 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __TEST_TEST_H__
-#define __TEST_TEST_H__
+#ifndef __KERN_SYSCALL_SYSCALL_H__
+#define __KERN_SYSCALL_SYSCALL_H__
 
-void test_phypg_alloc(void);
-void test_vspace(void);
-void test_schedule(void);
+#include "kern/driver/io.h"
+
+#define MAX_SYSCALL 32
+typedef void (*syscall_t)(void);
+extern syscall_t __stub[MAX_SYSCALL];
 
 #endif

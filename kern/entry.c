@@ -20,7 +20,7 @@ entry(void) {
              "movw %ax,      %fs\r\n"
              "movw %ax,      %gs\r\n"
              "movw %ax,      %ss\r\n"
-             "movl $0x7b000, %esp\r\n"
+             "movl $0x80000, %esp\r\n"
              // setup DIED INSTRUCTION
              "pushl $0x77ffc\r\n"
              // setup calling convention

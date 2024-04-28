@@ -8,7 +8,7 @@
 #ifndef __KERN_MODULE_CONFIG_H__
 #define __KERN_MODULE_CONFIG_H__
 
-#include "idle.h"
+#include "hoo.h"
 #include "kern/conf/descriptor.h"
 #include "kern/driver/io.h"
 #include "kern/mem/pm.h"

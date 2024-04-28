@@ -70,6 +70,16 @@ mode_ring3:
     pushl $((3 * 8) | 3)
     movl 0x8(%ebp),      %eax   # fetch user entry
     pushl %eax
+
+    # reset the context except %esp
+    xorl %eax,           %eax
+    xorl %ebx,           %ebx
+    xorl %ecx,           %ecx
+    xorl %edx,           %edx
+    xorl %esi,           %esi
+    xorl %edi,           %edi
+    xorl %ebp,           %ebp
+
     iret
 
 idle:

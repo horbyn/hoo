@@ -4,17 +4,24 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "test.h"
-#include "kern/module/sched.h"
 
-/**
- * @brief scheduling test
- */
-void
-test_schedule() {
-    clear_screen();
-    kprintf(">          TEST_SCHEDULE          <\n");
+    .text
+    .code32
+    .globl idle
+    .extern idle_setup_vspace
 
-    tid_t t1 = fork();
-    kprintf("  tid %d created\n", t1);
-}
+idle:
+    # for caller-saved
+    pushl %eax
+    pushl %ecx
+    pushl %edx
+    pushl %esi
+    pushl %edi
+    call idle_setup_vspace
+    popl %edi
+    popl %esi
+    popl %edx
+    popl %ecx
+    popl %eax
+
+    jmp .

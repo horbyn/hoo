@@ -52,6 +52,8 @@ void
 isr_default(void) {
     uint32_t vec = 0;
     __asm__ ("movl 56(%%ebp), %0": "=a"(vec) ::);
+    // not sure if it’s a problem with bochs that often throws exception 0x26
+    if (vec == 0x26)    return;
     // spurious interrupt is not interrupt
     if (vec == 0x27 || vec == 0x2f)    return;
 

@@ -28,10 +28,12 @@ get_mminfo() {
 
     if (__mminfo.length_ == 0)
         panic("mem_info_init(): cannot get memory info");
+#ifndef DEBUG
     else
         kprintf("================ MEMORY  INFO ================\n"
                 "begin: 0x%x, end: 0x%x\n", __mminfo.base_,
                 __mminfo.base_ + __mminfo.length_);
+#endif
 }
 
 /**

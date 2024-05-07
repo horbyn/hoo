@@ -21,9 +21,10 @@ extern void idle(void);
 
 pcb_t *get_current_pcb(void);
 void  init_tasks_system(void);
-tid_t allocate_tid(void);
 void  scheduler();
 void  task_ready(node_t *task);
-void  init_idle(void);
+void  idle_init(void);
+void  idle_setup_vspace(void);
+tid_t fork(void);
 
 #endif

@@ -89,6 +89,7 @@ void
 set_mapping(pgelem_t *pdir, uint32_t va, uint32_t pa) {
     if (pdir == null)    panic("set_mapping(): page directory invalid");
 
+    __asm__ ("invlpg (%0)" : : "a" (va));
     pgelem_t *pgtbl_entry = get_mapping(pdir, va);
     *pgtbl_entry = ((pgelem_t)PGUP(pa, PGSIZE)) | PGENT_US | PGENT_RW | PGENT_PS;
 }

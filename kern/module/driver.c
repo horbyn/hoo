@@ -30,7 +30,7 @@ init_pic(void) {
     disable_mask_ocw1(IRQ_OPEN_SCSI_NIC2);                  // irq#11
     disable_mask_ocw1(IRQ_MOUSE);                           // irq#12
     disable_mask_ocw1(IRQ_MATH);                            // irq#13
-    disable_mask_ocw1(IRQ_ATA1);                             // irq#14
+    disable_mask_ocw1(IRQ_ATA1);                            // irq#14
     disable_mask_ocw1(IRQ_ATA2);                            // irq#15
 }
 
@@ -40,7 +40,7 @@ init_pic(void) {
 static void
 init_pit(void) {
     set_command(SC_CHANNEL0, LOWHIGHBYTE, M3, BINARY);
-    set_counter(100);                                       // 100 singal per second
+    set_counter(TICKS_PER_SEC);                             // 100 singal per second
 }
 
 /**

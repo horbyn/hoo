@@ -13,11 +13,13 @@ void
 kernel_init(void) {
     io_init();
 
+#ifndef DEBUG
     kprintf("================ KERNEL IMAGE ================\n"
         "kern base: 0x%x,  kern end: 0x%x\n"
         "kern length: %dkb\n\n",
         (uint32_t)__kern_base, (uint32_t)__kern_end,
         ((uint32_t)__kern_end - (uint32_t)__kern_base) / 1024);
+#endif
 
     kinit_memory();
     kinit_config();
@@ -32,15 +34,12 @@ kernel_init(void) {
  */
 void
 kernel_exec(void) {
-    init_idle();
+    idle_init();
     enable_intr();
 
 #ifdef TEST
     test_phypg_alloc();
     test_vspace();
-#endif
-
-#ifdef TEST
     test_schedule();
 #endif
 }

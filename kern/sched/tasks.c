@@ -7,12 +7,13 @@
 #include "tasks.h"
 
 static node_t __mdata_node[MAX_TASKS_AMOUNT];
-// serially access thread id
-static spinlock_t __spinlock_alloc_tid;
 // serially access task queues
 static spinlock_t __spinlock_tasks_queue;
+// serially access metadata
+static spinlock_t __spinlock_mdata_node;
 static queue_t __queue_ready, __queue_running;
-static tid_t __global_tid;
+static const uint32_t IDLE_PAGES = 6;
+static void *idle_pgdir_va;
 
 /**
  * @brief Get the pcb of current thread
@@ -35,15 +36,31 @@ get_current_pcb() {
 }
 
 /**
+ * @brief get metadata node
+ * 
+ * @param tid thread id
+ * @return node object pointer
+ */
+static node_t *
+mdata_alloc_node(tid_t tid) {
+    node_t *temp = null;
+    wait(&__spinlock_mdata_node);
+    temp = __mdata_node + tid;
+    signal(&__spinlock_mdata_node);
+    return temp;
+}
+
+/**
  * @brief initialize the tasks system
  */
 void
 init_tasks_system() {
+    init_pcb_system();
     bzero(__mdata_node, sizeof(__mdata_node));
     queue_init(&__queue_ready);
     queue_init(&__queue_running);
-    spinlock_init(&__spinlock_alloc_tid);
     spinlock_init(&__spinlock_tasks_queue);
+    spinlock_init(&__spinlock_mdata_node);
 
     // metadata
     __attribute__((aligned(4096))) static uint8_t mdata_vspace[PGSIZE] = { 0 },
@@ -54,31 +71,15 @@ init_tasks_system() {
     // hoo thread, and the stack it used is hoo stack
     pcb_t *hoo_pcb = get_hoo_pcb();
     pcb_set(null, (uint32_t *)STACK_HOO_RING0, hoo_pcb->tid_, get_hoo_pgdir(),
-        (void *)(V2P(get_hoo_pgdir())), mdata_vspace, mdata_node, mdata_vaddr, TIMETICKS);
-    node_set(__mdata_node + hoo_pcb->tid_, hoo_pcb, null);
+        (void *)(V2P(get_hoo_pgdir())), mdata_vspace, mdata_node, mdata_vaddr,
+        null, TIMETICKS);
+    node_t *n = mdata_alloc_node(hoo_pcb->tid_);
+    node_set(n, hoo_pcb, null);
     wait(&__spinlock_tasks_queue);
-    queue_push(&__queue_running, __mdata_node + hoo_pcb->tid_, TAIL);
+    queue_push(&__queue_running, n, TAIL);
     signal(&__spinlock_tasks_queue);
 
     vir_alloc_pages(hoo_pcb, (KERN_HIGH_MAPPING + MM_BASE) / PGSIZE);
-}
-
-/**
- * @brief allocate the thread id
- * 
- * @return thread id
- */
-tid_t
-allocate_tid() {
-    tid_t temp = 0;
-
-    wait(&__spinlock_alloc_tid);
-    temp = ++__global_tid;
-    signal(&__spinlock_alloc_tid);
-
-    if (temp >= MAX_TASKS_AMOUNT)
-        panic("allocate_tid(): thread id overflows");
-    return temp;
 }
 
 /**
@@ -135,13 +136,14 @@ task_ready(node_t *task) {
 /**
  * @brief setup the ring0 stack of hoo
  * 
- * @param r0_top top of ring 0 stack
- * @param r3_top top of ring 3 stack
+ * @param r0_hoo top of hoo thread ring 0 stack
+ * @param r0_idle top of idle thread ring 0 stack
+ * @param r3_idle top of idle thread ring 3 stack
  * @param entry  thread entry
  * @return ring0 stack pointer after setup
  */
 static uint32_t *
-setup_ring0_stack(void *r0_top, void *r3_top, void *entry) {
+setup_idle_ring0_stack(void *r0_hoo, void *r0_idle, void *r3_idle, void *entry) {
 
     /*
      ************************************
@@ -169,22 +171,20 @@ setup_ring0_stack(void *r0_top, void *r3_top, void *entry) {
      ************************************/
 
     // setup the kernel stack
-    uint8_t *pstack = (uint8_t *)r0_top;
+    uint8_t *pstack = (uint8_t *)r0_hoo;
 
     // always located on the top of new task stack that the `esp`
     // pointed to when the new task completes its initialization
     pstack -= sizeof(uint32_t);
-    *((uint32_t *)pstack) = DIED_INSTRUCTION;
+    *((uint32_t *)pstack) = (DIED_INSTRUCTION + KERN_HIGH_MAPPING);
 
-    if (r3_top) {
-        // user mode entry
-        pstack -= sizeof(uint32_t);
-        *((uint32_t *)pstack) = (uint32_t)entry;
+    // user mode entry
+    pstack -= sizeof(uint32_t);
+    *((uint32_t *)pstack) = (uint32_t)entry;
 
-        // user mode stack
-        pstack -= sizeof(uint32_t);
-        *((uint32_t *)pstack) = (uint32_t)r3_top;
-    }
+    // user mode stack
+    pstack -= sizeof(uint32_t);
+    *((uint32_t *)pstack) = (uint32_t)r3_idle;
 
     pstack -= sizeof(istackcpu_t);
     istackcpu_t *workercpu = (istackcpu_t *)pstack;
@@ -197,10 +197,9 @@ setup_ring0_stack(void *r0_top, void *r3_top, void *entry) {
 
     // setup the thread context
     // the new task will enable interrupt
-    workercpu->eflags_ = r3_top ? 0 : EFLAGS_IF;
+    workercpu->eflags_ = 0;
     workercpu->oldcs_  = CS_SELECTOR_KERN;
-    workercpu->oldeip_ = r3_top ?
-        (uint32_t *)mode_ring3 : (uint32_t *)entry;
+    workercpu->oldeip_ = (uint32_t *)mode_ring3;
     workercpu->errcode_ = 0;
     workercpu->vec_ = 0;
     workeros->ds_ = DS_SELECTOR_KERN;
@@ -212,7 +211,8 @@ setup_ring0_stack(void *r0_top, void *r3_top, void *entry) {
     workeros->edx_ = 0;
     workeros->ebx_ = 0;
     // skip the 4 segment regs
-    workeros->esp_ = (uint32_t)(((uint32_t *)workercpu) - 4);
+    uint32_t offset = (uint32_t)r0_hoo - (uint32_t)(((uint32_t *)workercpu) - 4);
+    workeros->esp_ = (uint32_t)r0_idle - offset;
     workeros->ebp_ = 0;
     workeros->esi_ = 0;
     workeros->edi_ = 0;
@@ -225,81 +225,131 @@ setup_ring0_stack(void *r0_top, void *r3_top, void *entry) {
  * @brief setup the first ring3 thread, idle
  */
 void
-init_idle(void) {
+idle_init(void) {
     pcb_t *hoo_pcb = get_hoo_pcb();
-    static const uint32_t PAGES = 7;
-    void *va = vir_alloc_pages(hoo_pcb, PAGES);
 
     // setup the idle page directory table (1 page)
     void *idle_pgdir_pa = phy_alloc_page();
-    void *hoo_temp_pgdir_va = va;
-    set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_pgdir_va,
+    idle_pgdir_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(hoo_pcb->pdir_va_, (uint32_t)idle_pgdir_va,
         (uint32_t)idle_pgdir_pa);
 
     // setup the idle page table (1 page)
+    void *va = vir_alloc_pages(hoo_pcb, IDLE_PAGES);
     void *idle_pg_pa = phy_alloc_page();
-    void *hoo_temp_pg_va = va + PGSIZE * 1;
+    void *hoo_temp_pg_va = va;
     set_mapping(
         hoo_pcb->pdir_va_, (uint32_t)hoo_temp_pg_va, (uint32_t)idle_pg_pa);
 
     // setup the idle ring0 stack (1 page)
     void *idle_ring0_pa = phy_alloc_page();
-    void *hoo_temp_ring0_va = va + PGSIZE * 2;
+    void *hoo_temp_ring0_va = va + PGSIZE;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_ring0_va,
         (uint32_t)idle_ring0_pa);
 
     // setup the idle ring3 stack (1 page)
     void *idle_ring3_pa = phy_alloc_page();
-    void *hoo_temp_ring3_va = va + PGSIZE * 3;
+    void *hoo_temp_ring3_va = va + PGSIZE * 2;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_ring3_va,
         (uint32_t)idle_ring3_pa);
 
     // setup the idle metadata (3 pages)
     void *idle_vspace_pa = phy_alloc_page();
-    void *hoo_temp_vspace_va = va + PGSIZE * 4;
+    void *hoo_temp_vspace_va = va + PGSIZE * 3;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_vspace_va,
         (uint32_t)idle_vspace_pa);
     void *idle_node_pa = phy_alloc_page();
-    void *hoo_temp_node_va = va + PGSIZE * 5;
+    void *hoo_temp_node_va = va + PGSIZE * 4;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_node_va,
         (uint32_t)idle_node_pa);
     void *idle_vaddr_pa = phy_alloc_page();
-    void *hoo_temp_vaddr_va = va + PGSIZE * 6;
+    void *hoo_temp_vaddr_va = va + PGSIZE * 5;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_vaddr_va,
         (uint32_t)idle_vaddr_pa);
 
     // setup the idle thread
-    hoo_temp_ring0_va = (void *)((uint32_t)hoo_temp_ring0_va + PGSIZE);
-    hoo_temp_ring3_va = (void *)((uint32_t)hoo_temp_ring3_va + PGSIZE);
-    uint32_t *cur_stack = setup_ring0_stack(
-        hoo_temp_ring0_va, hoo_temp_ring3_va, idle);
+    static const pgelem_t IDLE_PGDIR_VA = 0xfffff000;
+    static const pgelem_t IDLE_RING0_VA = 0;
+    static const pgelem_t IDLE_RING3_VA = IDLE_RING0_VA + PGSIZE;
+    static const pgelem_t IDLE_VS_VA = IDLE_RING3_VA + PGSIZE;
+    static const pgelem_t IDLE_NODE_VA = IDLE_VS_VA + PGSIZE;
+    static const pgelem_t IDLE_VADDR_VA = IDLE_NODE_VA + PGSIZE;
 
-    tid_t idle_tid = allocate_tid();
-    pcb_set(cur_stack, hoo_temp_ring0_va, idle_tid, hoo_temp_pgdir_va,
-        idle_pgdir_pa, hoo_temp_vspace_va, hoo_temp_node_va, hoo_temp_vaddr_va,
-        TIMETICKS);
-    pcb_t *idle_pcb = pcb_get(idle_tid);
-    vir_alloc_pages(idle_pcb, PAGES);
+    hoo_temp_ring0_va = (void *)((uint32_t)hoo_temp_ring0_va + PGSIZE);
+    uint32_t *cur_stack = setup_idle_ring0_stack(hoo_temp_ring0_va,
+        (void *)(IDLE_RING0_VA + PGSIZE), (void *)(IDLE_RING3_VA + PGSIZE), idle);
+
+    tid_t idle_tid = TID_IDLE;
+    cur_stack = (uint32_t *)(PG_OFFSET((uint32_t)cur_stack) | IDLE_RING0_VA);
+    pcb_set(cur_stack, (uint32_t *)(IDLE_RING0_VA + PGSIZE), idle_tid,
+        (void *)IDLE_PGDIR_VA, (void *)idle_pgdir_pa, (void *)IDLE_VS_VA,
+        (void *)IDLE_NODE_VA, (void *)IDLE_VADDR_VA, null, TIMETICKS);
 
     // setup idle page directory table
-    pgelem_t *hoo_pgdir = hoo_pcb->pdir_va_;
     pgelem_t flag = (pgelem_t)PGENT_US | PGENT_RW | PGENT_PS;
-    for (uint32_t i = (uint32_t)PD_INDEX(KERN_HIGH_MAPPING);
-        i < (PGSIZE / sizeof(uint32_t) - 1); ++i)
-        ((pgelem_t *)hoo_temp_pgdir_va)[i] = hoo_pgdir[i];
-    ((pgelem_t *)hoo_temp_pgdir_va)[0] = (pgelem_t)hoo_temp_pg_va | flag;
+    uint32_t i = (uint32_t)PD_INDEX(KERN_HIGH_MAPPING);
+    for (; i < (PGSIZE / sizeof(uint32_t) - 1); ++i)
+        ((pgelem_t *)idle_pgdir_va)[i] = ((pgelem_t *)hoo_pcb->pdir_va_)[i];
+    ((pgelem_t *)idle_pgdir_va)[0] = (pgelem_t)idle_pg_pa | flag;
+    ((pgelem_t *)idle_pgdir_va)[i] = (pgelem_t)idle_pgdir_pa | flag;
 
     // setup idle page table
-    ((pgelem_t *)hoo_temp_pg_va)[0] = (pgelem_t)idle_pgdir_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[1] = (pgelem_t)idle_ring0_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[2] = (pgelem_t)idle_ring3_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[3] = (pgelem_t)idle_vspace_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[4] = (pgelem_t)idle_node_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[5] = (pgelem_t)idle_vaddr_pa | flag;
+    ((pgelem_t *)hoo_temp_pg_va)[0] = (pgelem_t)idle_ring0_pa | flag;
+    ((pgelem_t *)hoo_temp_pg_va)[1] = (pgelem_t)idle_ring3_pa | flag;
+    ((pgelem_t *)hoo_temp_pg_va)[2] = (pgelem_t)idle_vspace_pa | flag;
+    ((pgelem_t *)hoo_temp_pg_va)[3] = (pgelem_t)idle_node_pa | flag;
+    ((pgelem_t *)hoo_temp_pg_va)[4] = (pgelem_t)idle_vaddr_pa | flag;
 
-    node_set(__mdata_node + idle_tid, idle_pcb, null);
-    task_ready(__mdata_node + idle_tid);
+    pcb_t *idle_pcb = pcb_get(idle_tid);
+    node_t *n = mdata_alloc_node(idle_tid);
+    node_set(n, idle_pcb, null);
+    task_ready(n);
 
     // release
     vir_release_pages(hoo_pcb, va);
+}
+
+/**
+ * @brief setup the virtual space of the idle thread
+ */
+void
+idle_setup_vspace(void) {
+    vir_alloc_pages(pcb_get(TID_IDLE), IDLE_PAGES);
+}
+
+/**
+ * @brief copy idle thread
+ * 
+ * @return thread id of the new thread
+ */
+tid_t
+fork(void) {
+    pcb_t *hoo_pcb = get_hoo_pcb();
+    void *new_pgdir_pa = phy_alloc_page();
+    void *hoo_pgdir_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_pgdir_va,
+        (uint32_t)new_pgdir_pa);
+
+    // copy the page directory table
+    uint32_t i = 0;
+    for (; i < (PGSIZE / sizeof(uint32_t) - 1); ++i)
+        ((pgelem_t *)hoo_pgdir_va)[i] = ((pgelem_t *)idle_pgdir_va)[i];
+    ((pgelem_t *)hoo_pgdir_va)[0] &= ~((pgelem_t)PGENT_RW);
+    ((pgelem_t *)hoo_pgdir_va)[i] =
+        (pgelem_t)new_pgdir_pa | PGENT_US | PGENT_RW | PGENT_PS;
+
+    // copy pcb
+    tid_t new_tid = allocate_tid();
+    pcb_t *new_pcb = pcb_get(new_tid);
+    pcb_t *idle_pcb = pcb_get(TID_IDLE);
+    pcb_set(idle_pcb->stack_cur_, idle_pcb->stack0_, new_tid, idle_pcb->pdir_va_,
+        new_pgdir_pa, idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_,
+        idle_pcb->vmngr_.vaddr_, &idle_pcb->vmngr_.head_, TIMETICKS);
+
+    // add to ready queue
+    node_t *n = mdata_alloc_node(new_tid);
+    node_set(n, new_pcb, null);
+    task_ready(n);
+
+    return new_tid;
 }

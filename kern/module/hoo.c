@@ -34,6 +34,5 @@ get_hoo_tss(void) {
  */
 pcb_t *
 get_hoo_pcb(void) {
-    static tid_t hoo_tid = 0;
-    return pcb_get(hoo_tid);
+    return pcb_get(TID_HOO);
 }

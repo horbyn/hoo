@@ -9,7 +9,6 @@
     .code32
     .globl switch_to
     .globl mode_ring3
-    .globl idle
 
     # called as a function, `switch_to(node_t *cur_task, node_t *next_task)`
     # ASSUME that `next_task` IS NOT NULL because it needs not to schedule without next tasks
@@ -81,6 +80,3 @@ mode_ring3:
     xorl %ebp,           %ebp
 
     iret
-
-idle:
-    jmp .

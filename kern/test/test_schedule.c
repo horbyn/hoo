@@ -17,4 +17,8 @@ test_schedule() {
 
     tid_t t1 = fork();
     kprintf("  tid %d created\n", t1);
+    tid_t t2 = fork();
+    kprintf("  tid %d created\n", t2);
+    tid_t t3 = fork();
+    kprintf("  tid %d created\n", t3);
 }

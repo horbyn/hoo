@@ -5,16 +5,21 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_MODULE_HOO_H__
-#define __KERN_MODULE_HOO_H__
+#ifndef __KERN_UNITS_SLEEPLOCK_H__
+#define __KERN_UNITS_SLEEPLOCK_H__
 
-#include "kern/conf/descriptor.h"
-#include "kern/conf/page.h"
-#include "kern/sched/pcb.h"
+#include "spinlock.h"
 
-pgelem_t    *get_hoo_pgdir(void);
-tss_t       *get_hoo_tss(void);
-pcb_t       *get_hoo_pcb(void);
-sleeplock_t *get_hoo_sleeplock(void);
+/**
+ * @brief sleep lock
+ */
+typedef struct sleeplock {
+    // make sure hold this sleeplock atomically, like the guard
+    spinlock_t guard_;
+    // true if someone holds the lock
+    uint32_t islock_;
+} sleeplock_t;
+
+void sleeplock_init(sleeplock_t *slock);
 
 #endif

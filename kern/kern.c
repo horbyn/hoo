@@ -35,6 +35,12 @@ kernel_init(void) {
 void
 kernel_exec(void) {
     idle_init();
+
+    // "hoo" sleeps until "idle" completes its initialization
+    sleeplock_t *hoo_slplock = get_hoo_sleeplock();
+    wait(&hoo_slplock->guard_);
+    sleep(hoo_slplock);
+    signal(&hoo_slplock->guard_);
     enable_intr();
 
 #ifdef TEST

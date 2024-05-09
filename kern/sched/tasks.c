@@ -12,6 +12,7 @@ static spinlock_t __spinlock_tasks_queue;
 // serially access metadata
 static spinlock_t __spinlock_mdata_node;
 static queue_t __queue_ready, __queue_running;
+static list_t __list_sleeping;
 static const uint32_t IDLE_PAGES = 6;
 static void *idle_pgdir_va;
 
@@ -59,6 +60,7 @@ init_tasks_system() {
     bzero(__mdata_node, sizeof(__mdata_node));
     queue_init(&__queue_ready);
     queue_init(&__queue_running);
+    list_init(&__list_sleeping, false);
     spinlock_init(&__spinlock_tasks_queue);
     spinlock_init(&__spinlock_mdata_node);
 
@@ -72,7 +74,7 @@ init_tasks_system() {
     pcb_t *hoo_pcb = get_hoo_pcb();
     pcb_set(null, (uint32_t *)STACK_HOO_RING0, hoo_pcb->tid_, get_hoo_pgdir(),
         (void *)(V2P(get_hoo_pgdir())), mdata_vspace, mdata_node, mdata_vaddr,
-        null, TIMETICKS);
+        null, TIMETICKS, null);
     node_t *n = mdata_alloc_node(hoo_pcb->tid_);
     node_set(n, hoo_pcb, null);
     wait(&__spinlock_tasks_queue);
@@ -93,7 +95,7 @@ scheduler() {
     // we just need the first queue node
     wait(&__spinlock_tasks_queue);
     node_t *cur = queue_front(&__queue_running);
-    if (cur) {
+    if (!((pcb_t *)cur->data_)->sleeplock_ && cur) {
         if (((pcb_t *)cur->data_)->ticks_ > 0) {
             ((pcb_t *)cur->data_)->ticks_--;
             signal(&__spinlock_tasks_queue);
@@ -105,8 +107,11 @@ scheduler() {
     if (next) {
         cur = queue_pop(&__queue_running);
         // only change tasks when the `cur` task exists
-        if (cur)
-            queue_push(&__queue_ready, cur, TAIL);
+        if (cur) {
+            if (((pcb_t *)cur->data_)->sleeplock_)
+                list_insert(&__list_sleeping, cur, LSIDX_AFTAIL(&__list_sleeping));
+            else    queue_push(&__queue_ready, cur, TAIL);
+        }
         queue_push(&__queue_running, next, TAIL);
 
         // update tss
@@ -283,7 +288,7 @@ idle_init(void) {
     cur_stack = (uint32_t *)(PG_OFFSET((uint32_t)cur_stack) | IDLE_RING0_VA);
     pcb_set(cur_stack, (uint32_t *)(IDLE_RING0_VA + PGSIZE), idle_tid,
         (void *)IDLE_PGDIR_VA, (void *)idle_pgdir_pa, (void *)IDLE_VS_VA,
-        (void *)IDLE_NODE_VA, (void *)IDLE_VADDR_VA, null, TIMETICKS);
+        (void *)IDLE_NODE_VA, (void *)IDLE_VADDR_VA, null, TIMETICKS, null);
 
     // setup idle page directory table
     pgelem_t flag = (pgelem_t)PGENT_US | PGENT_RW | PGENT_PS;
@@ -344,7 +349,8 @@ fork(void) {
     pcb_t *idle_pcb = pcb_get(TID_IDLE);
     pcb_set(idle_pcb->stack_cur_, idle_pcb->stack0_, new_tid, idle_pcb->pdir_va_,
         new_pgdir_pa, idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_,
-        idle_pcb->vmngr_.vaddr_, &idle_pcb->vmngr_.head_, TIMETICKS);
+        idle_pcb->vmngr_.vaddr_, &idle_pcb->vmngr_.head_, TIMETICKS,
+        idle_pcb->sleeplock_);
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);
@@ -352,4 +358,83 @@ fork(void) {
     task_ready(n);
 
     return new_tid;
+}
+
+/**
+ * @brief make the task to sleep (the sleeplock MUST BE held to make sure
+ * only one task in scheduling each time)
+ * 
+ * @param slock sleeplock
+ */
+void
+sleep(sleeplock_t *slock) {
+    if (slock == null)    panic("sleep(): null pointer");
+    if (test(&slock->guard_) == 0)    panic("sleep(): invalid sleeplock");
+
+    // it is time to go to sleep
+    disable_intr();
+    pcb_t *cur = get_current_pcb();
+    cur->sleeplock_ = slock;
+    signal(&slock->guard_);
+    scheduler();
+
+    // it is time to wakeup
+    enable_intr();
+    cur->sleeplock_ = null;
+
+    wait(&slock->guard_);
+}
+
+/**
+ * @brief wakeup the task (the sleeplock MUST BE held to make sure
+ * only one task in scheduling each time)
+ * 
+ * @param slock sleeplock
+ */
+void
+wakeup(sleeplock_t *slock) {
+    if (test(&slock->guard_) == 0)    panic("sleep(): invalid sleeplock");
+
+    for (uint32_t i = 1; i <= __list_sleeping.size_; ++i) {
+        node_t *n = list_find(&__list_sleeping, i);
+        if (((pcb_t *)n->data_)->sleeplock_ == slock) {
+            node_t *to_wakeup = list_remove(&__list_sleeping, i);
+            task_ready(to_wakeup);
+            --i;
+        }
+    }
+}
+
+/**
+ * @brief hold the sleeplock
+ * 
+ * @param slock sleeplock
+ */
+void
+wait_sleeplock(sleeplock_t *slock) {
+    if (slock == null)    panic("wait_sleeplock(): null pointer");
+
+    wait(&slock->guard_);
+    while (slock->islock_)    sleep(slock);
+
+    // nobody holds the sleeplock
+    get_current_pcb()->sleeplock_ = slock;
+    slock->islock_ = 1;
+    signal(&slock->guard_);
+}
+
+/**
+ * @brief release the sleeplock
+ * 
+ * @param slock sleeplock
+ */
+void
+signal_sleeplock(sleeplock_t *slock) {
+    if (slock == null)    panic("signal_sleeplock(): null pointer");
+
+    wait(&slock->guard_);
+    slock->islock_ = 0;
+    get_current_pcb()->sleeplock_ = null;
+    wakeup(slock);
+    signal(&slock->guard_);
 }

@@ -4,17 +4,16 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_MODULE_HOO_H__
-#define __KERN_MODULE_HOO_H__
+#include "sleeplock.h"
 
-#include "kern/conf/descriptor.h"
-#include "kern/conf/page.h"
-#include "kern/sched/pcb.h"
-
-pgelem_t    *get_hoo_pgdir(void);
-tss_t       *get_hoo_tss(void);
-pcb_t       *get_hoo_pcb(void);
-sleeplock_t *get_hoo_sleeplock(void);
-
-#endif
+/**
+ * @brief sleeplock initialization
+ * 
+ * @param slock sleeplock object
+ */
+void
+sleeplock_init(sleeplock_t *slock) {
+    if (slock == null)    panic("sleeplock_init(): null pointer");
+    spinlock_init(&slock->guard_);
+    slock->islock_ = 0;
+}

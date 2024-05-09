@@ -10,7 +10,6 @@
 static spinlock_t __spinlock_pcb;
 // serially access thread id
 static spinlock_t __spinlock_alloc_tid;
-static tid_t __global_tid;
 
 /**
  * @brief setup pcb object
@@ -25,10 +24,12 @@ static tid_t __global_tid;
  * @param va_vaddr virtual address of vaddr metadata
  * @param vspace virtual space object
  * @param ticks   ticks amount
+ * @param sleeplock sleeplock
  */
 void
 pcb_set(uint32_t *scur, uint32_t *s0, uint32_t tid, void *va_pdir, void *pa_pdir,
-void *va_vspace, void *va_node, void *va_vaddr, vspace_t *vspace, uint32_t ticks) {
+void *va_vspace, void *va_node, void *va_vaddr, vspace_t *vspace, uint32_t ticks,
+sleeplock_t *sleeplock) {
 
     if (tid >= MAX_TASKS_AMOUNT)    panic("pcb_set(): thread id overflow");
     pcb_t *pcb = pcb_get(tid);
@@ -41,6 +42,7 @@ void *va_vspace, void *va_node, void *va_vaddr, vspace_t *vspace, uint32_t ticks
     else    memmove(&pcb->vmngr_.head_, vspace, sizeof(vspace_t));
     vsmngr_init(&pcb->vmngr_, va_vspace, va_node, va_vaddr);
     pcb->ticks_ = ticks;
+    pcb->sleeplock_ = sleeplock;
 }
 
 /**
@@ -69,7 +71,29 @@ void
 init_pcb_system(void) {
     spinlock_init(&__spinlock_pcb);
     spinlock_init(&__spinlock_alloc_tid);
-    __global_tid = TID_IDLE + 1;
+}
+
+/**
+ * @brief get the bitmap storing thread id
+ * 
+ * @return bitmap object
+ */
+static bitmap_t *
+get_bitmap_tid(void) {
+    __attribute__((aligned(16)))
+        static uint8_t bmbuff_tid[MAX_TASKS_AMOUNT / BITS_PER_BYTE];
+    static bitmap_t bm_tid;
+    static bool is_init = false;
+    if (!is_init) {
+        bzero(bmbuff_tid, sizeof(bmbuff_tid));
+        bitmap_init(&bm_tid, MAX_TASKS_AMOUNT, bmbuff_tid);
+        // for hoo thread
+        bitmap_set(&bm_tid, TID_HOO);
+        // for idle thread
+        bitmap_set(&bm_tid, TID_IDLE);
+        is_init = true;
+    }
+    return &bm_tid;
 }
 
 /**
@@ -82,7 +106,7 @@ allocate_tid() {
     tid_t temp = 0;
 
     wait(&__spinlock_alloc_tid);
-    temp = __global_tid++;
+    temp = (tid_t)bitmap_scan_empty(get_bitmap_tid());
     signal(&__spinlock_alloc_tid);
 
     if (temp >= MAX_TASKS_AMOUNT)

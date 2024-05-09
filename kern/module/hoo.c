@@ -36,3 +36,20 @@ pcb_t *
 get_hoo_pcb(void) {
     return pcb_get(TID_HOO);
 }
+
+/**
+ * @brief get the sleeplock of hoo thread
+ * 
+ * @return sleeplock
+ */
+sleeplock_t *
+get_hoo_sleeplock(void) {
+    // "hoo" need to sleep until "idle" completes initialization
+    static sleeplock_t wait_idle_init;
+    static bool is_init = false;
+    if (!is_init) {
+        sleeplock_init(&wait_idle_init);
+        is_init = true;
+    }
+    return &wait_idle_init;
+}

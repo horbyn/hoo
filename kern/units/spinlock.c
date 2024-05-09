@@ -13,7 +13,9 @@
  */
 void
 spinlock_init(spinlock_t *spin) {
-    spin->islock_ = 0;                                      // nobody holds the lock
+    if (spin == null)    panic("spinlock_init(): null pointer");
+    // nobody holds the lock
+    spin->islock_ = 0;
 }
 
 /**

@@ -10,6 +10,7 @@
 
 #include "kern/types.h"
 #include "kern/x86.h"
+#include "kern/driver/io.h"
 
 /**
  * @brief binary somaphore -- spinlock definition

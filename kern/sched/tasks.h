@@ -11,6 +11,7 @@
 #include "kern/x86.h"
 #include "kern/conf/descriptor.h"
 #include "kern/mem/vm.h"
+#include "kern/units/list.h"
 #include "kern/units/queue.h"
 
 #define KERN_AVAIL_VMBASE   (KERN_HIGH_MAPPING + MM_BASE)
@@ -26,5 +27,9 @@ void  task_ready(node_t *task);
 void  idle_init(void);
 void  idle_setup_vspace(void);
 tid_t fork(void);
+void  sleep(sleeplock_t *slock);
+void  wakeup(sleeplock_t *slock);
+void  wait_sleeplock(sleeplock_t *slock);
+void  signal_sleeplock(sleeplock_t *slock);
 
 #endif

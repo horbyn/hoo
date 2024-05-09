@@ -13,8 +13,7 @@ entry(void) {
      *                                                                    *
      * the address is same as the setting in `boot/config_boot.h`         *
      **********************************************************************/
-    __asm__ ("\r\n"
-             "movw $0x10,    %ax\r\n"
+    __asm__ ("movw $0x10,    %ax\r\n"
              "movw %ax,      %ds\r\n"
              "movw %ax,      %es\r\n"
              "movw %ax,      %fs\r\n"
@@ -25,7 +24,11 @@ entry(void) {
              "pushl $0x77ffc\r\n"
              // setup calling convention
              "pushl $0\r\n"
-             "movl %esp,     %ebp");
+             "movl %esp,     %ebp\r\n"
+             "pushl $go\r\n"
+             // goto the high address
+             "ret\r\n"
+             "go:\r\n");
 
     kernel_init();
     kernel_exec();

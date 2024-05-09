@@ -9,6 +9,10 @@
     .code32
     .globl idle
     .extern idle_setup_vspace
+    .extern wakeup
+    .extern wait
+    .extern signal
+    .extern get_hoo_sleeplock
 
 idle:
     # for caller-saved
@@ -17,7 +21,16 @@ idle:
     pushl %edx
     pushl %esi
     pushl %edi
+
+    # wakeup the hoo
     call idle_setup_vspace
+    call get_hoo_sleeplock
+    pushl %eax
+    call wait
+    call wakeup
+    call signal
+    popl %eax
+
     popl %edi
     popl %esi
     popl %edx

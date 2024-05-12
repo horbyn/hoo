@@ -20,6 +20,9 @@ extern void switch_to(node_t *, node_t *);
 extern void mode_ring3(uint32_t *user_stack, void *user_entry);
 extern void idle(void);
 
+#ifdef DEBUG
+    void  debug_print_tasks(void);
+#endif
 pcb_t *get_current_pcb(void);
 void  init_tasks_system(void);
 void  scheduler();

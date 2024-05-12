@@ -17,15 +17,15 @@
 // used to calculate pg entry size
 typedef uint32_t            pgelem_t;
 
-// pg dir entry amount
-#define PGDIR_SIZE          ((PGSIZE) / sizeof(pgelem_t))
-// pg table entry amount
-#define PGTBL_SIZE          PGDIR_SIZE
+// pg dir entry(pg table entry) amount
+#define PG_STRUCT_SIZE      ((PGSIZE) / sizeof(pgelem_t))
 
 #define MB4                 0x400000
 #define PD_INDEX(x)         (((x)>>22) & 0x3ff)
 #define PT_INDEX(x)         (((x)>>12) & 0x3ff)
 #define PG_OFFSET(x)        ((x) & 0xfff)
+#define PG_MASK             0xfffff000
+#define PG(x)               (((uint32_t)x) & (PG_MASK))
 
 /**
  * @brief page dir table/page table entry attribute

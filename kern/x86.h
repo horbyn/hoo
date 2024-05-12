@@ -11,7 +11,6 @@
 #include "boot/config_boot.h"
 #include "types.h"
 
-#define KERN_HIGH_MAPPING   0xc0000000
 #define MM_BASE             0x100000
 #define PGSIZE              0x1000
 #define STACK_BOOT_BOTTOM   ((SEG_PGTABLE)*16 + PGSIZE)

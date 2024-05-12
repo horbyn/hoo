@@ -82,7 +82,8 @@ page_fault(void) {
         //void *va = vir_alloc_pages(get_hoo_pcb(), 1);
         //if (va < KERN_AVAIL_VMBASE)    panic("page_fault(): bug");
         //void *pa = phy_alloc_page();
-        //set_mapping(get_hoo_pgdir(), (uint32_t)va, (uint32_t)pa);
+        //set_mapping(get_hoo_pgdir(), (uint32_t)va, (uint32_t)pa,
+        //    PGENT_US | PGENT_RW | PGENT_PS);
 
         //memmove(va, (void *)linear_addr, PGSIZE);
     }

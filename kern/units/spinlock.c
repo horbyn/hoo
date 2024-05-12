@@ -43,6 +43,5 @@ wait(spinlock_t *spin) {
  */
 void
 signal(spinlock_t *spin) {
-
     __asm__ ("movl $0, %0" :: "m"(*spin) :);
 }

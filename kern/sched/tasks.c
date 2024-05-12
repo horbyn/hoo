@@ -14,7 +14,44 @@ static spinlock_t __spinlock_mdata_node;
 static queue_t __queue_ready, __queue_running;
 static list_t __list_sleeping;
 static const uint32_t IDLE_PAGES = 6;
-static void *idle_pgdir_va;
+
+#ifdef DEBUG
+/**
+ * @brief debug mode: print tasks metadata
+ */
+void
+debug_print_tasks() {
+    kprintf(
+        "[DEBUG] pcb_slot:        0x%x\n"
+        "[DEBUG] __mdata_node:    0x%x\n"
+        "[DEBUG] __queue_ready:   0x%x\n"
+        "[DEBUG] __queue_running: 0x%x\n"
+        "[DEBUG] __list_sleeping: 0x%x\n",
+        pcb_get(TID_HOO), __mdata_node, &__queue_ready, &__queue_running,
+        &__list_sleeping);
+
+    kprintf("\n[DEBUG] running: ");
+    for (node_t *n = __queue_running.head_->next_; n; n = n->next_) {
+        kprintf("0x%x", n);
+        if (n->next_)    kprintf(", ");
+    }
+
+    kprintf("\n[DEBUG] ready: ");
+    for (node_t *n = __queue_ready.head_->next_; n; n = n->next_) {
+        kprintf("0x%x", n);
+        if (n->next_)    kprintf(", ");
+    }
+
+    kprintf("\n[DEBUG] sleeping: ");
+    for (idx_t i = 1; i <= __list_sleeping.size_; ++i) {
+        node_t *n = list_find(&__list_sleeping, i);
+        kprintf("0x%x", n);
+        if (n->next_)    kprintf(", ");
+    }
+
+    kprintf("\n");
+}
+#endif
 
 /**
  * @brief Get the pcb of current thread
@@ -52,6 +89,28 @@ mdata_alloc_node(tid_t tid) {
 }
 
 /**
+ * @brief set the page directory virtual address
+ * 
+ * @param tid the specific task
+ * @return the corresponding virtual address
+ */
+static void **
+get_tasks_pgdir_va(tid_t tid) {
+    if (tid >= MAX_TASKS_AMOUNT)
+        panic("get_tasks_pgdir_va(): invalid parameter");
+
+    __attribute__((aligned(16))) static void *pgdir_va[MAX_TASKS_AMOUNT];
+    static bool is_init = false;
+    if (!is_init) {
+        bzero(pgdir_va, sizeof(pgdir_va));
+        is_init = true;
+    }
+
+    // need not to lock as the tid is unique
+    return &pgdir_va[tid];
+}
+
+/**
  * @brief initialize the tasks system
  */
 void
@@ -75,6 +134,7 @@ init_tasks_system() {
     pcb_set(null, (uint32_t *)STACK_HOO_RING0, hoo_pcb->tid_, get_hoo_pgdir(),
         (void *)(V2P(get_hoo_pgdir())), mdata_vspace, mdata_node, mdata_vaddr,
         null, TIMETICKS, null);
+    *(get_tasks_pgdir_va(hoo_pcb->tid_)) = get_hoo_pgdir();
     node_t *n = mdata_alloc_node(hoo_pcb->tid_);
     node_set(n, hoo_pcb, null);
     wait(&__spinlock_tasks_queue);
@@ -232,48 +292,50 @@ setup_idle_ring0_stack(void *r0_hoo, void *r0_idle, void *r3_idle, void *entry) 
 void
 idle_init(void) {
     pcb_t *hoo_pcb = get_hoo_pcb();
+    pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
 
     // setup the idle page directory table (1 page)
     void *idle_pgdir_pa = phy_alloc_page();
-    idle_pgdir_va = vir_alloc_pages(hoo_pcb, 1);
+    void *idle_pgdir_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)idle_pgdir_va,
-        (uint32_t)idle_pgdir_pa);
+        (uint32_t)idle_pgdir_pa, flags);
+    *(get_tasks_pgdir_va(TID_IDLE)) = idle_pgdir_va;
 
     // setup the idle page table (1 page)
     void *va = vir_alloc_pages(hoo_pcb, IDLE_PAGES);
     void *idle_pg_pa = phy_alloc_page();
     void *hoo_temp_pg_va = va;
-    set_mapping(
-        hoo_pcb->pdir_va_, (uint32_t)hoo_temp_pg_va, (uint32_t)idle_pg_pa);
+    set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_pg_va,
+        (uint32_t)idle_pg_pa, flags);
 
     // setup the idle ring0 stack (1 page)
     void *idle_ring0_pa = phy_alloc_page();
     void *hoo_temp_ring0_va = va + PGSIZE;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_ring0_va,
-        (uint32_t)idle_ring0_pa);
+        (uint32_t)idle_ring0_pa, flags);
 
     // setup the idle ring3 stack (1 page)
     void *idle_ring3_pa = phy_alloc_page();
     void *hoo_temp_ring3_va = va + PGSIZE * 2;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_ring3_va,
-        (uint32_t)idle_ring3_pa);
+        (uint32_t)idle_ring3_pa, flags);
 
     // setup the idle metadata (3 pages)
     void *idle_vspace_pa = phy_alloc_page();
     void *hoo_temp_vspace_va = va + PGSIZE * 3;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_vspace_va,
-        (uint32_t)idle_vspace_pa);
+        (uint32_t)idle_vspace_pa, flags);
     void *idle_node_pa = phy_alloc_page();
     void *hoo_temp_node_va = va + PGSIZE * 4;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_node_va,
-        (uint32_t)idle_node_pa);
+        (uint32_t)idle_node_pa, flags);
     void *idle_vaddr_pa = phy_alloc_page();
     void *hoo_temp_vaddr_va = va + PGSIZE * 5;
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_temp_vaddr_va,
-        (uint32_t)idle_vaddr_pa);
+        (uint32_t)idle_vaddr_pa, flags);
 
     // setup the idle thread
-    static const pgelem_t IDLE_PGDIR_VA = 0xfffff000;
+    static const pgelem_t IDLE_PGDIR_VA = PG_MASK;
     static const pgelem_t IDLE_RING0_VA = 0;
     static const pgelem_t IDLE_RING3_VA = IDLE_RING0_VA + PGSIZE;
     static const pgelem_t IDLE_VS_VA = IDLE_RING3_VA + PGSIZE;
@@ -284,29 +346,27 @@ idle_init(void) {
     uint32_t *cur_stack = setup_idle_ring0_stack(hoo_temp_ring0_va,
         (void *)(IDLE_RING0_VA + PGSIZE), (void *)(IDLE_RING3_VA + PGSIZE), idle);
 
-    tid_t idle_tid = TID_IDLE;
     cur_stack = (uint32_t *)(PG_OFFSET((uint32_t)cur_stack) | IDLE_RING0_VA);
-    pcb_set(cur_stack, (uint32_t *)(IDLE_RING0_VA + PGSIZE), idle_tid,
+    pcb_set(cur_stack, (uint32_t *)(IDLE_RING0_VA + PGSIZE), TID_IDLE,
         (void *)IDLE_PGDIR_VA, (void *)idle_pgdir_pa, (void *)IDLE_VS_VA,
         (void *)IDLE_NODE_VA, (void *)IDLE_VADDR_VA, null, TIMETICKS, null);
 
     // setup idle page directory table
-    pgelem_t flag = (pgelem_t)PGENT_US | PGENT_RW | PGENT_PS;
     uint32_t i = (uint32_t)PD_INDEX(KERN_HIGH_MAPPING);
-    for (; i < (PGSIZE / sizeof(uint32_t) - 1); ++i)
+    for (; i < (PG_STRUCT_SIZE - 1); ++i)
         ((pgelem_t *)idle_pgdir_va)[i] = ((pgelem_t *)hoo_pcb->pdir_va_)[i];
-    ((pgelem_t *)idle_pgdir_va)[0] = (pgelem_t)idle_pg_pa | flag;
-    ((pgelem_t *)idle_pgdir_va)[i] = (pgelem_t)idle_pgdir_pa | flag;
+    ((pgelem_t *)idle_pgdir_va)[0] = (pgelem_t)idle_pg_pa | flags;
+    ((pgelem_t *)idle_pgdir_va)[i] = (pgelem_t)idle_pgdir_pa | flags;
 
     // setup idle page table
-    ((pgelem_t *)hoo_temp_pg_va)[0] = (pgelem_t)idle_ring0_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[1] = (pgelem_t)idle_ring3_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[2] = (pgelem_t)idle_vspace_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[3] = (pgelem_t)idle_node_pa | flag;
-    ((pgelem_t *)hoo_temp_pg_va)[4] = (pgelem_t)idle_vaddr_pa | flag;
+    ((pgelem_t *)hoo_temp_pg_va)[0] = (pgelem_t)idle_ring0_pa | flags;
+    ((pgelem_t *)hoo_temp_pg_va)[1] = (pgelem_t)idle_ring3_pa | flags;
+    ((pgelem_t *)hoo_temp_pg_va)[2] = (pgelem_t)idle_vspace_pa | flags;
+    ((pgelem_t *)hoo_temp_pg_va)[3] = (pgelem_t)idle_node_pa | flags;
+    ((pgelem_t *)hoo_temp_pg_va)[4] = (pgelem_t)idle_vaddr_pa | flags;
 
-    pcb_t *idle_pcb = pcb_get(idle_tid);
-    node_t *n = mdata_alloc_node(idle_tid);
+    pcb_t *idle_pcb = pcb_get(TID_IDLE);
+    node_t *n = mdata_alloc_node(TID_IDLE);
     node_set(n, idle_pcb, null);
     task_ready(n);
 
@@ -319,7 +379,7 @@ idle_init(void) {
  */
 void
 idle_setup_vspace(void) {
-    vir_alloc_pages(pcb_get(TID_IDLE), IDLE_PAGES);
+    vir_alloc_pages(pcb_get(TID_IDLE), IDLE_PAGES - 1);
 }
 
 /**
@@ -333,11 +393,12 @@ fork(void) {
     void *new_pgdir_pa = phy_alloc_page();
     void *hoo_pgdir_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(hoo_pcb->pdir_va_, (uint32_t)hoo_pgdir_va,
-        (uint32_t)new_pgdir_pa);
+        (uint32_t)new_pgdir_pa, PGENT_US | PGENT_RW | PGENT_PS);
 
     // copy the page directory table
     uint32_t i = 0;
-    for (; i < (PGSIZE / sizeof(uint32_t) - 1); ++i)
+    pgelem_t *idle_pgdir_va = *(get_tasks_pgdir_va(TID_IDLE));
+    for (; i < (PG_STRUCT_SIZE - 1); ++i)
         ((pgelem_t *)hoo_pgdir_va)[i] = ((pgelem_t *)idle_pgdir_va)[i];
     ((pgelem_t *)hoo_pgdir_va)[0] &= ~((pgelem_t)PGENT_RW);
     ((pgelem_t *)hoo_pgdir_va)[i] =
@@ -351,6 +412,7 @@ fork(void) {
         new_pgdir_pa, idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_,
         idle_pcb->vmngr_.vaddr_, &idle_pcb->vmngr_.head_, TIMETICKS,
         idle_pcb->sleeplock_);
+    *(get_tasks_pgdir_va(new_tid)) = hoo_pgdir_va;
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);

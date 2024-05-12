@@ -205,11 +205,11 @@ pgtable:
     orl  $7,            %eax
     movl pdtable_addr,  %ebx
     movl %eax,          (%ebx)
-    addl $0xc00,        %ebx
+    addl $PDE_HIGH_OFF, %ebx
     movl %eax,          (%ebx)
     movl $SEG_PDTABLE<<4, %eax
     orl  $7,            %eax
-    addl $0x3fc,        %ebx
+    addl $PDE_LAST_OFF, %ebx
     movl %eax,          (%ebx)
 
     movl $SEG_PDTABLE<<4, %eax

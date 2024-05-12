@@ -113,7 +113,7 @@ vir_release_pages(pcb_t *pcb, void *va) {
     uint32_t pages_amount = ((vaddr_t *)(worker_node->data_))->length_;
     for (uint32_t i = 0; i < ((vaddr_t *)(worker_node->data_))->length_; ++i) {
         uint32_t va = ((vaddr_t *)(worker_node->data_))->va_;
-        pgelem_t *pa = get_mapping(pcb->pdir_va_, va + i * PGSIZE);
+        pgelem_t *pa = get_mapping(pcb->pdir_va_, va + i * PGSIZE, null);
         phy_release_page((void *)*pa);
     }
 

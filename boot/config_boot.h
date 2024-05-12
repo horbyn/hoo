@@ -27,19 +27,23 @@
 //     ss:sp(esp) that 0x7000:0xfffe(0xfffc)
 //
 //     This is why 0x7000 below
-#define SEG_KSTACK  0x7000
+#define SEG_KSTACK          0x7000
 
 // here sets the `jmp .` instruction
-#define SEG_DIED    0x77f0
-#define OFF_DIED    0xfc
+#define SEG_DIED            0x77f0
+#define OFF_DIED            0xfc
 
 // here record the ARDS struct temporary
-#define SEG_ARDS    0x7a20
-#define OFF_ARDS_CR 0
-#define OFF_ARDS    4
+#define SEG_ARDS            0x7a20
+#define OFF_ARDS_CR         0
+#define OFF_ARDS            4
 
 // temporary page(page dir) table
-#define SEG_PDTABLE 0x7800
-#define SEG_PGTABLE 0x7900
+#define SEG_PDTABLE         0x7800
+#define SEG_PGTABLE         0x7900
+
+#define KERN_HIGH_MAPPING   0x80000000
+#define PDE_HIGH_OFF        (KERN_HIGH_MAPPING >> 20)
+#define PDE_LAST_OFF        (0xffc - PDE_HIGH_OFF)
 
 #endif

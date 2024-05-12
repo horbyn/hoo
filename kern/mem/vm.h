@@ -12,7 +12,6 @@
 #include "kern/conf/page.h"
 #include "kern/driver/io.h"
 #include "kern/mem/pm.h"
-#include "kern/module/hoo.h"
 #include "kern/sched/pcb.h"
 
 // the maximum value of hoo thread virtual space -- the cause subtracted from

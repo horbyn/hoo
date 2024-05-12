@@ -22,7 +22,7 @@ paging() {
     pdir[1023] = (pgelem_t)((uint32_t)pdir | flags);
 
     for (uint32_t va = 0, pa = 0, i = 0; pa < MM_BASE; va += PGSIZE, pa += PGSIZE, ++i)
-        set_mapping(pdir, va, pa);
+        set_mapping(pdir, va, pa, flags);
 
     // paging
     __asm__ ("movl %0, %%cr3" : :"r"(V2P(pdir)));

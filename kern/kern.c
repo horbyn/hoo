@@ -48,4 +48,9 @@ kernel_exec(void) {
     test_vspace();
     test_schedule();
 #endif
+
+#ifdef DEBUG
+    clear_screen();
+    debug_print_tasks();
+#endif
 }

@@ -11,6 +11,7 @@
 #include "kern/x86.h"
 #include "kern/conf/page.h"
 #include "kern/driver/io.h"
+#include "kern/module/hoo.h"
 #include "kern/units/bitmap.h"
 #include "kern/units/spinlock.h"
 
@@ -21,7 +22,7 @@
 void     init_phymm_system(uint32_t mem_size);
 void     *phy_alloc_page(void);
 void     phy_release_page(void *page_phy_addr);
-pgelem_t *get_mapping(pgelem_t *pdir, uint32_t va);
-void     set_mapping(pgelem_t *pdir, uint32_t va, uint32_t pa);
+pgelem_t *get_mapping(pgelem_t *pdir, uint32_t va, void *pg_va);
+void     set_mapping(pgelem_t *pdir, uint32_t va, uint32_t pa, pgelem_t flags);
 
 #endif

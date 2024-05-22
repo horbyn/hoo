@@ -14,15 +14,16 @@ static Gdtr_t __gdtr;
  */
 static void
 paging() {
-    pgelem_t *pdir = get_hoo_pgdir();
     pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
 
+    pgelem_t *pdir = get_hoo_pgdir();
     pdir[0] = (pgelem_t)((SEG_PGTABLE * 16) | flags);
-    pdir[PD_INDEX(KERN_HIGH_MAPPING)] = (pgelem_t)((SEG_PGTABLE * 16) | flags);
-    pdir[1023] = (pgelem_t)((uint32_t)pdir | flags);
+    pdir[PD_INDEX(KERN_HIGH_MAPPING)] = pdir[0];
+    pdir[PG_STRUCT_SIZE - 1] = (pgelem_t)((uint32_t)pdir | flags);
 
-    for (uint32_t va = 0, pa = 0, i = 0; pa < MM_BASE; va += PGSIZE, pa += PGSIZE, ++i)
-        set_mapping(pdir, va, pa, flags);
+    pgelem_t *pg = (pgelem_t *)(SEG_PGTABLE * 16);
+    for (uint32_t i = 0; i < (MM_BASE / PGSIZE); ++i)
+        pg[i] = ((pgelem_t)(i * PGSIZE) | flags);
 
     // paging
     __asm__ ("movl %0, %%cr3" : :"r"(V2P(pdir)));

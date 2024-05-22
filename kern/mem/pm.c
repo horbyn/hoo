@@ -56,43 +56,35 @@ phy_release_page(void *page_phy_addr) {
 /**
  * @brief get the mapping of the given virtual address
  * 
- * @param pdir the corresponding page directory table
- * @param va virtual address
- * @param pg_va the page table virtual address using when the page table missed
+ * @param pgs   the paging structure
+ * @param va    virtual address
  * @return page table entry pointer
  */
 pgelem_t *
-get_mapping(pgelem_t *pdir, uint32_t va, void *pg_va) {
-    if (pdir == null)    panic("get_mapping(): page directory invalid");
+get_mapping(pgstruct_t *pgs, uint32_t va) {
+    if (pgs == null)    panic("get_mapping(): null pointer");
 
     pgelem_t vaddr = PGUP(va, PGSIZE);
-    pgelem_t flags = pdir[PD_INDEX(vaddr)] & ~PG_MASK;
-    pgelem_t *phy_pgtable = (pgelem_t *)(pdir[PD_INDEX(vaddr)] & PG_MASK);
-    if (flags & PGENT_RW) {
-        // how about the threads request physical pages unlimitedly?
-        phy_pgtable = (pgelem_t *)phy_alloc_page();
-        pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
-        pdir[PD_INDEX(vaddr)] = ((pgelem_t)phy_pgtable) | flags;
-        set_mapping(get_hoo_pgdir(), (uint32_t)pg_va, (uint32_t)phy_pgtable, flags);
-    } else {
+    pgelem_t flags = *((pgelem_t *)pgs->pdir_va_ + PD_INDEX(vaddr)) & ~PG_MASK,
+        FLAGS = PGENT_US | PGENT_RW | PGENT_PS;
+    if ((flags & FLAGS) != FLAGS)
         panic("get_mapping(): invalid page table structure");
-    }
-    return (phy_pgtable + PT_INDEX(vaddr));
+    return (pgelem_t *)(pgs->mapping_[PD_INDEX(vaddr)]) + PT_INDEX(vaddr);
 }
 
 /**
  * @brief create page table mappings
  * 
- * @param pdir  the corresponding page directory table
+ * @param pgs   the paging structure
  * @param va    virtual address
  * @param pa    physical address
  * @param flags flags
  */
 void
-set_mapping(pgelem_t *pdir, uint32_t va, uint32_t pa, pgelem_t flags) {
-    if (pdir == null)    panic("set_mapping(): page directory invalid");
+set_mapping(pgstruct_t *pgs, uint32_t va, uint32_t pa, pgelem_t flags) {
+    if (pgs == null)    panic("set_mapping(): null pointer");
 
     __asm__ ("invlpg (%0)" : : "a" (va));
-    pgelem_t *pgtbl_entry = get_mapping(pdir, va, null);
-    *pgtbl_entry = ((pgelem_t)PGUP(pa, PGSIZE)) | flags;
+    pgelem_t *pte = get_mapping(pgs, va);
+    *pte = ((pgelem_t)PGUP(pa, PGSIZE)) | flags;
 }

@@ -34,5 +34,7 @@ void  sleep(sleeplock_t *slock);
 void  wakeup(sleeplock_t *slock);
 void  wait_sleeplock(sleeplock_t *slock);
 void  signal_sleeplock(sleeplock_t *slock);
+void  exit();
+void  kill(pcb_t *pcb);
 
 #endif

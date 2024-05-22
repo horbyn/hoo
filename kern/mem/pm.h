@@ -22,7 +22,7 @@
 void     init_phymm_system(uint32_t mem_size);
 void     *phy_alloc_page(void);
 void     phy_release_page(void *page_phy_addr);
-pgelem_t *get_mapping(pgelem_t *pdir, uint32_t va, void *pg_va);
-void     set_mapping(pgelem_t *pdir, uint32_t va, uint32_t pa, pgelem_t flags);
+pgelem_t *get_mapping(pgstruct_t *pgs, uint32_t va);
+void     set_mapping(pgstruct_t *pgs, uint32_t va, uint32_t pa, pgelem_t flags);
 
 #endif

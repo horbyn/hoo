@@ -16,10 +16,12 @@
 
 // the maximum value of hoo thread virtual space -- the cause subtracted from
 // 4-MB is that the last entry of its page directory table is not allowed to use
-#define MAX_VSPACE_HOO      (0xfffff000 - MB4 + 0x1000)
+#define MAX_VSPACE_HOO      (PG_MASK - MB4 + PGSIZE)
 
 void init_virmm_system(void);
 void *vir_alloc_pages(pcb_t *pcb, uint32_t amount);
 void vir_release_pages(pcb_t *pcb, void *va);
+void phy_release_vpage(pcb_t *pcb, void *page_vir_addr);
+void release_vspace(pcb_t *pcb);
 
 #endif

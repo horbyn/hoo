@@ -111,10 +111,9 @@ vir_release_pages(pcb_t *pcb, void *va) {
 
     // release pages
     uint32_t pages_amount = ((vaddr_t *)(worker_node->data_))->length_;
-    for (uint32_t i = 0; i < ((vaddr_t *)(worker_node->data_))->length_; ++i) {
+    for (uint32_t i = 0; i < pages_amount; ++i) {
         uint32_t va = ((vaddr_t *)(worker_node->data_))->va_;
-        pgelem_t *pa = get_mapping(pcb->pdir_va_, va + i * PGSIZE, null);
-        phy_release_page((void *)*pa);
+        phy_release_vpage(pcb, (void *)(va + i * PGSIZE));
     }
 
     // reclaim the metadata
@@ -128,4 +127,64 @@ vir_release_pages(pcb_t *pcb, void *va) {
     } else {
         worker_vs->end_ -= (pages_amount * PGSIZE);
     }
+}
+
+/**
+ * @brief release a physical page
+ * 
+ * @param page_vir_addr the corresponding virtual address
+ */
+void
+phy_release_vpage(pcb_t *pcb, void *page_vir_addr) {
+    if (pcb == null)    panic("phy_release_vpage(): null pointer");
+    if (pcb == get_hoo_pcb()
+        && (uint32_t)page_vir_addr < KERN_HIGH_MAPPING + MM_BASE)
+        panic("phy_release_vpage(): cannot release kernel virtual space");
+
+    bzero(page_vir_addr, PGSIZE);
+    pgelem_t *pte =
+        get_mapping(&pcb->pgstruct_, (uint32_t)page_vir_addr);
+    void *pa = (void *)PG(*pte);
+    phy_release_page(pa);
+}
+
+/**
+ * @brief release the virtual space
+ * 
+ * @param pcb the thread
+ */
+void
+release_vspace(pcb_t *pcb) {
+    if (pcb == null)    panic("release_vspace(): null pointer");
+
+    vspace_t *worker_vs = pcb->vmngr_.head_.next_;
+    while (worker_vs) {
+        node_t *worker_node = worker_vs->list_.null_.next_;
+        while (worker_node) {
+            vaddr_t *worker_vaddr = (vaddr_t *)worker_node->data_;
+            if (worker_vaddr == null)
+                panic("release_vspace(): bug");
+
+            // release pages except metadata (va = 0)
+            uint32_t pages_amount = ((vaddr_t *)(worker_node->data_))->length_;
+            uint32_t va = ((vaddr_t *)(worker_node->data_))->va_;
+            node_t *worker_node_next = worker_node->next_;
+            if (va != 0) {
+                for (uint32_t i = 0; i < pages_amount; ++i)
+                    phy_release_vpage(pcb, (void *)(va + i * PGSIZE));
+
+                // reclaim the metadata
+                vsmngr_release_vaddr(&pcb->vmngr_, worker_node->data_);
+                vsmngr_release_node(&pcb->vmngr_, worker_node);
+            }
+            worker_node = worker_node_next;
+        } // end while(node)
+
+        vspace_t *worker_vs_next = worker_vs->next_;
+        if (list_isempty(&worker_vs->list_))
+            vsmngr_release_vspace(&pcb->vmngr_, worker_vs);
+        worker_vs = worker_vs_next;
+    } // end while(vspace)
+
+    node_set(&pcb->vmngr_.head_.list_.null_, null, null);
 }

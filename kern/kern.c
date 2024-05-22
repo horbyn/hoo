@@ -49,6 +49,7 @@ kernel_exec(void) {
     test_schedule();
 #endif
 
+    kill(pcb_get(TID_IDLE));
 #ifdef DEBUG
     clear_screen();
     debug_print_tasks();

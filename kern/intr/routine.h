@@ -11,6 +11,7 @@
 #include "kern/x86.h"
 #include "kern/driver/io.h"
 #include "kern/sched/tasks.h"
+#include "kern/driver/ata/ata_irq.h"
 
 #define ISR14_PAGEFAULT         14
 #define ISR32_TIMER             32

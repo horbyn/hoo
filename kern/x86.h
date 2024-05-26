@@ -16,7 +16,7 @@
 #define STACK_BOOT_BOTTOM   ((SEG_PGTABLE)*16 + PGSIZE)
 #define STACK_HOO_RING3     (STACK_BOOT_BOTTOM + PGSIZE + KERN_HIGH_MAPPING)
 #define STACK_HOO_RING0     (0x80000 + KERN_HIGH_MAPPING)
-#define TICKS_PER_SEC       100
+#define TICKS_PER_SEC       1000
 
 // the ARDS amount addr
 #define ADDR_ARDS_NUM       (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS_CR))

@@ -5,12 +5,12 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_TEST_TEST_H__
-#define __KERN_TEST_TEST_H__
+#ifndef __KERN_DRIVER_ATA_ATA_POLLING_H__
+#define __KERN_DRIVER_ATA_ATA_POLLING_H__
 
-void test_phypg_alloc(void);
-void test_vspace(void);
-void test_schedule(void);
-void test_disk_read(void);
+#include "ata.h"
+
+void ata_polling_init(void);
+void ata_polling_rw(atabuff_t *buff, bool is_irq);
 
 #endif

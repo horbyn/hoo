@@ -5,12 +5,14 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_TEST_TEST_H__
-#define __KERN_TEST_TEST_H__
+#ifndef __KERN_DRIVER_ATA_ATA_IRQ_H__
+#define __KERN_DRIVER_ATA_ATA_IRQ_H__
 
-void test_phypg_alloc(void);
-void test_vspace(void);
-void test_schedule(void);
-void test_disk_read(void);
+#include "ata.h"
+#include "kern/units/queue.h"
+
+void ata_irq_init();
+void ata_irq_intr();
+void ata_irq_rw(atabuff_t *buff, bool is_irq);
 
 #endif

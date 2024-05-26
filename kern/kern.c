@@ -27,6 +27,23 @@ kernel_init(void) {
     kinit_isr_idt();
     kinit_dirver();
 
+#ifndef DEBUG
+    ata_space_t *ata_space = get_ataspace();
+    uint32_t select = ata_space->current_select_;
+    kprintf("================ DEVICE  INFO ================"
+        "\ndev no.:       %d"
+        "\nserial no.:    %s"
+        "\nmodel no.:     %s"
+        "\ntype:          %s"
+        "\ntotal sectors: %d\n\n",
+        ata_space->device_info_[select].device_no_,
+        (char *)&(ata_space->device_info_[select].dev_serial_),
+        (char *)&(ata_space->device_info_[select].dev_model_),
+        ENUM2STR_ATA_TYPE_DEVICE(
+            ata_space->device_info_[select].device_type_),
+        ata_space->device_info_[select].total_sectors_);
+#endif
+
 }
 
 /**
@@ -47,9 +64,9 @@ kernel_exec(void) {
     test_phypg_alloc();
     test_vspace();
     test_schedule();
+    test_disk_read();
 #endif
 
-    kill(pcb_get(TID_IDLE));
 #ifdef DEBUG
     clear_screen();
     debug_print_tasks();

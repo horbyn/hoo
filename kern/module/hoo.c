@@ -34,7 +34,10 @@ get_hoo_tss(void) {
  */
 pcb_t *
 get_hoo_pcb(void) {
-    return pcb_get(TID_HOO);
+    // the hoo thread uses pcb by statically allocation
+    //   while the rest by dynamically allocation
+    static pcb_t hoo_pcb;
+    return &hoo_pcb;
 }
 
 /**

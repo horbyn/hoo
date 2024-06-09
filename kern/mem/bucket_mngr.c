@@ -4,24 +4,21 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#include "bucket_mngr.h"
 
-#include "module/config.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/fs.h"
-#include "module/mem.h"
-#include "module/sched.h"
-#include "driver/io.h"
-#ifdef TEST
-    #include "test/test.h"
-#endif
+/**
+ * @brief bucket manager initialization
+ * 
+ * @param mngr bucket manager
+ * @param size bucket size
+ * @param chain bucket chain
+ * @param next next bucket manager
+ */
+void
+buckmngr_init(buckx_mngr_t *mngr, uint32_t size, arrlist_t *chain, buckx_mngr_t *next) {
+    if (mngr == null)    panic("buckmngr_init(): null pointer");
 
-extern uint8_t __kern_base[], __kern_end[];
-
-void kernel_init(void);
-void kernel_exec(void);
-
-#endif
+    mngr->size_ = size;
+    mngr->chain_ = chain;
+    mngr->next_ = next;
+}

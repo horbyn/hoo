@@ -5,23 +5,21 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_DRIVER_ATA_DRIVER_H__
+#define __KERN_DRIVER_ATA_DRIVER_H__
 
-#include "module/config.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/fs.h"
-#include "module/mem.h"
-#include "module/sched.h"
-#include "driver/io.h"
-#ifdef TEST
-    #include "test/test.h"
-#endif
+#include "kern/driver/ata/ata_polling.h"
+#include "kern/driver/ata/ata_irq.h"
 
-extern uint8_t __kern_base[], __kern_end[];
+/**
+ * @brief ata method like IRQs or polling
+ */
+typedef enum ata_method {
+    ATA_METHOD_POLLING = 0,
+    ATA_METHOD_IRQ
+} enum_ata_method;
 
-void kernel_init(void);
-void kernel_exec(void);
+void ata_driver_init(enum_ata_method);
+void ata_driver_rw(void *buff, uint32_t bufflen, idx_t lba, ata_cmd_t cmd);
 
 #endif

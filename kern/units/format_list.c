@@ -18,6 +18,8 @@ fmtlist_init(fmtlist_t *page_va, uint32_t type_size, bool is_cycle) {
     if (page_va == null)    panic("fmtlist_init(): parameter invalid");
 
     uint8_t *p = (uint8_t *)(PGDOWN((uint32_t)page_va, PGSIZE));
+    if ((uint32_t)p != (uint32_t)page_va)
+        panic("fmtlist_init(): page size is not 4KB");
     uint32_t head_sz = sizeof(fmtlist_t);
     uint32_t elem_sz = sizeof(node_t) + type_size;
     uint32_t total_elems = (PGSIZE - head_sz) / elem_sz;
@@ -49,16 +51,19 @@ fmtlist_init(fmtlist_t *page_va, uint32_t type_size, bool is_cycle) {
  * @brief get a element from the formatting list
  * 
  * @param fmtlist formatting list
- * @return the specific element
+ * @retval non-null: the specific element
+ * @retval null: no more available element in the list
  */
 void *
 fmtlist_alloc(fmtlist_t *fmtlist) {
     if (fmtlist == null)    panic("fmtlist_alloc(): parameter invalid");
+    if (fmtlist->list_.size_ <= 0)    return null;
     return list_remove(&fmtlist->list_, 1)->data_;
 }
 
 /**
- * @brief reclaim the list elements of specific type
+ * @brief reclaim the list elements of specific type (DO NOT VERIFY whether
+ * the element is belong to this list)
  * 
  * @param fmtlist   the formatting list
  * @param elem      the free element

@@ -6,13 +6,38 @@
  **************************************************************************/
 #include "tasks.h"
 
-static node_t __mdata_node[MAX_TASKS_AMOUNT];
+__attribute__((aligned(4096))) static pgelem_t mappings[PG_STRUCT_SIZE] = { 0 };
+__attribute__((aligned(4096))) static uint32_t mdata_vspace[PG_STRUCT_SIZE] = { 0 },
+    mdata_node[PG_STRUCT_SIZE] = { 0 }, mdata_vaddr[PG_STRUCT_SIZE] = { 0 };
+
+/**
+ * @brief bucket size array
+ */
+static uint32_t __bucket_size[] = { 8, 16, 32, 64, 128, 256, 512, 1024 };
+#define MAX_BUCKET_SIZE     (NELEMS(__bucket_size))
+
+/**
+ * @brief the bucket manager one thread owned
+ */
+typedef struct arr_buckmngr {
+    buckx_mngr_t head_[MAX_BUCKET_SIZE];
+} thread_buckmngr_t;
+
 // serially access task queues
 static spinlock_t __spinlock_tasks;
 // serially access metadata
 static spinlock_t __spinlock_mdata_node;
+// serially access pcb array
+static spinlock_t __spinlock_pcb;
+// serially access thread id
+static spinlock_t __spinlock_alloc_tid;
 static queue_t __queue_ready, __queue_running;
 static list_t __list_sleeping, __list_expired;
+static node_t *__mdata_node;
+static pcb_t *__mdata_pcb;
+static thread_buckmngr_t *__mdata_buckmngr;
+static uint8_t *__mdata_bmbuff_tid;
+static bitmap_t __bm_tid;
 static const uint32_t IDLE_PAGES = 4;
 static const pgelem_t IDLE_RING3_VA = 0;
 static const pgelem_t IDLE_MD_VSPACE_VA = IDLE_RING3_VA + PGSIZE;
@@ -27,15 +52,13 @@ void
 debug_print_tasks() {
     kprintf(
         "[DEBUG] sizeof(pgstruct_t): %d\tsizeof(vsmngr_t): %d\tsizeof(pcb_t): %d\n"
-        "[DEBUG] pcb_slot:           0x%x\n"
         "[DEBUG] __mdata_node:       0x%x\n"
         "[DEBUG] __queue_ready:      0x%x\n"
         "[DEBUG] __queue_running:    0x%x\n"
         "[DEBUG] __list_sleeping:    0x%x\n"
         "[DEBUG] __list_expired:     0x%x\n",
-        sizeof(pgstruct_t), sizeof(vsmngr_t), sizeof(pcb_t),
-        pcb_get(TID_HOO), __mdata_node, &__queue_ready, &__queue_running,
-        &__list_sleeping, &__list_expired);
+        sizeof(pgstruct_t), sizeof(vsmngr_t), sizeof(pcb_t), __mdata_node,
+        &__queue_ready, &__queue_running, &__list_sleeping, &__list_expired);
 
     kprintf("\n[DEBUG] running: ");
     for (node_t *n = __queue_running.head_->next_; n; n = n->next_) {
@@ -103,24 +126,49 @@ mdata_alloc_node(tid_t tid) {
 }
 
 /**
+ * @brief get the bucket manager metadata
+ * 
+ * @param tid thread id
+ * @return bucket manager metadata
+ */
+static buckx_mngr_t *
+thread_buckmngr_get(tid_t tid) {
+    if (tid >= MAX_TASKS_AMOUNT)
+        panic("thread_buckmngr_get(): thread id out of range");
+    return __mdata_buckmngr[tid].head_;
+}
+
+/**
+ * @brief bucket manager initialization of single thread
+ * 
+ * @param tb thread bucket manager
+ */
+static void
+thread_buckmngr_set(thread_buckmngr_t *tb) {
+    if (tb == null)    panic("thread_buckmngr_set(): null pointer");
+
+    buckx_mngr_t *worker = tb->head_;
+    for (int i = 0; i < MAX_BUCKET_SIZE; ++i) {
+        buckx_mngr_t *next = (i == MAX_BUCKET_SIZE - 1) ? null : worker + i + 1;
+        buckmngr_init(worker + i, __bucket_size[i], null, next);
+    }
+}
+
+/**
  * @brief initialize the tasks system
  */
 void
 init_tasks_system() {
-    init_pcb_system();
-    bzero(__mdata_node, sizeof(__mdata_node));
     queue_init(&__queue_ready);
     queue_init(&__queue_running);
     list_init(&__list_sleeping, false);
     list_init(&__list_expired, false);
     spinlock_init(&__spinlock_tasks);
     spinlock_init(&__spinlock_mdata_node);
+    spinlock_init(&__spinlock_pcb);
+    spinlock_init(&__spinlock_alloc_tid);
 
     // metadata
-    __attribute__((aligned(4096))) static pgelem_t mappings[PG_STRUCT_SIZE] = { 0 };
-    __attribute__((aligned(4096))) static uint32_t
-        mdata_vspace[PG_STRUCT_SIZE] = { 0 }, mdata_node[PG_STRUCT_SIZE] = { 0 },
-        mdata_vaddr[PG_STRUCT_SIZE] = { 0 };
     bzero(mappings, sizeof(mappings));
     bzero(mdata_vspace, sizeof(mdata_vspace));
     bzero(mdata_node, sizeof(mdata_node));
@@ -133,12 +181,14 @@ init_tasks_system() {
 
     pgstruct_t pgs;
     pgstruct_set(&pgs, get_hoo_pgdir(), (void *)(V2P(get_hoo_pgdir())), mappings);
-    pcb_set(null, (uint32_t *)STACK_HOO_RING0, hoo_pcb->tid_, &pgs,
-        mdata_vspace, mdata_node, mdata_vaddr, null, TIMETICKS, null);
-    node_t *n = mdata_alloc_node(hoo_pcb->tid_);
-    node_set(n, hoo_pcb, null);
+    static thread_buckmngr_t hoo_bucket;
+    thread_buckmngr_set(&hoo_bucket);
+    pcb_set(hoo_pcb, null, (uint32_t *)STACK_HOO_RING0, TID_HOO, &pgs, mdata_vspace,
+        mdata_node, mdata_vaddr, null, TIMETICKS, null, hoo_bucket.head_);
+    static node_t hoo_node;
+    node_set(&hoo_node, hoo_pcb, null);
     wait(&__spinlock_tasks);
-    queue_push(&__queue_running, n, TAIL);
+    queue_push(&__queue_running, &hoo_node, TAIL);
     signal(&__spinlock_tasks);
 
     vir_alloc_pages(hoo_pcb, (KERN_HIGH_MAPPING + MM_BASE) / PGSIZE);
@@ -157,6 +207,51 @@ init_tasks_system() {
         *((pgelem_t *)hoo_pcb->pgstruct_.pdir_va_ + i) = (pgelem_t)pa | flags;
         set_mapping(&hoo_pcb->pgstruct_, va32, (uint32_t)pa, flags);
     }
+
+    // initialize the tasks system
+    uint32_t metadata_node_pages =
+        (sizeof(node_t) * MAX_TASKS_AMOUNT + PGSIZE - 1) / PGSIZE;
+    __mdata_node = vir_alloc_pages(hoo_pcb, metadata_node_pages);
+    for (uint32_t i = 0; i < metadata_node_pages; ++i) {
+        uint32_t va = (uint32_t)__mdata_node + i * PGSIZE;
+        void *pa = phy_alloc_page();
+        set_mapping(&hoo_pcb->pgstruct_, va, (uint32_t)pa, flags);
+    }
+
+    uint32_t metadata_pcb_pages =
+        (sizeof(pcb_t) * MAX_TASKS_AMOUNT + PGSIZE - 1) / PGSIZE;
+    __mdata_pcb = vir_alloc_pages(hoo_pcb, metadata_pcb_pages);
+    for (uint32_t i = 0; i < metadata_pcb_pages; ++i) {
+        uint32_t va = (uint32_t)__mdata_pcb + i * PGSIZE;
+        void *pa = phy_alloc_page();
+        set_mapping(&hoo_pcb->pgstruct_, va, (uint32_t)pa, flags);
+    }
+
+    uint32_t metadata_bucket_pages =
+        (sizeof(thread_buckmngr_t) * MAX_TASKS_AMOUNT + PGSIZE - 1) / PGSIZE;
+    __mdata_buckmngr = vir_alloc_pages(hoo_pcb, metadata_bucket_pages);
+    for (uint32_t i = 0; i < metadata_bucket_pages; ++i) {
+        uint32_t va = (uint32_t)__mdata_buckmngr + i * PGSIZE;
+        void *pa = phy_alloc_page();
+        set_mapping(&hoo_pcb->pgstruct_, va, (uint32_t)pa, flags);
+    }
+    for (uint32_t i = 0; i < MAX_TASKS_AMOUNT; ++i)
+        thread_buckmngr_set(__mdata_buckmngr + i);
+
+    uint32_t metadata_tid_pages =
+        (sizeof(uint8_t) * (MAX_TASKS_AMOUNT / BITS_PER_BYTE) + PGSIZE - 1) / PGSIZE;
+    __mdata_bmbuff_tid = vir_alloc_pages(hoo_pcb, metadata_tid_pages);
+    for (uint32_t i = 0; i < metadata_tid_pages; ++i) {
+        uint32_t va = (uint32_t)__mdata_bmbuff_tid + i * PGSIZE;
+        void *pa = phy_alloc_page();
+        set_mapping(&hoo_pcb->pgstruct_, va, (uint32_t)pa, flags);
+    }
+    bzero(__mdata_bmbuff_tid, sizeof(__mdata_bmbuff_tid));
+    bitmap_init(&__bm_tid, MAX_TASKS_AMOUNT, __mdata_bmbuff_tid);
+    // for hoo thread
+    bitmap_set(&__bm_tid, TID_HOO);
+    // for idle thread
+    bitmap_set(&__bm_tid, TID_IDLE);
 }
 
 /**
@@ -250,8 +345,6 @@ setup_idle_ring0_stack(void *r0, void *r3_idle, void *r3_hoo, void *entry) {
      * │                               │*
      * │             stack             │*
      * │                               │*
-     * ├───────────────────────────────┤*
-     * │              pcb              │*
      * └───────────────────────────────┘*
      ************************************/
 
@@ -303,6 +396,23 @@ setup_idle_ring0_stack(void *r0, void *r3_idle, void *r3_hoo, void *entry) {
     workerth->retaddr_ = isr_part3;
 
     return (uint32_t *)pstack;
+}
+
+/**
+ * @brief get pcb
+ * 
+ * @param tid thread id
+ * @return pcb pointer
+ */
+static pcb_t *
+pcb_get(tid_t tid) {
+    if (tid >= MAX_TASKS_AMOUNT)    panic("pcb_get(): thread id overflow");
+
+    pcb_t *temp = null;
+    wait(&__spinlock_pcb);
+    temp = __mdata_pcb + tid;
+    signal(&__spinlock_pcb);
+    return temp;
 }
 
 /**
@@ -377,11 +487,12 @@ idle_init(void) {
     pgstruct_t pgs;
     pgstruct_set(&pgs, (void *)idle_pgdir_va, (void *)idle_pgdir_pa,
         idle_mapping_va);
-    pcb_set(cur_stack, (uint32_t *)((uint32_t)hoo_ring0_va + PGSIZE), TID_IDLE,
-        &pgs, (void *)IDLE_MD_VSPACE_VA, (void *)IDLE_MD_NODE_VA,
-        (void *)IDLE_MD_VADDR_VA, null, TIMETICKS, null);
-
     pcb_t *idle_pcb = pcb_get(TID_IDLE);
+    pcb_set(idle_pcb, cur_stack, (uint32_t *)((uint32_t)hoo_ring0_va + PGSIZE),
+        TID_IDLE, &pgs, (void *)IDLE_MD_VSPACE_VA, (void *)IDLE_MD_NODE_VA,
+        (void *)IDLE_MD_VADDR_VA, null, TIMETICKS, null,
+        thread_buckmngr_get(TID_IDLE));
+
     node_t *n = mdata_alloc_node(TID_IDLE);
     node_set(n, idle_pcb, null);
     task_ready(n);
@@ -394,6 +505,24 @@ idle_init(void) {
 void
 idle_setup_vspace(void) {
     vir_alloc_pages(pcb_get(TID_IDLE), IDLE_PAGES);
+}
+
+/**
+ * @brief allocate the thread id
+ * 
+ * @return thread id
+ */
+static tid_t
+allocate_tid() {
+    tid_t temp = 0;
+
+    wait(&__spinlock_alloc_tid);
+    temp = (tid_t)bitmap_scan_empty(&__bm_tid);
+    signal(&__spinlock_alloc_tid);
+
+    if (temp >= MAX_TASKS_AMOUNT)
+        panic("allocate_tid(): thread id overflows");
+    return temp;
 }
 
 /**
@@ -453,9 +582,10 @@ fork(void) {
     pcb_t *new_pcb = pcb_get(new_tid);
     pgstruct_t pgs;
     pgstruct_set(&pgs, new_pgdir_va, new_pgdir_pa, new_mapping_va);
-    pcb_set(idle_pcb->stack_cur_, new_ring0_va, new_tid, &pgs,
+    pcb_set(new_pcb, idle_pcb->stack_cur_, new_ring0_va, new_tid, &pgs,
         idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_, idle_pcb->vmngr_.vaddr_,
-        &idle_pcb->vmngr_.head_, TIMETICKS, idle_pcb->sleeplock_);
+        &idle_pcb->vmngr_.head_, TIMETICKS, idle_pcb->sleeplock_,
+        thread_buckmngr_get(new_tid));
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);

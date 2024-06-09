@@ -211,7 +211,8 @@ ata_space_init(void) {
                 ata_get_model_number(&identify,
                     &ata_devices[ata_space->device_amount_].dev_model_);
 
-                ++ata_space->device_amount_;                 // increase after founded
+                // increase after founded
+                ++ata_space->device_amount_;
             }
 
         } // end for(j)

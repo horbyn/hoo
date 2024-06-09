@@ -4,24 +4,12 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#include "files.h"
 
-#include "module/config.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/fs.h"
-#include "module/mem.h"
-#include "module/sched.h"
-#include "driver/io.h"
-#ifdef TEST
-    #include "test/test.h"
-#endif
+files_t __fs_files[MAX_OPEN_FILES];
 
-extern uint8_t __kern_base[], __kern_end[];
-
-void kernel_init(void);
-void kernel_exec(void);
-
-#endif
+bool
+files_create(diritem_t cur_dir, const char *name,
+void *buff, uint32_t bufflen) {
+    return false;
+}

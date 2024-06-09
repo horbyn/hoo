@@ -31,7 +31,7 @@ get_mminfo() {
 #ifndef DEBUG
     else
         kprintf("================ MEMORY  INFO ================\n"
-                "begin: 0x%x, end: 0x%x\n", __mminfo.base_,
+                "begin: 0x%x, end: 0x%x\n\n", __mminfo.base_,
                 __mminfo.base_ + __mminfo.length_);
 #endif
 }

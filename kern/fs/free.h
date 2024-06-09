@@ -5,23 +5,18 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_FS_FREE_H__
+#define __KERN_FS_FREE_H__
 
-#include "module/config.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/fs.h"
-#include "module/mem.h"
-#include "module/sched.h"
-#include "driver/io.h"
-#ifdef TEST
-    #include "test/test.h"
-#endif
+#include "super_block.h"
+#include "kern/mem/dynamic.h"
+#include "kern/mem/pm.h"
+#include "kern/mem/vm.h"
+#include "kern/units/bitmap.h"
 
-extern uint8_t __kern_base[], __kern_end[];
-
-void kernel_init(void);
-void kernel_exec(void);
+lba_index_t free_allocate();
+void free_release(lba_index_t index);
+void free_rw_disk(void *buff, uint32_t bufflen, lba_index_t base_lba, ata_cmd_t cmd);
+void setup_free_map(bool is_new);
 
 #endif

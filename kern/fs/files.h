@@ -5,13 +5,25 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_MODULE_DRIVER_H__
-#define __KERN_MODULE_DRIVER_H__
+#ifndef __KERN_FS_FILES_H__
+#define __KERN_FS_FILES_H__
 
-#include "kern/driver/ata_driver.h"
-#include "kern/driver/8259a/8259a.h"
-#include "kern/driver/8253/8253.h"
+#include "dir.h"
+#include "kern/types.h"
 
-void kinit_dirver(void);
+#define MAX_OPEN_FILES 1024
+
+/**
+ * @brief file struct corresponding to the opening file.
+ * that is there will be multiple structures if we
+ * repeatly open a file
+ */
+typedef struct files {
+    idx_t inode_idx_;
+} __attribute__((packed)) files_t;
+extern files_t __fs_files[MAX_OPEN_FILES];
+
+bool files_create(diritem_t cur_dir, const char *name, void *buff,
+    uint32_t bufflen);
 
 #endif

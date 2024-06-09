@@ -42,21 +42,6 @@ vspace_set(vspace_t *vs, list_t *ls, uint32_t begin, uint32_t end,
 }
 
 /**
- * @brief append `next` to `cur`
- * 
- * @param cur current vspace object
- * @param next next vspace object
- */
-void
-vspace_append(vspace_t *cur, vspace_t *next) {
-    if (cur == null || next == null)
-        panic("vspace_append(): invalid parameter");
-
-    next->next_ = cur->next_;
-    cur->next_ = next;
-}
-
-/**
  * @brief `vsmngr` object initialization
  * 
  * @param mngr `vsmngr` object
@@ -65,81 +50,9 @@ vspace_append(vspace_t *cur, vspace_t *next) {
  * @param va_vaddr metadata vaddr virtual address
  */
 void
-vsmngr_init(vsmngr_t *mngr, void *va_vs, void *va_node, void *va_vaddr) {
-    if (mngr == null)    panic("vsmngr_init(): invalid parameter");
+vsmngr_set(vsmngr_t *mngr, void *va_vs, void *va_node, void *va_vaddr) {
+    if (mngr == null)    panic("vsmngr_set(): invalid parameter");
     mngr->vspace_ = va_vs;
     mngr->node_ = va_node;
     mngr->vaddr_ = va_vaddr;
-}
-
-/**
- * @brief metadata vspace allocation
- * 
- * @param mngr `vsmngr` object
- */
-vspace_t *
-vsmngr_alloc_vspace(vsmngr_t *mngr) {
-    if (mngr == null)    panic("vsmngr_alloc_vspace(): invalid parameter");
-    if (list_isempty(&mngr->vspace_->list_))
-        fmtlist_init(mngr->vspace_, sizeof(vspace_t), true);
-    return fmtlist_alloc(mngr->vspace_);
-}
-
-/**
- * @brief metadata node allocation
- * 
- * @param mngr `vsmngr` object
- */
-node_t *
-vsmngr_alloc_node(vsmngr_t *mngr) {
-    if (mngr == null)    panic("vsmngr_alloc_node(): invalid parameter");
-    if (list_isempty(&mngr->node_->list_))
-        fmtlist_init(mngr->node_, sizeof(node_t), true);
-    return fmtlist_alloc(mngr->node_);
-}
-
-/**
- * @brief metadata vaddr allocation
- * 
- * @param mngr `vsmngr` object
- */
-vaddr_t *
-vsmngr_alloc_vaddr(vsmngr_t *mngr) {
-    if (mngr == null)    panic("vsmngr_alloc_vaddr(): invalid parameter");
-    if (list_isempty(&mngr->vaddr_->list_))
-        fmtlist_init(mngr->vaddr_, sizeof(vaddr_t), true);
-    return fmtlist_alloc(mngr->vaddr_);
-}
-
-/**
- * @brief metadata vspace releasing
- * 
- * @param mngr `vsmngr` object
- * @param vs metadata vspace object
- */
-void
-vsmngr_release_vspace(vsmngr_t *mngr, vspace_t *vs) {
-    fmtlist_release(mngr->vspace_, vs, sizeof(vspace_t));
-}
-
-/**
- * @brief metadata node releasing
- * 
- * @param mngr `vsmngr` object
- * @param vs metadata node object
- */
-void
-vsmngr_release_node(vsmngr_t *mngr, node_t *node) {
-    fmtlist_release(mngr->node_, node, sizeof(node_t));
-}
-
-/**
- * @brief metadata vaddr releasing
- * 
- * @param mngr `vsmngr` object
- * @param vs metadata vaddr object
- */
-void
-vsmngr_release_vaddr(vsmngr_t *mngr, vaddr_t *vaddr) {
-    fmtlist_release(mngr->vaddr_, vaddr, sizeof(vaddr_t));
 }

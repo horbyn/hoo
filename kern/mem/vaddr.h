@@ -43,13 +43,6 @@ typedef struct vspace_manager {
 
 void vaddr_set(vaddr_t *vaddr, uint32_t addr, uint32_t length);
 void vspace_set(vspace_t *vs, list_t *ls, uint32_t begin, uint32_t end, vspace_t *next);
-void vspace_append(vspace_t *cur, vspace_t *next);
-void vsmngr_init(vsmngr_t *mngr, void *va_vs, void *va_node, void *va_vaddr);
-vspace_t *vsmngr_alloc_vspace(vsmngr_t *mngr);
-node_t   *vsmngr_alloc_node(vsmngr_t *mngr);
-vaddr_t  *vsmngr_alloc_vaddr(vsmngr_t *mngr);
-void vsmngr_release_vspace(vsmngr_t *mngr, vspace_t *vs);
-void vsmngr_release_node(vsmngr_t *mngr, node_t *node);
-void vsmngr_release_vaddr(vsmngr_t *mngr, vaddr_t *vaddr);
+void vsmngr_set(vsmngr_t *mngr, void *va_vs, void *va_node, void *va_vaddr);
 
 #endif

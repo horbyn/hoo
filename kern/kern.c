@@ -26,6 +26,7 @@ kernel_init(void) {
     kinit_tasks_system();
     kinit_isr_idt();
     kinit_dirver();
+    kinit_fs();
 
 #ifndef DEBUG
     ata_space_t *ata_space = get_ataspace();
@@ -42,6 +43,19 @@ kernel_init(void) {
         ENUM2STR_ATA_TYPE_DEVICE(
             ata_space->device_info_[select].device_type_),
         ata_space->device_info_[select].total_sectors_);
+
+    kprintf("================ FILE  SYSTEM ================"
+        "\naccess:          %s"
+        "\nlba:"
+        "\n    super block: %d"
+        "\n    inode map:   %d"
+        "\n    inodes:      %d"
+        "\n    free map:    %d"
+        "\n    free:        %d\n\n",
+        MACRO_STRING_INDEX_LEVEL(__super_block.index_level_),
+        __super_block.lba_super_block_, __super_block.lba_map_inode_,
+        __super_block.lba_inodes_, __super_block.lba_map_free_,
+        __super_block.lba_free_);
 #endif
 
 }

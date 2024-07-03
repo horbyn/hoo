@@ -12,9 +12,8 @@
 #include "free.h"
 #include "kern/units/lib.h"
 
-#define FS_DIR_BASIC_CUR    0
-#define FS_DIR_BASIC_PRE    1
 #define DIRITEM_NAME_LEN    16
+#define DIRNAME_ROOT        "/"
 
 /**
  * @brief directory item
@@ -43,8 +42,8 @@ void      diritem_set(diritem_t *dir, enum_inode_type type, idx_t inode_idx,
     const char *name);
 int       diritem_write(dirblock_t *block, const diritem_t *item);
 diritem_t *diritem_read(dirblock_t *block, const diritem_t *item);
-diritem_t *diritem_find(const char *dir);
-void      dirblock_rw(dirblock_t *db, lba_index_t lba, ata_cmd_t cmd);
+void      diritem_find(const char *dir, diritem_t *found);
+void      dirblock_get_new(dirblock_t *result);
 void      setup_root_dir(bool is_new);
 
 #endif

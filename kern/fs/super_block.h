@@ -24,7 +24,6 @@ typedef struct super_block {
         lba_inodes_,
         lba_map_free_,
         lba_free_;
-    enum_index_level_t index_level_;
     uint32_t map_free_sectors_;
     uint32_t inode_block_index_max_;
 } super_block_t;

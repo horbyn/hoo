@@ -33,11 +33,11 @@ typedef struct inode {
 } __attribute__((packed)) inode_t;
 extern inode_t __fs_inodes[MAX_INODES];
 
-idx_t inode_allocate(void);
-void  inode_release(idx_t idx);
-void  inode_set(idx_t inode_idx, uint32_t size, lba_index_t base_lba);
-void  inode_retrieve_block(void *block, idx_t inode_idx, idx_t inode_block_idx);
-void  inodes_rw_disk(idx_t inode_idx, ata_cmd_t cmd);
-void  setup_inode(bool);
+idx_t       inode_allocate(void);
+void        inode_release(idx_t idx);
+void        inode_set(idx_t inode_idx, uint32_t size, lba_index_t base_lba);
+void        inodes_rw_disk(idx_t inode_idx, ata_cmd_t cmd);
+lba_index_t iblock_get(idx_t inode_idx, idx_t iblock_idx);
+void        setup_inode(bool);
 
 #endif

@@ -5,7 +5,6 @@
  *                                                                        *
  **************************************************************************/
 #include "test.h"
-#include "kern/driver/io.h"
 #include "kern/mem/pm.h"
 #include "kern/sched/tasks.h"
 

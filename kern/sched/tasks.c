@@ -53,12 +53,14 @@ debug_print_tasks() {
     kprintf(
         "[DEBUG] sizeof(pgstruct_t): %d\tsizeof(vsmngr_t): %d\tsizeof(pcb_t): %d\n"
         "[DEBUG] __mdata_node:       0x%x\n"
+        "[DEBUG] __mdata_pcb:        0x%x\n"
         "[DEBUG] __queue_ready:      0x%x\n"
         "[DEBUG] __queue_running:    0x%x\n"
         "[DEBUG] __list_sleeping:    0x%x\n"
         "[DEBUG] __list_expired:     0x%x\n",
         sizeof(pgstruct_t), sizeof(vsmngr_t), sizeof(pcb_t), __mdata_node,
-        &__queue_ready, &__queue_running, &__list_sleeping, &__list_expired);
+        __mdata_pcb, &__queue_ready, &__queue_running, &__list_sleeping,
+        &__list_expired);
 
     kprintf("\n[DEBUG] running: ");
     for (node_t *n = __queue_running.head_->next_; n; n = n->next_) {

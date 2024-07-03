@@ -16,7 +16,7 @@
 
 lba_index_t free_allocate();
 void free_release(lba_index_t index);
-void free_rw_disk(void *buff, uint32_t bufflen, lba_index_t base_lba, ata_cmd_t cmd);
+void free_rw_disk(void *buff, lba_index_t base_lba, ata_cmd_t cmd, bool is_new);
 void setup_free_map(bool is_new);
 
 #endif

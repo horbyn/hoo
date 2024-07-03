@@ -57,129 +57,6 @@ inode_set(idx_t inode_idx, uint32_t size, lba_index_t base_lba) {
 }
 
 /**
- * @brief retrieve the block from direct index method
- * 
- * @param block           block buffer
- * @param inode_idx       inode index
- * @param inode_block_idx inode iblock index
- * @return block
- */
-static void
-retrieve_block_l0(void *block, idx_t inode_idx, idx_t inode_block_idx) {
-    lba_index_t lba_idx = __fs_inodes[inode_idx].iblocks_[inode_block_idx];
-    ata_driver_rw(block, BYTES_SECTOR, lba_idx, ATA_CMD_IO_READ);
-}
-
-/**
- * @brief retrieve the block from single indirect index method
- * 
- * @param block           block buffer
- * @param inode_idx       inode index
- * @param inode_block_idx inode iblock index
- * @return block
- */
-static void
-retrieve_block_l1(void *block, idx_t inode_idx, idx_t inode_block_idx) {
-    static uint32_t BORDER = MAX_DIRECT + LBA_ITEMS_PER_SECTOR,
-        BORDER2 = MAX_DIRECT + LBA_ITEMS_PER_SECTOR * 2;
-    lba_index_t lba_indirect = 0;
-
-    if (MAX_DIRECT < inode_block_idx) {
-        retrieve_block_l0(block, inode_idx, inode_block_idx);
-        return;
-    } else if (MAX_DIRECT <= inode_block_idx && inode_block_idx < BORDER)
-        lba_indirect = MAX_DIRECT;
-    else if (BORDER <= inode_block_idx && inode_block_idx < BORDER2)
-        lba_indirect = MAX_DIRECT + 1;
-    else    panic("retrieve_block_l1(): inode block array out of range");
-
-    lba_index_t *lba_block = dyn_alloc(BYTES_SECTOR);
-    ata_driver_rw(lba_block, BYTES_SECTOR, lba_indirect, ATA_CMD_IO_READ);
-
-    uint32_t i = 0;
-    for (; i < LBA_ITEMS_PER_SECTOR; ++i)
-        if (lba_block[i] == inode_block_idx)    break;
-    if (i == LBA_ITEMS_PER_SECTOR)
-        panic("retrieve_block_l1(): index of inode block array not found");
-
-    ata_driver_rw(block, BYTES_SECTOR, lba_block[i], ATA_CMD_IO_READ);
-    dyn_free(lba_block);
-}
-
-/**
- * @brief retrieve the block from double indirect index method
- * 
- * @param block           block buffer
- * @param inode_idx       inode index
- * @param inode_block_idx inode iblock index
- * @return block
- */
-static void
-retrieve_block_l2(void *block, idx_t inode_idx, idx_t inode_block_idx) {
-    static uint32_t BORDER = MAX_DIRECT + LBA_ITEMS_PER_SECTOR,
-        BORDER2 = MAX_DIRECT + ((LBA_ITEMS_PER_SECTOR + 1) * LBA_ITEMS_PER_SECTOR);
-    lba_index_t lba_indirect1 = 0;
-
-    if (MAX_DIRECT < inode_block_idx) {
-        retrieve_block_l0(block, inode_idx, inode_block_idx);
-        return;
-    } else if (MAX_DIRECT <= inode_block_idx && inode_block_idx < BORDER) {
-        retrieve_block_l1(block, inode_idx, inode_block_idx);
-        return;
-    } else if (BORDER <= inode_block_idx && inode_block_idx < BORDER2)
-        lba_indirect1 = MAX_DIRECT + 1;
-    else    panic("retrieve_block_l1(): inode block array out of range");
-
-    // get the double indirect index
-    lba_index_t *lba_block_l2 = dyn_alloc(BYTES_SECTOR);
-    ata_driver_rw(lba_block_l2, BYTES_SECTOR, lba_indirect1, ATA_CMD_IO_READ);
-    lba_index_t lba_indirect2 =
-        ((inode_block_idx - MAX_DIRECT - LBA_ITEMS_PER_SECTOR)
-        + LBA_ITEMS_PER_SECTOR - 1) / LBA_ITEMS_PER_SECTOR;
-    lba_index_t lba_indirect = lba_block_l2[lba_indirect2];
-
-    // get the double indirect index
-    lba_index_t *lba_block_l1 = dyn_alloc(BYTES_SECTOR);
-    ata_driver_rw(lba_block_l1, BYTES_SECTOR, lba_indirect, ATA_CMD_IO_READ);
-
-    uint32_t i = 0;
-    for (; i < LBA_ITEMS_PER_SECTOR; ++i)
-        if (lba_block_l1[i] == inode_block_idx)    break;
-    if (i == LBA_ITEMS_PER_SECTOR)
-        panic("retrieve_block_l1(): index of inode block array not found");
-
-    ata_driver_rw(block, BYTES_SECTOR, lba_block_l1[i], ATA_CMD_IO_READ);
-    dyn_free(lba_block_l2);
-    dyn_free(lba_block_l1);
-}
-
-/**
- * @brief retrieve blocks according to the index of the inode iblock array
- * 
- * @param block           block buffer
- * @param inode_idx       inode index
- * @param inode_block_idx inode iblock index
- * @retval null: error happened 
- */
-void
-inode_retrieve_block(void *block, idx_t inode_idx, idx_t inode_block_idx) {
-    if (block == null)    panic("inode_retrieve_block(): null pointer");
-    if (inode_idx == INVALID_INDEX)
-        panic("inodes_write_to_disk(): invalid inode index");
-    if (inode_block_idx >= __super_block.inode_block_index_max_)
-        panic("inodes_write_to_disk(): invalid index of inode block array");
-
-    switch (__super_block.index_level_) {
-    case INDEX_LEVEL2:
-        retrieve_block_l2(block, inode_idx, inode_block_idx); break;
-    case INDEX_LEVEL1:
-        retrieve_block_l1(block, inode_idx, inode_block_idx); break;
-    default: retrieve_block_l0(block, inode_idx, inode_block_idx); break;
-    }
-
-}
-
-/**
  * @brief inode reads from / writes to disk
  * 
  * @param inode_idx inode index
@@ -205,6 +82,52 @@ inodes_rw_disk(idx_t inode_idx, ata_cmd_t cmd) {
     else    bitmap_clear(&__bmfs, inode_idx);
     ata_driver_rw(__bmbuff_fs_inodes, sizeof(__bmbuff_fs_inodes),
         __super_block.lba_map_inode_, ATA_CMD_IO_WRITE);
+}
+
+/**
+ * @brief get the element of array iblock according to specific inode
+ * 
+ * @param inode_idx  inode index
+ * @param iblock_idx the index of the array iblock
+ * @return lba
+ */
+lba_index_t
+iblock_get(idx_t inode_idx, idx_t iblock_idx) {
+    if (inode_idx == INVALID_INDEX || inode_idx >= MAX_INODES)
+        panic("iblock_get(): invalid inode index");
+    if (iblock_idx == INVALID_INDEX
+        || iblock_idx >= __super_block.inode_block_index_max_)
+        panic("iblock_get(): invalid iblock index");
+
+    static const idx_t DIRECT_INDEX = MAX_INODE_BLOCKS - 2 - 1, // 5
+        LEVEL1_INDEX = DIRECT_INDEX + 1, LEVEL2_INDEX = LEVEL1_INDEX + 1; // 6, 7
+    static const idx_t DIRECT_BORDER = MAX_INODE_BLOCKS - 2, // 6
+        LEVEL1_BORDER = DIRECT_BORDER + LBA_ITEMS_PER_SECTOR, // 134
+        LEVEL2_BORDER = LEVEL1_BORDER + LBA_ITEMS_PER_SECTOR * LBA_ITEMS_PER_SECTOR; // 16518
+
+    inode_t *inode = __fs_inodes + inode_idx;
+    lba_index_t ret = 0;
+    char *buf = dyn_alloc(BYTES_SECTOR);
+    if (iblock_idx < DIRECT_BORDER) {
+        ret = inode->iblocks_[iblock_idx];
+    } else if (iblock_idx < LEVEL1_BORDER) {
+        lba_index_t level1 = inode->iblocks_[LEVEL1_INDEX];
+        ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
+        ret = ((lba_index_t *)buf)[iblock_idx - DIRECT_BORDER];
+    } else if (iblock_idx < LEVEL2_BORDER) {
+        lba_index_t level2 = inode->iblocks_[LEVEL2_INDEX];
+        ata_driver_rw(buf, BYTES_SECTOR, level2, ATA_CMD_IO_READ);
+        idx_t index = iblock_idx - LEVEL1_BORDER;
+
+        lba_index_t level1 = ((lba_index_t *)buf)[index / LBA_ITEMS_PER_SECTOR];
+        ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
+        ret = ((lba_index_t *)buf)[index % LBA_ITEMS_PER_SECTOR];
+    } else {
+        panic("iblock_get(): invalid iblock index");
+    }
+
+    dyn_free(buf);
+    return ret;
 }
 
 /**

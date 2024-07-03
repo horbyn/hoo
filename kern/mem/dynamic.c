@@ -22,7 +22,7 @@ arrlist_init(arrlist_t *list, uint32_t type_size) {
     arrlist_t *arrlist = (arrlist_t *)p;
     arrlist->type_size_ = type_size;
     arrlist->first_off_ = sizeof(arrlist_t);
-    *((void **)(arrlist->head_)) = (void *)(p + arrlist->first_off_);
+    *((void **)(&arrlist->head_)) = (void *)(p + arrlist->first_off_);
     arrlist->capacity_ = (PGSIZE - arrlist->first_off_) / type_size;
     arrlist->size_ = arrlist->capacity_;
     arrlist->next_ = null;
@@ -37,7 +37,7 @@ arrlist_init(arrlist_t *list, uint32_t type_size) {
      */
 
     p += arrlist->first_off_;
-    for (uint32_t i = 0; i < arrlist->capacity_; ++i) {
+    for (uint32_t i = 0; i < arrlist->capacity_; ++i, p += type_size) {
         if (i == arrlist->capacity_ - 1)    *((void **)p) = null;
         else    *((void **)p) = (void *)(p + type_size);
     }
@@ -61,10 +61,11 @@ arrlist_pop(arrlist_t *list) {
  * @brief get a free element from the array list
  * 
  * @param list array list
+ * @param size element size
  * @return the free element
  */
 static void *
-arrlist_alloc(arrlist_t *list) {
+arrlist_alloc(arrlist_t *list, uint32_t size) {
 
     void *ret = null;
     arrlist_t *pre = null;
@@ -83,7 +84,7 @@ arrlist_alloc(arrlist_t *list) {
         void *va = vir_alloc_pages(cur_pcb, 1);
         set_mapping(&cur_pcb->pgstruct_, (uint32_t)va, (uint32_t)pa,
             PGENT_US | PGENT_RW | PGENT_PS);
-        arrlist_init(va, list->type_size_);
+        arrlist_init(va, size);// not null, 0x20
 
         if (pre == null)    list = va;
         else    pre->next_ = va;
@@ -165,7 +166,7 @@ dyn_alloc(uint32_t size) {
         return va;
     }
 
-    return arrlist_alloc(mngr->chain_);
+    return arrlist_alloc(mngr->chain_, mngr->size_);
 }
 
 /**

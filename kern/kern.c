@@ -45,14 +45,12 @@ kernel_init(void) {
         ata_space->device_info_[select].total_sectors_);
 
     kprintf("================ FILE  SYSTEM ================"
-        "\naccess:          %s"
         "\nlba:"
         "\n    super block: %d"
         "\n    inode map:   %d"
         "\n    inodes:      %d"
         "\n    free map:    %d"
         "\n    free:        %d\n\n",
-        MACRO_STRING_INDEX_LEVEL(__super_block.index_level_),
         __super_block.lba_super_block_, __super_block.lba_map_inode_,
         __super_block.lba_inodes_, __super_block.lba_map_free_,
         __super_block.lba_free_);
@@ -84,5 +82,9 @@ kernel_exec(void) {
 #ifdef DEBUG
     clear_screen();
     debug_print_tasks();
+#endif
+
+#ifdef TEST
+    test_fs();
 #endif
 }

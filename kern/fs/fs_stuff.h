@@ -27,19 +27,4 @@
  */
 typedef uint32_t lba_index_t;
 
-/**
- * @brief index level
- */
-typedef enum index_level {
-    INDEX_LEVEL0 = 0,                                       // direct
-    INDEX_LEVEL1,                                           // single indirect
-    INDEX_LEVEL2,                                           // double indirect
-
-    MAX_FS_ACCESS_LEVEL
-} enum_index_level_t;
-#define MACRO_STRING_INDEX_LEVEL(e) \
-    ((e == INDEX_LEVEL0) ? "direct" : \
-     (e == INDEX_LEVEL1) ? "single indirect" : \
-     (e == INDEX_LEVEL2) ? "double indirect" : "unknown")
-
 #endif

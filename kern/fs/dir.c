@@ -6,7 +6,6 @@
  **************************************************************************/
 #include "dir.h"
 
-static char *__fs_dir_basic[] = { ".", "..", 0 };
 static diritem_t __fs_root_dir;
 
 /**
@@ -91,82 +90,85 @@ diritem_read(dirblock_t *block, const diritem_t *item) {
 /**
  * @brief find the specific diritem
  * 
- * @param dir the absolute path to be searched
- * @return diritem object
+ * @param dir   the absolute path to be searched
+ * @param found diritem object found
  */
-diritem_t *
-diritem_find(const char *dir) {
-    static char separate = '/';
-    if (dir && dir[0] != separate)
+void
+diritem_find(const char *dir, diritem_t *found) {
+    static const char SEPARATE = '/';
+    if (dir && dir[0] != SEPARATE)
         panic("diritem_find(): not absolute path");
+    if (found == null)    panic("diritem_find(): null pointer");
 
-    diritem_t *ret = null;
+    diritem_t *item = &__fs_root_dir;
     if (dir) {
+        uint32_t count = 0;
+        for (uint32_t i = 0; i < strlen(dir); ++i)
+            if (dir[i] == SEPARATE)    ++count;
+
         diritem_t *worker = &__fs_root_dir;
         char name_storage[DIRITEM_NAME_LEN] = { 0 };
 
-        ++dir;
-        while (dir) {
+        for (uint32_t i = 1; i <= count; ++i) {
             // get the current directory name
             //   e.g. "/dir1/dir2/dir3" -> "dir3"
             //                    ^
             //                    |
             //                    dir pointer
             bzero(name_storage, sizeof(name_storage));
-            uint32_t pos = 0;
-            while (dir[pos] && dir[pos] != separate)    ++pos;
-            if (pos >= DIRITEM_NAME_LEN)
-                panic("diritem_find(): invalid dir name");
-
-            memmove(name_storage, dir, pos);
-            name_storage[pos] = 0;
-
-            for (uint32_t i = 0; i <= pos + 1; ++i, ++dir)
-                if (dir[i] == 0)    break;
+            strsep(dir, SEPARATE, i, name_storage);
 
             // traversal inode blocks
             dirblock_t *dirblock = dyn_alloc(sizeof(dirblock_t));
-            uint32_t i = 0;
-            for (; i < __super_block.inode_block_index_max_; ++i) {
+            uint32_t j = 0;
+            for (; j < __super_block.inode_block_index_max_; ++j) {
                 // the block filled with directory items
-                inode_retrieve_block(dirblock, worker->inode_idx_, i);
+                lba_index_t lba = iblock_get(worker->inode_idx_, j);
+                free_rw_disk(dirblock, lba, ATA_CMD_IO_READ, false);
 
                 bool found = false;
-                for (uint32_t j = 0; j < dirblock->amount_; ++j) {
-                    ret = dirblock->dir_ + j;
-                    if (memcmp(ret->name_, name_storage, pos) == 0) {
+                for (uint32_t k = 0; k < dirblock->amount_; ++k) {
+                    item = dirblock->dir_ + k;
+                    if (memcmp(item->name_, name_storage, strlen(name_storage)) == 0) {
                         found = true;
                         break;
                     }
-                } // end for(j)
+                } // end for(k)
 
                 if (found)    break;
-            } // end for(i)
+            } // end for(j)
             dyn_free(dirblock);
 
-            if (i == __super_block.inode_block_index_max_)
+            if (j == __super_block.inode_block_index_max_)
                 panic("diritem_find(): no such directory item");
             else    break;
 
-        } // end while(dir)
+        } // end for(i)
     }
 
-    return ret;
+    memmove(found, item, sizeof(diritem_t));
 }
 
 /**
- * @brief directory block writes to disk
+ * @brief get a new dirblock
  * 
- * @param db  dirblock object
- * @param lba lba index
- * @param cmd ata command
+ * @param result new dirblock
  */
 void
-dirblock_rw(dirblock_t *db, lba_index_t lba, ata_cmd_t cmd) {
-    if (db == null)    panic("dirblock_rw(): null pointer");
-    if (lba == INVALID_INDEX)    panic("dirblock_rw(): invalid lba index");
+dirblock_get_new(dirblock_t *result) {
+    if (result == null)    panic("dirblock_get_new(): null pointer");
 
-    ata_driver_rw(db, sizeof(dirblock_t), lba, cmd);
+    // [0] .
+    // [1] ..
+    diritem_t *cur = result->dir_, *pre = result->dir_ + 1;
+    cur->type_ = pre->type_ = INODE_TYPE_DIR;
+    cur->inode_idx_ = INODE_INDEX_ROOT;
+    pre->inode_idx_ = INVALID_INDEX;
+    bzero(cur->name_, DIRITEM_NAME_LEN);
+    bzero(pre->name_, DIRITEM_NAME_LEN);
+    memmove(cur->name_, ".", sizeof(1));
+    memmove(pre->name_, "..", sizeof(2));
+    result->amount_ = 2;
 }
 
 /**
@@ -178,27 +180,19 @@ void
 setup_root_dir(bool is_new) {
 
     // setup dir item
-    diritem_set(&__fs_root_dir, INODE_TYPE_DIR, INODE_INDEX_ROOT, "/");
+    diritem_set(&__fs_root_dir, INODE_TYPE_DIR, INODE_INDEX_ROOT, DIRNAME_ROOT);
 
     if (is_new) {
 
         dirblock_t dirblock;
         bzero(&dirblock, sizeof(dirblock_t));
+        dirblock_get_new(&dirblock);
 
         // setup inode
         lba_index_t free_block = free_allocate();
-        inode_set(INODE_INDEX_ROOT, 0, free_block);
+        inode_set(INODE_INDEX_ROOT, dirblock.amount_, free_block);
+        inodes_rw_disk(INODE_INDEX_ROOT, ATA_CMD_IO_WRITE);
 
-        // setup block
-        diritem_t dir_cur, dir_pre;
-        diritem_set(&dir_cur, INODE_TYPE_DIR,
-            INODE_INDEX_ROOT, __fs_dir_basic[FS_DIR_BASIC_CUR]);
-        diritem_set(&dir_pre, INODE_TYPE_DIR, INVALID_INDEX,
-            __fs_dir_basic[FS_DIR_BASIC_PRE]);
-
-        // NEED NOT check return value because it is the first item
-        diritem_write(&dirblock, &dir_cur);
-        diritem_write(&dirblock, &dir_pre);
-        dirblock_rw(&dirblock, free_block, ATA_CMD_IO_WRITE);
+        free_rw_disk(&dirblock, free_block, ATA_CMD_IO_WRITE, true);
     }
 }

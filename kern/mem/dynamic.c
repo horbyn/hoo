@@ -60,18 +60,19 @@ arrlist_pop(arrlist_t *list) {
 /**
  * @brief get a free element from the array list
  * 
- * @param list array list
- * @param size element size
+ * @param plist array list
+ * @param size  element size
  * @return the free element
  */
 static void *
-arrlist_alloc(arrlist_t *list, uint32_t size) {
+arrlist_alloc(arrlist_t **plist, uint32_t size) {
+    if (plist == null)    panic("arrlist_alloc(): null pointer");
 
     void *ret = null;
-    arrlist_t *pre = null;
+    arrlist_t *pre = null, *list = *plist;
     while (list) {
         if (list->size_ != 0) {
-            ret = arrlist_pop(list->head_);
+            ret = arrlist_pop(list);
             break;
         }
         pre = list;
@@ -86,10 +87,10 @@ arrlist_alloc(arrlist_t *list, uint32_t size) {
             PGENT_US | PGENT_RW | PGENT_PS);
         arrlist_init(va, size);// not null, 0x20
 
-        if (pre == null)    list = va;
+        if (pre == null)    *plist = list = va;
         else    pre->next_ = va;
 
-        ret = arrlist_pop(list->head_);
+        ret = arrlist_pop(list);
     }
 
     return ret;
@@ -99,7 +100,7 @@ arrlist_alloc(arrlist_t *list, uint32_t size) {
  * @brief reclaim the list elements of specific type (DO NOT VERIFY whether
  * the element is belong to this list)
  * 
- * @param fmtlist   the array list
+ * @param plist     the array list
  * @param elem      the free element
  * @param elem_size the length of the free element
  * 
@@ -107,13 +108,15 @@ arrlist_alloc(arrlist_t *list, uint32_t size) {
  * @retval false: release failed
  */
 static bool
-arrlist_release(arrlist_t *list, void *elem, uint32_t elem_size) {
-    if (list == null)    panic("arrlist_release(): null pointer");
-    if (elem_size != list->type_size_)
-        panic("arrlist_release(): element type not match");
+arrlist_release(arrlist_t **plist, void *elem, uint32_t elem_size) {
+    arrlist_t *pre = null, *list = null;
+    bool release = false;
 
-    arrlist_t *pre = null;
+    if (plist)    list = *plist;
     while (list) {
+        if (elem_size != list->type_size_)
+            panic("arrlist_release(): element type not match");
+
         if ((void *)list == (void *)PGDOWN((uint32_t)elem, PGSIZE)) {
             void *temp = list->head_;
             list->head_ = elem;
@@ -125,16 +128,17 @@ arrlist_release(arrlist_t *list, void *elem, uint32_t elem_size) {
                     pre->next_ = list->next_;
 
                 phy_release_vpage(get_current_pcb(), list);
-                list = null;
+                *plist = null;
             }
 
+            release = true;
             break;
         }
         pre = list; 
         list = list->next_;
     } // end while()
 
-    return list ? true : false;
+    return release;
 }
 
 /**
@@ -166,7 +170,7 @@ dyn_alloc(uint32_t size) {
         return va;
     }
 
-    return arrlist_alloc(mngr->chain_, mngr->size_);
+    return arrlist_alloc(&mngr->chain_, mngr->size_);
 }
 
 /**
@@ -180,9 +184,8 @@ dyn_free(void *ptr) {
     buckx_mngr_t *mngr = cur_pcb->hmngr_;
 
     while (mngr) {
-        if (arrlist_release(mngr->chain_, ptr, mngr->size_))    break;
+        if (arrlist_release(&mngr->chain_, ptr, mngr->size_))    break;
         mngr = mngr->next_;
     }
-    // if (mngr == null)    phy_release_vpage(cur_pcb, ptr); // single page not multiple
     if (mngr == null)    vir_release_pages(cur_pcb, ptr);
 }

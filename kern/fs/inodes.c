@@ -99,11 +99,11 @@ iblock_get(idx_t inode_idx, idx_t iblock_idx) {
         || iblock_idx >= __super_block.inode_block_index_max_)
         panic("iblock_get(): invalid iblock index");
 
-    static const idx_t DIRECT_INDEX = MAX_INODE_BLOCKS - 2 - 1, // 5
-        LEVEL1_INDEX = DIRECT_INDEX + 1, LEVEL2_INDEX = LEVEL1_INDEX + 1; // 6, 7
-    static const idx_t DIRECT_BORDER = MAX_INODE_BLOCKS - 2, // 6
-        LEVEL1_BORDER = DIRECT_BORDER + LBA_ITEMS_PER_SECTOR, // 134
-        LEVEL2_BORDER = LEVEL1_BORDER + LBA_ITEMS_PER_SECTOR * LBA_ITEMS_PER_SECTOR; // 16518
+    static const idx_t DIRECT_INDEX = MAX_INODE_BLOCKS - 2 - 1,
+        LEVEL1_INDEX = DIRECT_INDEX + 1, LEVEL2_INDEX = LEVEL1_INDEX + 1;
+    static const idx_t DIRECT_BORDER = MAX_INODE_BLOCKS - 2,
+        LEVEL1_BORDER = DIRECT_BORDER + LBA_ITEMS_PER_SECTOR,
+        LEVEL2_BORDER = LEVEL1_BORDER + LBA_ITEMS_PER_SECTOR * LBA_ITEMS_PER_SECTOR;
 
     inode_t *inode = __fs_inodes + inode_idx;
     lba_index_t ret = 0;

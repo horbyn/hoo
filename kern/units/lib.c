@@ -75,8 +75,8 @@ memmove(void *dst, const void *src, uint32_t size) {
  * @param a buffer a
  * @param b buffer b
  * @param max_cmp_size the max size to be compared
- * @return true same
- * @return false not same
+ * @retval true: same
+ * @retval false: not same
  */
 bool
 memcmp(const void *a, const void *b, uint32_t max_cmp_size) {

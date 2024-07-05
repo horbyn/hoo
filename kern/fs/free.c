@@ -55,10 +55,12 @@ free_rw_disk(void *buff, lba_index_t base_lba, ata_cmd_t cmd, bool is_new) {
 
     ata_driver_rw(buff, BYTES_SECTOR, base_lba, cmd);
 
-    if (cmd == ATA_CMD_IO_WRITE)    bitmap_set(&__bmfs_free, bit);
-    else    bitmap_clear(&__bmfs_free, bit);
-    ata_driver_rw(__bmbuff_fs_free, __bmbuff_fs_free_inbytes,
-        __super_block.lba_map_free_, cmd);
+    if (is_new) {
+        if (cmd == ATA_CMD_IO_WRITE)    bitmap_set(&__bmfs_free, bit);
+        else    bitmap_clear(&__bmfs_free, bit);
+        ata_driver_rw(__bmbuff_fs_free, __bmbuff_fs_free_inbytes,
+            __super_block.lba_map_free_, cmd);
+    }
 
 }
 

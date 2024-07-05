@@ -12,6 +12,12 @@
  */
 void
 test_fs() {
-    kprintf("create direcoty: /usr");
+    clear_screen();
+    kprintf("> TEST_FS <\n");
+
+    kprintf("create direcoty: /usr\n");
     files_create(INODE_TYPE_DIR, "/usr");
+
+    kprintf("\n\ncreate file: /usr/myfile.txt\n");
+    files_create(INODE_TYPE_FILE, "/usr/myfile.txt");
 }

@@ -45,12 +45,14 @@ files_create(enum_inode_type type, const char *name) {
     diritem_write(db, di_new);
     free_rw_disk(db, lba, ATA_CMD_IO_WRITE, is_new);
     ++__fs_inodes[di_parent->inode_idx_].size_;
+    inodes_rw_disk(di_parent->inode_idx_, ATA_CMD_IO_WRITE);
 
     // new diritem push to disk
     lba_index_t lba_new = free_allocate();
     dirblock_t *db_new = dyn_alloc(sizeof(dirblock_t));
     dirblock_get_new(db_new);
     inode_set(inode_new, db_new->amount_, lba_new);
+    inodes_rw_disk(inode_new, ATA_CMD_IO_WRITE);
     free_rw_disk(db_new, lba_new, ATA_CMD_IO_WRITE, true);
 
     dyn_free(db_new);

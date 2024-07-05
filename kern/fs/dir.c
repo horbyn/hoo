@@ -95,58 +95,66 @@ diritem_read(dirblock_t *block, const diritem_t *item) {
  */
 void
 diritem_find(const char *dir, diritem_t *found) {
+    if (found == null)    panic("diritem_find(): null pointer");
+    bzero(found, sizeof(diritem_t));
+
     static const char SEPARATE = '/';
     if (dir && dir[0] != SEPARATE)
         panic("diritem_find(): not absolute path");
-    if (found == null)    panic("diritem_find(): null pointer");
 
-    diritem_t *item = &__fs_root_dir;
-    if (dir) {
-        uint32_t count = 0;
-        for (uint32_t i = 0; i < strlen(dir); ++i)
-            if (dir[i] == SEPARATE)    ++count;
+    diritem_t parent;
+    memmove(&parent, &__fs_root_dir, sizeof(diritem_t));
 
-        diritem_t *worker = &__fs_root_dir;
-        char name_storage[DIRITEM_NAME_LEN] = { 0 };
+    char name_storage[DIRITEM_NAME_LEN] = { 0 };
+    uint32_t count = 0;
+    for (uint32_t i = 0; i < strlen(dir); ++i)
+        if (dir[i] == SEPARATE)    ++count;
 
-        for (uint32_t i = 1; i <= count; ++i) {
-            // get the current directory name
-            //   e.g. "/dir1/dir2/dir3" -> "dir3"
-            //                    ^
-            //                    |
-            //                    dir pointer
-            bzero(name_storage, sizeof(name_storage));
-            strsep(dir, SEPARATE, i, name_storage);
+    dirblock_t *dirblock = dyn_alloc(sizeof(dirblock_t));
+    for (uint32_t i = 1; i < count; ++i) {
+        // get the current directory name
+        //   e.g. "/dir1/dir2/dir3" -> "dir3"
+        //                    ^
+        //                    |
+        //                    dir pointer
+        bzero(name_storage, sizeof(name_storage));
+        strsep(dir, SEPARATE, i, name_storage);
 
-            // traversal inode blocks
-            dirblock_t *dirblock = dyn_alloc(sizeof(dirblock_t));
-            uint32_t j = 0;
-            for (; j < __super_block.inode_block_index_max_; ++j) {
-                // the block filled with directory items
-                lba_index_t lba = iblock_get(worker->inode_idx_, j);
-                free_rw_disk(dirblock, lba, ATA_CMD_IO_READ, false);
+        // traversal inode blocks
+        diritem_t *cur = null;
+        uint32_t j = 0;
+        bool ffound = false;
+        for (; j < __super_block.inode_block_index_max_; ++j) {
+            // the block filled with directory items
+            lba_index_t lba = iblock_get(parent.inode_idx_, j);
 
-                bool found = false;
-                for (uint32_t k = 0; k < dirblock->amount_; ++k) {
-                    item = dirblock->dir_ + k;
-                    if (memcmp(item->name_, name_storage, strlen(name_storage)) == 0) {
-                        found = true;
+            // assume that the later blocks all invalid
+            // if meet the first invalid block
+            if (lba < __super_block.lba_free_)    break;
+
+            free_rw_disk(dirblock, lba, ATA_CMD_IO_READ, false);
+            for (uint32_t k = 0; k < dirblock->amount_; ++k) {
+                cur = dirblock->dir_ + k;
+                if (memcmp(cur->name_, name_storage, strlen(name_storage))) {
+                    if (i != count)    memmove(&parent, cur, sizeof(diritem_t));
+                    if (i == count) {
+                        ffound = true;
                         break;
                     }
-                } // end for(k)
+                }
+            } // end for(k)
 
-                if (found)    break;
-            } // end for(j)
-            dyn_free(dirblock);
+            if (ffound)    break;
+        } // end for(j)
 
-            if (j == __super_block.inode_block_index_max_)
-                panic("diritem_find(): no such directory item");
-            else    break;
+        if (cur == null || j == __super_block.inode_block_index_max_)
+            panic("diritem_find(): no such directory");
+        if (ffound)    break;
 
-        } // end for(i)
-    }
+    } // end for(i)
 
-    memmove(found, item, sizeof(diritem_t));
+    dyn_free(dirblock);
+    memmove(found, &parent, sizeof(diritem_t));
 }
 
 /**

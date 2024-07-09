@@ -23,6 +23,6 @@ typedef struct files {
 } __attribute__((packed)) files_t;
 extern files_t __fs_files[MAX_OPEN_FILES];
 
-bool files_create(enum_inode_type type, const char *name);
+void files_create(enum_inode_type type, const char *name);
 
 #endif

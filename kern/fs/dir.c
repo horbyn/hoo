@@ -28,6 +28,27 @@ const char *name) {
 }
 
 /**
+ * @brief whether the dir is root dir
+ * 
+ * @param dir the specific directory
+ * @retval true: is the root
+ * @retval false: not the root
+ */
+bool
+is_root_dir(const char *dir) {
+    if (dir == null)    panic("is_root_dir(): null pointer");
+
+    static char ROOT_DIR[DIRITEM_NAME_LEN];
+    static bool is_init = false;
+    if (!is_init) {
+        memmove(ROOT_DIR, DIRNAME_ROOT_STR, 1);
+        ROOT_DIR[1] = 0;
+        is_init = true;
+    }
+    return memcmp(dir, ROOT_DIR, strlen(dir));
+}
+
+/**
  * @brief put the diritem object to dirblock
  * 
  * @param block dirblock
@@ -102,76 +123,80 @@ diritem_find(const char *dir, diritem_t *found) {
     if (dir && dir[0] != SEPARATE)
         panic("diritem_find(): not absolute path");
 
-    diritem_t parent;
-    memmove(&parent, &__fs_root_dir, sizeof(diritem_t));
+    diritem_t cur;
+    memmove(&cur, &__fs_root_dir, sizeof(diritem_t));
 
     char name_storage[DIRITEM_NAME_LEN] = { 0 };
     uint32_t count = 0;
     for (uint32_t i = 0; i < strlen(dir); ++i)
         if (dir[i] == SEPARATE)    ++count;
 
-    dirblock_t *dirblock = dyn_alloc(sizeof(dirblock_t));
-    for (uint32_t i = 1; i < count; ++i) {
-        // get the current directory name
-        //   e.g. "/dir1/dir2/dir3" -> "dir3"
-        //                    ^
-        //                    |
-        //                    dir pointer
-        bzero(name_storage, sizeof(name_storage));
-        strsep(dir, SEPARATE, i, name_storage);
+    if (is_root_dir(dir) == false) {
+        dirblock_t *dirblock = dyn_alloc(sizeof(dirblock_t));
+        for (uint32_t i = 1; i <= count; ++i) {
+            // get the current directory name
+            //   e.g. "/dir1/dir2/dir3" -> "dir3"
+            //                    ^
+            //                    |
+            //                    dir pointer
+            bzero(name_storage, sizeof(name_storage));
+            strsep(dir, SEPARATE, i, name_storage);
 
-        // traversal inode blocks
-        diritem_t *cur = null;
-        uint32_t j = 0;
-        bool ffound = false;
-        for (; j < __super_block.inode_block_index_max_; ++j) {
-            // the block filled with directory items
-            lba_index_t lba = iblock_get(parent.inode_idx_, j);
+            // traversal inode blocks
+            diritem_t *temp = null;
+            uint32_t j = 0;
+            bool ffound = false;
+            for (; j < __super_block.inode_block_index_max_; ++j) {
+                // the block filled with directory items
+                lba_index_t lba = iblock_get(cur.inode_idx_, j);
 
-            // assume that the later blocks all invalid
-            // if meet the first invalid block
-            if (lba < __super_block.lba_free_)    break;
+                // assume that the later blocks all invalid
+                // if meet the first invalid block
+                if (lba < __super_block.lba_free_)    break;
 
-            free_rw_disk(dirblock, lba, ATA_CMD_IO_READ, false);
-            for (uint32_t k = 0; k < dirblock->amount_; ++k) {
-                cur = dirblock->dir_ + k;
-                if (memcmp(cur->name_, name_storage, strlen(name_storage))) {
-                    if (i != count)    memmove(&parent, cur, sizeof(diritem_t));
-                    if (i == count) {
-                        ffound = true;
-                        break;
+                free_rw_disk(dirblock, lba, ATA_CMD_IO_READ, false);
+                for (uint32_t k = 0; k < dirblock->amount_; ++k) {
+                    temp = dirblock->dir_ + k;
+                    if (memcmp(temp->name_, name_storage, strlen(name_storage))) {
+                        memmove(&cur, temp, sizeof(diritem_t));
+                        if (i == count) {
+                            ffound = true;
+                            break;
+                        }
                     }
-                }
-            } // end for(k)
+                } // end for(k)
 
+                if (ffound)    break;
+            } // end for(j)
+
+            if (temp == null || j == __super_block.inode_block_index_max_)
+                panic("diritem_find(): no such directory");
             if (ffound)    break;
-        } // end for(j)
 
-        if (cur == null || j == __super_block.inode_block_index_max_)
-            panic("diritem_find(): no such directory");
-        if (ffound)    break;
+        } // end for(i)
 
-    } // end for(i)
-
-    dyn_free(dirblock);
-    memmove(found, &parent, sizeof(diritem_t));
+        dyn_free(dirblock);
+    }
+    memmove(found, &cur, sizeof(diritem_t));
 }
 
 /**
  * @brief get a new dirblock
  * 
  * @param result new dirblock
+ * @param self   inode index itself
+ * @param parent parent inode index
  */
 void
-dirblock_get_new(dirblock_t *result) {
+dirblock_get_new(dirblock_t *result, idx_t self, idx_t parent) {
     if (result == null)    panic("dirblock_get_new(): null pointer");
 
     // [0] .
     // [1] ..
     diritem_t *cur = result->dir_, *pre = result->dir_ + 1;
     cur->type_ = pre->type_ = INODE_TYPE_DIR;
-    cur->inode_idx_ = INODE_INDEX_ROOT;
-    pre->inode_idx_ = INVALID_INDEX;
+    cur->inode_idx_ = self;
+    pre->inode_idx_ = parent;
     bzero(cur->name_, DIRITEM_NAME_LEN);
     bzero(pre->name_, DIRITEM_NAME_LEN);
     memmove(cur->name_, ".", sizeof(1));
@@ -188,13 +213,13 @@ void
 setup_root_dir(bool is_new) {
 
     // setup dir item
-    diritem_set(&__fs_root_dir, INODE_TYPE_DIR, INODE_INDEX_ROOT, DIRNAME_ROOT);
+    diritem_set(&__fs_root_dir, INODE_TYPE_DIR, INODE_INDEX_ROOT, DIRNAME_ROOT_STR);
 
     if (is_new) {
 
         dirblock_t dirblock;
         bzero(&dirblock, sizeof(dirblock_t));
-        dirblock_get_new(&dirblock);
+        dirblock_get_new(&dirblock, INODE_INDEX_ROOT, INVALID_INDEX);
 
         // setup inode
         lba_index_t free_block = free_allocate();

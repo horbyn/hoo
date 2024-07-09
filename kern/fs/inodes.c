@@ -47,8 +47,6 @@ void
 inode_set(idx_t inode_idx, uint32_t size, lba_index_t base_lba) {
     if (inode_idx == INVALID_INDEX)
         panic("inode_set(): invalid inode");
-    if (base_lba < __super_block.lba_free_)
-        panic("inode_set(): invalid lba");
 
     inode_t *inode = &__fs_inodes[inode_idx];
     bzero(inode, sizeof(inode_t));

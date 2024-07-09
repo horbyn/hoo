@@ -13,7 +13,8 @@
 #include "kern/units/lib.h"
 
 #define DIRITEM_NAME_LEN    16
-#define DIRNAME_ROOT        "/"
+#define DIRNAME_ROOT_ASCII  47 // ascii code for '/'
+#define DIRNAME_ROOT_STR    "/"
 
 /**
  * @brief directory item
@@ -40,10 +41,11 @@ typedef struct dir_block {
 
 void      diritem_set(diritem_t *dir, enum_inode_type type, idx_t inode_idx,
     const char *name);
+bool      is_root_dir(const char *dir);
 int       diritem_write(dirblock_t *block, const diritem_t *item);
 diritem_t *diritem_read(dirblock_t *block, const diritem_t *item);
 void      diritem_find(const char *dir, diritem_t *found);
-void      dirblock_get_new(dirblock_t *result);
+void      dirblock_get_new(dirblock_t *result, idx_t self, idx_t parent);
 void      setup_root_dir(bool is_new);
 
 #endif

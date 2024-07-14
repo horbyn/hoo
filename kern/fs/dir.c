@@ -81,8 +81,9 @@ diritem_write(dirblock_t *block, const diritem_t *item) {
 static bool
 diritem_compare(const diritem_t *d1, const diritem_t *d2) {
     if (d1 == null || d2 == null)    panic("diritem_compare(): null pointer");
+    if (strlen(d1->name_) != strlen(d2->name_))    return false;
     return (d1->type_ == d2->type_
-        && memcmp(d1->name_, d2->name_, DIRITEM_NAME_LEN));
+        && memcmp(d1->name_, d2->name_, strlen(d1->name_)));
 }
 
 /**
@@ -154,7 +155,7 @@ diritem_find(const char *dir, diritem_t *found) {
                 // if meet the first invalid block
                 if (lba < __super_block.lba_free_)    break;
 
-                free_rw_disk(dirblock, lba, ATA_CMD_IO_READ, false);
+                free_rw_disk(dirblock, lba, ATA_CMD_IO_READ);
                 for (uint32_t k = 0; k < dirblock->amount_; ++k) {
                     temp = dirblock->dir_ + k;
                     if (memcmp(temp->name_, name_storage, strlen(name_storage))) {
@@ -223,9 +224,14 @@ setup_root_dir(bool is_new) {
 
         // setup inode
         lba_index_t free_block = free_allocate();
-        inode_set(INODE_INDEX_ROOT, dirblock.amount_, free_block);
+        inode_set(INODE_INDEX_ROOT, 1, free_block);
         inodes_rw_disk(INODE_INDEX_ROOT, ATA_CMD_IO_WRITE);
+        inode_map_setup(INODE_INDEX_ROOT, true);
 
-        free_rw_disk(&dirblock, free_block, ATA_CMD_IO_WRITE, true);
+        free_map_setup(free_block, true);
+        free_rw_disk(&dirblock, free_block, ATA_CMD_IO_WRITE);
+
+        inode_map_update();
+        free_map_update();
     }
 }

@@ -4,23 +4,34 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "test.h"
-#include "kern/fs/files.h"
+#include "user.h"
 
 /**
- * @brief file system testing
+ * @brief formatting print
+ * 
+ * @param format formatting string
  */
 void
-test_fs() {
-    clear_screen();
-    kprintf("> TEST_FS <\n");
+printf(const char *format, ...) {
+    syscall_entry(SYS_PRINTF);
+}
 
-    kprintf("create direcoty: /usr/\n");
-    files_create("/usr/");
+/**
+ * @brief create files or directories
+ * 
+ * @param filename file or directory name
+ */
+void
+create(const char *filename) {
+    syscall_entry(SYS_CREATE);
+}
 
-    kprintf("\n\ncreate file: /usr/myfile.txt\n");
-    files_create("/usr/myfile.txt");
-
-    kprintf("\n\ndelete directory: /usr/\n");
-    files_remove("/usr/");
+/**
+ * @brief delete files or directories
+ * 
+ * @param filename file or directory name
+ */
+void
+remove(const char *filename) {
+    syscall_entry(SYS_REMOVE);
 }

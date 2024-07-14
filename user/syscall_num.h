@@ -4,23 +4,12 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "test.h"
-#include "kern/fs/files.h"
+#pragma once
+#ifndef __USER_SYSCALL_NUM_H__
+#define __USER_SYSCALL_NUM_H__
 
-/**
- * @brief file system testing
- */
-void
-test_fs() {
-    clear_screen();
-    kprintf("> TEST_FS <\n");
+#define SYS_PRINTF      0
+#define SYS_CREATE      1
+#define SYS_REMOVE      2
 
-    kprintf("create direcoty: /usr/\n");
-    files_create("/usr/");
-
-    kprintf("\n\ncreate file: /usr/myfile.txt\n");
-    files_create("/usr/myfile.txt");
-
-    kprintf("\n\ndelete directory: /usr/\n");
-    files_remove("/usr/");
-}
+#endif

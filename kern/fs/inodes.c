@@ -14,7 +14,7 @@ inode_t __fs_inodes[MAX_INODES];
 static bitmap_t __bmfs;
 
 /**
- * @brief allocate inode (only for index, not involves disk rw)
+ * @brief allocate inode
  * 
  * @return index of inode array
  */
@@ -24,16 +24,27 @@ inode_allocate() {
 }
 
 /**
- * @brief release inode (only for index, not involves disk rw)
+ * @brief setup inode bitmap (only for index, not involves disk rw)
  * 
- * @param idx index of inode array
+ * @param inode_idx inode index
+ * @param is_set    whether to set or clear
  */
 void
-inode_release(idx_t idx) {
-    if (idx == INVALID_INDEX)
-        panic("inode_release(): invalid index");
+inode_map_setup(idx_t inode_idx, bool is_set) {
+    if (inode_idx == INVALID_INDEX)
+        panic("inode_map_update(): invalid index");
 
-    bitmap_clear(&__bmfs, idx);
+    if (is_set)    bitmap_set(&__bmfs, inode_idx);
+    else    bitmap_clear(&__bmfs, inode_idx);
+}
+
+/**
+ * @brief update inode bitmap
+ */
+void
+inode_map_update() {
+    ata_driver_rw(__bmbuff_fs_inodes, sizeof(__bmbuff_fs_inodes),
+        __super_block.lba_map_inode_, ATA_CMD_IO_WRITE);
 }
 
 /**
@@ -75,11 +86,6 @@ inodes_rw_disk(idx_t inode_idx, ata_cmd_t cmd) {
     ata_driver_rw(sect, sizeof(sect), __super_block.lba_inodes_ + inode_idx, cmd);
     if (cmd == ATA_CMD_IO_READ)
         memmove(&(__fs_inodes[inode_idx]), sect, sizeof(inode_t));
-
-    if (cmd == ATA_CMD_IO_WRITE)    bitmap_set(&__bmfs, inode_idx);
-    else    bitmap_clear(&__bmfs, inode_idx);
-    ata_driver_rw(__bmbuff_fs_inodes, sizeof(__bmbuff_fs_inodes),
-        __super_block.lba_map_inode_, ATA_CMD_IO_WRITE);
 }
 
 /**

@@ -8,6 +8,12 @@
 #ifndef __USER_USER_H__
 #define __USER_USER_H__
 
-extern void printf(const char *, ...);
+#include "syscall_num.h"
+
+extern void syscall_entry(int syscall_number);
+
+void printf(const char *format, ...);
+void create(const char *filename);
+void remove(const char *filename);
 
 #endif

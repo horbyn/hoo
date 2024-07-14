@@ -11,7 +11,7 @@ static uint32_t __bmbuff_fs_free_inbytes;
 static bitmap_t __bmfs_free;
 
 /**
- * @brief get a free block (only for index, not involves disk rw)
+ * @brief get a free block
  * 
  * @return lba of a free block
  */
@@ -22,17 +22,28 @@ free_allocate() {
 }
 
 /**
- * @brief release a block (only for index, not involves disk rw)
+ * @brief setup free bitmap (only for index, not involves disk rw)
  * 
- * @param index lba of the block to be released
+ * @param index  free index
+ * @param is_set whether to set or clear
  */
 void
-free_release(lba_index_t index) {
+free_map_setup(lba_index_t index, bool is_set) {
     idx_t bit = index - __super_block.lba_free_;
     if (bit == INVALID_INDEX)
         panic("free_release(): invalid lba");
 
-    bitmap_clear(&__bmfs_free, bit);
+    if (is_set)    bitmap_set(&__bmfs_free, bit);
+    else    bitmap_clear(&__bmfs_free, bit);
+}
+
+/**
+ * @brief update free bitmap to disk
+ */
+void
+free_map_update() {
+    ata_driver_rw(__bmbuff_fs_free, __bmbuff_fs_free_inbytes,
+        __super_block.lba_map_free_, ATA_CMD_IO_WRITE);
 }
 
 /**
@@ -41,27 +52,15 @@ free_release(lba_index_t index) {
  * @param buff     buffer
  * @param base_lba lba
  * @param cmd      ata command
- * @param is_new   whether the free block is new
  */
 void
-free_rw_disk(void *buff, lba_index_t base_lba, ata_cmd_t cmd, bool is_new) {
+free_rw_disk(void *buff, lba_index_t base_lba, ata_cmd_t cmd) {
     if (buff == null)    panic("free_rw_disk(): null pointer");
     if (base_lba < __super_block.lba_free_)    panic("free_rw_disk(): invalid lba");
-    idx_t bit = base_lba - __super_block.lba_free_;
-    if (is_new == false) {
-        if (bitmap_test(&__bmfs_free, bit) == false)
-            panic("free_rw_disk(): not allow to read from / write to an empty block");
-    }
+    if (bitmap_test(&__bmfs_free, base_lba - __super_block.lba_free_) == false)
+        panic("free_rw_disk(): not allow to read from / write to an empty block");
 
     ata_driver_rw(buff, BYTES_SECTOR, base_lba, cmd);
-
-    if (is_new) {
-        if (cmd == ATA_CMD_IO_WRITE)    bitmap_set(&__bmfs_free, bit);
-        else    bitmap_clear(&__bmfs_free, bit);
-        ata_driver_rw(__bmbuff_fs_free, __bmbuff_fs_free_inbytes,
-            __super_block.lba_map_free_, cmd);
-    }
-
 }
 
 /**

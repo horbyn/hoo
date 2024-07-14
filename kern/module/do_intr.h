@@ -10,6 +10,7 @@
 
 #include "kern/intr/intr.h"
 #include "kern/intr/routine.h"
+#include "kern/syscall/syscall.h"
 
 // the entrance of isr
 extern uint32_t isr_part1[IDT_ENTRIES_NUM];

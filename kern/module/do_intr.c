@@ -38,4 +38,6 @@ kinit_isr_idt(void) {
     __idtr.limit_ = sizeof(__idt) - 1;
     __idtr.base_ = (uint32_t)__idt;
     __asm__ __volatile__ ("lidt %k0\n\t" : : "m"(__idtr));
+
+    syscall_init();
 }

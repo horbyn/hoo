@@ -28,5 +28,6 @@ kinit_fs(void) {
     setup_inode(is_new);
     setup_free_map(is_new);
     setup_root_dir(is_new);
+    files_init();
 
 }

@@ -15,8 +15,9 @@
 #include "kern/units/bitmap.h"
 
 lba_index_t free_allocate();
-void free_release(lba_index_t index);
-void free_rw_disk(void *buff, lba_index_t base_lba, ata_cmd_t cmd, bool is_new);
+void free_map_setup(lba_index_t index, bool is_set);
+void free_map_update();
+void free_rw_disk(void *buff, lba_index_t base_lba, ata_cmd_t cmd);
 void setup_free_map(bool is_new);
 
 #endif

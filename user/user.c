@@ -13,7 +13,7 @@
  */
 void
 printf(const char *format, ...) {
-    syscall_entry(SYS_PRINTF);
+    syscall_entry(SYS_PRINTF, 0);
 }
 
 /**
@@ -23,7 +23,7 @@ printf(const char *format, ...) {
  */
 void
 create(const char *filename) {
-    syscall_entry(SYS_CREATE);
+    syscall_entry(SYS_CREATE, 0);
 }
 
 /**
@@ -33,5 +33,28 @@ create(const char *filename) {
  */
 void
 remove(const char *filename) {
-    syscall_entry(SYS_REMOVE);
+    syscall_entry(SYS_REMOVE, 0);
+}
+
+/**
+ * @brief open the specific file
+ * 
+ * @param filename file name
+ * @return file descriptor
+ */
+int
+open(const char *filename) {
+    int fd = -1;
+    syscall_entry(SYS_OPEN, &fd);
+    return fd;
+}
+
+/**
+ * @brief close the specific file
+ * 
+ * @param fd file descriptor
+ */
+void
+close(int fd) {
+    syscall_entry(SYS_CLOSE, 0);
 }

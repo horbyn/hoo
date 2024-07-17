@@ -7,6 +7,22 @@
 #include "files.h"
 
 files_t *__fs_files;
+typedef fd_t global_fd_t;
+
+#ifdef DEBUG
+/**
+ * @brief print all the files
+ */
+void
+debug_print_files() {
+    for (uint32_t i = 0; i < MAX_OPEN_FILES; ++i) {
+        if (__fs_files[i].used_ == true) {
+            kprintf("[%d] inode index: %d; ref: %d\n",
+                i, __fs_files[i].inode_idx_, __fs_files[i].ref_);
+        }
+    }
+}
+#endif
 
 /**
  * @brief files system initialization
@@ -22,9 +38,9 @@ files_init(void) {
  * 
  * @return file descriptor
  */
-static fd_t
+static global_fd_t
 fd_global_alloc(void) {
-    fd_t i = 0;
+    global_fd_t i = 0;
     for (; i < MAX_OPEN_FILES; ++i) {
         if (__fs_files[i].used_ == false) {
             __fs_files[i].used_ = true;
@@ -39,10 +55,10 @@ fd_global_alloc(void) {
 /**
  * @brief global file descriptor release
  * 
- * @param fd file descriptor
+ * @param fd global file descriptor
  */
 static void
-fd_global_free(fd_t fd) {
+fd_global_free(global_fd_t fd) {
     if (fd >= MAX_OPEN_FILES)    panic("fd_global_free(): invalid file descriptor");
     __fs_files[fd].used_ = false;
 }
@@ -263,6 +279,30 @@ files_remove(const char *name) {
 }
 
 /**
+ * @brief file manager initialization
+ * 
+ * @param fmngr file manager
+ */
+static fmngr_t *
+fmngr_init(fmngr_t *fmngr) {
+    if (fmngr != null)    return fmngr;
+
+    // release when the task is terminated
+    fmngr = dyn_alloc(sizeof(fmngr_t));
+    void *buff = dyn_alloc(MAX_FILES_PER_TASK / BITS_PER_BYTE);
+    bitmap_init(fmngr->fd_set_, MAX_FILES_PER_TASK, buff);
+    fmngr->files_  = dyn_alloc(MAX_FILES_PER_TASK * sizeof(fd_t));
+    bzero(fmngr->files_, MAX_FILES_PER_TASK * sizeof(fd_t));
+
+    // for stdin, stdout, stderr
+    bitmap_set(fmngr->fd_set_, 0);
+    bitmap_set(fmngr->fd_set_, 1);
+    bitmap_set(fmngr->fd_set_, 2);
+
+    return fmngr;
+}
+
+/**
  * @brief open the specific file
  * 
  * @param name file name
@@ -277,11 +317,17 @@ files_open(const char *name) {
     if (self->type_ != INODE_TYPE_FILE || self->inode_idx_ > MAX_INODES)
         panic("files_open(): invalid file format");
 
-    fd_t fd = fd_global_alloc();
-    __fs_files[fd].inode_idx_ = self->inode_idx_;
+    global_fd_t index = fd_global_alloc();
+    __fs_files[index].inode_idx_ = self->inode_idx_;
+    ++__fs_files[index].ref_;
+
+    pcb_t *cur_pcb = get_current_pcb();
+    cur_pcb->fmngr_ = fmngr_init(cur_pcb->fmngr_);
+    fd_t fd = fmngr_alloc(cur_pcb->fmngr_);
+    fmngr_files_set(cur_pcb->fmngr_, fd, index);
 
     dyn_free(self);
-    return 0;
+    return fd;
 }
 
 /**
@@ -291,5 +337,15 @@ files_open(const char *name) {
  */
 void
 files_close(fd_t fd) {
-    fd_global_free(fd);
+    if (fd > MAX_FILES_PER_TASK)    panic("files_close(): invalid fd");
+
+    pcb_t *cur_pcb = get_current_pcb();
+    global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
+    if (__fs_files[index].used_ == false)
+        panic("files_close(): unknown status");
+    if (__fs_files[index].ref_ == 0)
+        panic("files_close(): the file was already closed");
+
+    if (__fs_files[index].ref_ > 0)    --__fs_files[index].ref_;
+    if (__fs_files[index].ref_ == 0)    fd_global_free(index);
 }

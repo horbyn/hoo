@@ -23,4 +23,24 @@ test_fs() {
 
     kprintf("\n\ndelete directory: /usr/\n");
     files_remove("/usr/");
+
+    kprintf("create direcoty: /opt/\n");
+    files_create("/opt/");
+
+    kprintf("\n\ncreate file: /opt/toOpen.txt\n");
+    files_create("/opt/toOpen.txt");
+
+    fd_t fd = files_open("/opt/toOpen.txt");
+    kprintf("\n\nopen file: /opt/toOpen.txt; %d\n", fd);
+
+#ifdef DEBUG
+    debug_print_files();
+#endif
+
+    kprintf("\n\nclose file: /opt/toOpen.txt\n");
+    files_close(fd);
+
+#ifdef DEBUG
+    debug_print_files();
+#endif
 }

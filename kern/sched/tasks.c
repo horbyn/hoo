@@ -186,7 +186,7 @@ init_tasks_system() {
     static thread_buckmngr_t hoo_bucket;
     thread_buckmngr_set(&hoo_bucket);
     pcb_set(hoo_pcb, null, (uint32_t *)STACK_HOO_RING0, TID_HOO, &pgs, mdata_vspace,
-        mdata_node, mdata_vaddr, null, TIMETICKS, null, hoo_bucket.head_);
+        mdata_node, mdata_vaddr, null, TIMETICKS, null, hoo_bucket.head_, null);
     static node_t hoo_node;
     node_set(&hoo_node, hoo_pcb, null);
     wait(&__spinlock_tasks);
@@ -493,7 +493,7 @@ idle_init(void) {
     pcb_set(idle_pcb, cur_stack, (uint32_t *)((uint32_t)hoo_ring0_va + PGSIZE),
         TID_IDLE, &pgs, (void *)IDLE_MD_VSPACE_VA, (void *)IDLE_MD_NODE_VA,
         (void *)IDLE_MD_VADDR_VA, null, TIMETICKS, null,
-        thread_buckmngr_get(TID_IDLE));
+        thread_buckmngr_get(TID_IDLE), null);
 
     node_t *n = mdata_alloc_node(TID_IDLE);
     node_set(n, idle_pcb, null);
@@ -587,7 +587,7 @@ fork(void) {
     pcb_set(new_pcb, idle_pcb->stack_cur_, new_ring0_va, new_tid, &pgs,
         idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_, idle_pcb->vmngr_.vaddr_,
         &idle_pcb->vmngr_.head_, TIMETICKS, idle_pcb->sleeplock_,
-        thread_buckmngr_get(new_tid));
+        thread_buckmngr_get(new_tid), null);
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);

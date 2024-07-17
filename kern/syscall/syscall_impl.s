@@ -62,6 +62,12 @@ syscall:
     movl 0x24(%ebp), %eax                                   # eax
     call *__stub(, %eax, 4)                                 # addr = $isr + %eax * $4
 
+    movl 0x1c(%ebp), %ecx
+    cmpl $0,         %ecx
+    jz syscall_exit
+    movl %eax,       (%ecx)
+
+syscall_exit:
     addl %ebx,       %esp
     popl %ebp
     ret
@@ -71,6 +77,7 @@ syscall:
 # @brief syscall entry              #
 #                                   #
 # @param number: syscall number     #
+# @param retval: return value       #
 #                                   #
 # ################################# #
 syscall_entry:
@@ -82,7 +89,8 @@ syscall_entry:
     addl $0x8,          %ebx                                # save user ring3 esp
     movl (%ebp),        %ecx
     movl (%ecx),        %ecx                                # save user ring3 ebp
-    movl 0x8(%ebp),     %eax
+    movl 0x8(%ebp),     %eax                                # system call number 
+    movl 0xc(%ebp),     %edx                                # return value
     int $0x80
 
     popal                                                   # restore user context

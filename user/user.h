@@ -10,10 +10,12 @@
 
 #include "syscall_num.h"
 
-extern void syscall_entry(int syscall_number);
+extern void syscall_entry(int syscall_number, void *retval);
 
 void printf(const char *format, ...);
 void create(const char *filename);
 void remove(const char *filename);
+int  open(const char *filename);
+void close(int fd);
 
 #endif

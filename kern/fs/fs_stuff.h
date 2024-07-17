@@ -27,4 +27,23 @@
  */
 typedef uint32_t lba_index_t;
 
+#define MAX_FILES_PER_TASK  64
+#define MAX_OPEN_FILES      ((MAX_FILES_PER_TASK) * (MAX_TASKS_AMOUNT))
+
+/**
+ * @brief file descriptor
+ */
+typedef int fd_t;
+
+/**
+ * @brief file struct corresponding to the opening file.
+ * that is there will be multiple structures if we
+ * repeatly open a file
+ */
+typedef struct files {
+    bool     used_;
+    idx_t    inode_idx_;
+    uint32_t ref_;
+} __attribute__((packed)) files_t;
+
 #endif

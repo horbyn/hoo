@@ -21,11 +21,12 @@
  * @param ticks     ticks amount
  * @param sleeplock sleeplock
  * @param bucket    bucket manager
+ * @param fmngr     files manager
  */
 void
 pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid, pgstruct_t *pgs,
 void *va_vspace, void *va_node, void *va_vaddr, vspace_t *vspace, uint32_t ticks,
-sleeplock_t *sleeplock, buckx_mngr_t *bucket) {
+sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr) {
     if (pcb == null)    panic("pcb_set(): null pointer");
     if (tid >= MAX_TASKS_AMOUNT)    panic("pcb_set(): thread id overflow");
 
@@ -39,4 +40,5 @@ sleeplock_t *sleeplock, buckx_mngr_t *bucket) {
     pcb->ticks_ = ticks;
     pcb->sleeplock_ = sleeplock;
     pcb->hmngr_ = bucket;
+    pcb->fmngr_ = fmngr;
 }

@@ -17,5 +17,7 @@ void syscall_init(void) {
     __stub[SYS_REMOVE] = (syscall_t)files_remove;
     __stub[SYS_OPEN]   = (syscall_t)files_open;
     __stub[SYS_CLOSE]  = (syscall_t)files_close;
+    __stub[SYS_READ]   = (syscall_t)files_read;
+    __stub[SYS_WRITE]  = (syscall_t)files_write;
     __stub[MAX_SYSCALL - 1] = null;
 }

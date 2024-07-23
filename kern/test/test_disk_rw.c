@@ -16,7 +16,7 @@ static void
 disk_rw_with_irq() {
     kprintf("> TEST_ATA_IO_IRQ <\n");
 
-    ata_driver_init(ATA_METHOD_IRQ);
+    ata_driver_change_mode(ATA_METHOD_IRQ);
 
     bzero(buff, sizeof(buff));
     for (uint32_t i = 0; i < sizeof(buff); ++i)
@@ -42,7 +42,7 @@ static void
 disk_rw_with_polling() {
     kprintf("> TEST_ATA_IO_POLLING <\n");
 
-    ata_driver_init(ATA_METHOD_POLLING);
+    ata_driver_change_mode(ATA_METHOD_POLLING);
 
     // read lba-0 from disk to buff
     bzero(buff, sizeof(buff));
@@ -79,5 +79,5 @@ test_disk_read() {
 
     // restore
     ata_driver_rw(backup_buff, sizeof(backup_buff), 0, ATA_CMD_IO_WRITE);
-    ata_driver_init(ATA_METHOD_IRQ); // restore the IRQ method
+    ata_driver_change_mode(ATA_METHOD_IRQ); // restore the IRQ method
 }

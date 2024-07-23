@@ -44,7 +44,7 @@ void      diritem_set(diritem_t *dir, enum_inode_type type, idx_t inode_idx,
 bool      is_root_dir(const char *dir);
 int       diritem_write(dirblock_t *block, const diritem_t *item);
 diritem_t *diritem_read(dirblock_t *block, const diritem_t *item);
-void      diritem_find(const char *dir, diritem_t *found);
+bool      diritem_find(const char *dir, diritem_t *found);
 void      dirblock_get_new(dirblock_t *result, idx_t self, idx_t parent);
 void      setup_root_dir(bool is_new);
 

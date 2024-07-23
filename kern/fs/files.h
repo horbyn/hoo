@@ -13,14 +13,12 @@
 
 extern files_t *__fs_files;
 
-#ifdef DEBUG
-    #include "kern/driver/io.h"
-    void debug_print_files(void);
-#endif
-void files_init(void);
+void filesystem_init(void);
 void files_create(const char *name);
 void files_remove(const char *name);
 fd_t files_open(const char *name);
 void files_close(fd_t fd);
+void files_read(fd_t fd, char *buf, uint32_t size);
+void files_write(fd_t fd, const char *buf, uint32_t size);
 
 #endif

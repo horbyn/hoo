@@ -9,26 +9,11 @@
 files_t *__fs_files;
 typedef fd_t global_fd_t;
 
-#ifdef DEBUG
-/**
- * @brief print all the files
- */
-void
-debug_print_files() {
-    for (uint32_t i = 0; i < MAX_OPEN_FILES; ++i) {
-        if (__fs_files[i].used_ == true) {
-            kprintf("[%d] inode index: %d; ref: %d\n",
-                i, __fs_files[i].inode_idx_, __fs_files[i].ref_);
-        }
-    }
-}
-#endif
-
 /**
  * @brief files system initialization
  */
 void
-files_init(void) {
+filesystem_init(void) {
     // no need to release
     __fs_files = dyn_alloc(sizeof(files_t) * MAX_OPEN_FILES);
 }
@@ -42,8 +27,7 @@ static global_fd_t
 fd_global_alloc(void) {
     global_fd_t i = 0;
     for (; i < MAX_OPEN_FILES; ++i) {
-        if (__fs_files[i].used_ == false) {
-            __fs_files[i].used_ = true;
+        if (__fs_files[i].ref_ == 0) {
             break;
         }
     }
@@ -60,7 +44,7 @@ fd_global_alloc(void) {
 static void
 fd_global_free(global_fd_t fd) {
     if (fd >= MAX_OPEN_FILES)    panic("fd_global_free(): invalid file descriptor");
-    __fs_files[fd].used_ = false;
+    __fs_files[fd].ref_ = 0;
 }
 
 /**
@@ -115,12 +99,21 @@ files_create(const char *name) {
     enum_inode_type type = (name[strlen(name) - 1] == '/') ?
         INODE_TYPE_DIR : INODE_TYPE_FILE;
 
+    // cannot create repeatly
+    diritem_t *self = dyn_alloc(sizeof(diritem_t));
+    if (diritem_find(name, self)) {
+        dyn_free(self);
+        return;
+    }
+    dyn_free(self);
+
     // get parent inode
     diritem_t *di_parent = dyn_alloc(sizeof(diritem_t));
     char parent[DIRITEM_NAME_LEN];
     bzero(parent, sizeof(parent));
     get_parent_filename(filename, parent);
-    diritem_find(parent, di_parent);
+    if (!diritem_find(parent, di_parent))
+        panic("files_create(): parent directory is not found");
 
     // push to parent inode
     dirblock_t *db = dyn_alloc(sizeof(dirblock_t));
@@ -229,7 +222,8 @@ files_remove(const char *name) {
     diritem_t *di_parent = dyn_alloc(sizeof(diritem_t));
     char parent[DIRITEM_NAME_LEN];
     get_parent_filename(filename, parent);
-    diritem_find(parent, di_parent);
+    if (!diritem_find(parent, di_parent))
+        panic("files_remove(): parent directory is not found");
     if (di_parent->inode_idx_ > MAX_INODES || di_parent->type_ != INODE_TYPE_DIR)
         panic("files_remove(): invalid format of parent");
 
@@ -289,10 +283,12 @@ fmngr_init(fmngr_t *fmngr) {
 
     // release when the task is terminated
     fmngr = dyn_alloc(sizeof(fmngr_t));
-    void *buff = dyn_alloc(MAX_FILES_PER_TASK / BITS_PER_BYTE);
-    bitmap_init(fmngr->fd_set_, MAX_FILES_PER_TASK, buff);
+    fmngr->fd_set_ = dyn_alloc(sizeof(bitmap_t));
     fmngr->files_  = dyn_alloc(MAX_FILES_PER_TASK * sizeof(fd_t));
     bzero(fmngr->files_, MAX_FILES_PER_TASK * sizeof(fd_t));
+
+    void *buff = dyn_alloc(MAX_FILES_PER_TASK / BITS_PER_BYTE);
+    bitmap_init(fmngr->fd_set_, MAX_FILES_PER_TASK, buff);
 
     // for stdin, stdout, stderr
     bitmap_set(fmngr->fd_set_, 0);
@@ -313,7 +309,8 @@ files_open(const char *name) {
     if (name == null)    panic("files_open(): invalid filename");
 
     diritem_t *self = dyn_alloc(sizeof(diritem_t));
-    diritem_find(name, self);
+    if (!diritem_find(name, self))
+        panic("files_open(): file or directory is not found");
     if (self->type_ != INODE_TYPE_FILE || self->inode_idx_ > MAX_INODES)
         panic("files_open(): invalid file format");
 
@@ -341,11 +338,81 @@ files_close(fd_t fd) {
 
     pcb_t *cur_pcb = get_current_pcb();
     global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
-    if (__fs_files[index].used_ == false)
-        panic("files_close(): unknown status");
     if (__fs_files[index].ref_ == 0)
         panic("files_close(): the file was already closed");
 
     if (__fs_files[index].ref_ > 0)    --__fs_files[index].ref_;
     if (__fs_files[index].ref_ == 0)    fd_global_free(index);
+}
+
+/**
+ * @brief data reads from the specific file
+ * 
+ * @param fd   file descriptor
+ * @param buf  buffer
+ * @param size buffer size
+ */
+void
+files_read(fd_t fd, char *buf, uint32_t size) {
+    if (fd > MAX_FILES_PER_TASK)    panic("files_read(): invalid fd");
+    if (buf == null)    panic("files_read(): invalid buffer");
+
+    pcb_t *cur_pcb = get_current_pcb();
+    global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
+    if (__fs_files[index].ref_ == 0)
+        panic("files_close(): the file was in non-opening");
+
+    idx_t inode_idx = __fs_files[index].inode_idx_;
+    inode_t *inode = __fs_inodes + inode_idx;
+    if (inode->size_ == 0 || size == 0)    return;
+
+    uint32_t total_size = (size > inode->size_) ? inode->size_ : size;
+    uint32_t cr = (total_size + BYTES_SECTOR) / BYTES_SECTOR;
+    char *temp_buf = dyn_alloc(BYTES_SECTOR);
+    for (uint32_t i = 0; i < cr; ++i) {
+        uint32_t cur_size = (i == cr - 1) ?
+            (total_size - i * BYTES_SECTOR) : BYTES_SECTOR;
+
+        free_rw_disk(temp_buf, iblock_get(inode_idx, i), ATA_CMD_IO_READ);
+        memmove(buf + i * BYTES_SECTOR, temp_buf, cur_size);
+    }
+    dyn_free(temp_buf);
+}
+
+/**
+ * @brief data writes to the specific file
+ * 
+ * @param fd   file descriptor
+ * @param buf  buffer
+ * @param size buffer size
+ */
+void
+files_write(fd_t fd, const char *buf, uint32_t size) {
+    if (fd > MAX_FILES_PER_TASK)    panic("files_write(): invalid fd");
+    if (buf == null || size == 0)    return;
+
+    pcb_t *cur_pcb = get_current_pcb();
+    global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
+    if (__fs_files[index].ref_ == 0)
+        panic("files_write(): the file was in non-opening");
+
+    idx_t inode_idx = __fs_files[index].inode_idx_;
+
+    char *buf_tmp = dyn_alloc(BYTES_SECTOR);
+    for (uint32_t i = 0; i <= size / BYTES_SECTOR; ++i) {
+        if (i == size / BYTES_SECTOR && size % BYTES_SECTOR != 0) {
+            // the last one needs to be filled with 0
+            memmove(buf_tmp, buf + i * BYTES_SECTOR, size % BYTES_SECTOR);
+            memmove(buf_tmp + size % BYTES_SECTOR, 0,
+                BYTES_SECTOR - size % BYTES_SECTOR);
+        } else    memmove(buf_tmp, buf + i * BYTES_SECTOR, BYTES_SECTOR);
+
+        free_rw_disk(buf_tmp, iblock_get(inode_idx, i), ATA_CMD_IO_WRITE);
+    } // end for(i)
+
+    // update inode
+    __fs_inodes[inode_idx].size_ = size;
+    inodes_rw_disk(inode_idx, ATA_CMD_IO_WRITE);
+
+    dyn_free(buf_tmp);
 }

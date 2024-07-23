@@ -19,7 +19,7 @@ typedef enum ata_method {
     ATA_METHOD_IRQ
 } enum_ata_method;
 
-void ata_driver_init(enum_ata_method);
+void ata_driver_change_mode(enum_ata_method);
 void ata_driver_rw(void *buff, uint32_t bufflen, idx_t lba, ata_cmd_t cmd);
 
 #endif

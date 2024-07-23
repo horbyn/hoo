@@ -24,10 +24,15 @@ kinit_fs(void) {
      * NOTE : the first sector will, if necessary, use for Partition                *
      ********************************************************************************/
 
+    // we are in interrupt disabling now
+    ata_driver_change_mode(ATA_METHOD_POLLING);
     bool is_new = setup_super_block();
     setup_inode(is_new);
     setup_free_map(is_new);
     setup_root_dir(is_new);
-    files_init();
+    filesystem_init();
+
+    // take effect after interrupt enabling
+    ata_driver_change_mode(ATA_METHOD_IRQ);
 
 }

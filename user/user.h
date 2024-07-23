@@ -17,5 +17,7 @@ void create(const char *filename);
 void remove(const char *filename);
 int  open(const char *filename);
 void close(int fd);
+void read(int fd, void *buf, unsigned int count);
+void write(int fd, const void *buf, unsigned int count);
 
 #endif

@@ -15,7 +15,7 @@ static enum_ata_method __ata_driver_method;
  * @param method ata method like IRQs or polling
  */
 void
-ata_driver_init(enum_ata_method method) {
+ata_driver_change_mode(enum_ata_method method) {
 
     __ata_driver_method = method;
 

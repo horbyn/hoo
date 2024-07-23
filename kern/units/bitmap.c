@@ -16,6 +16,7 @@
 void
 bitmap_init(bitmap_t *map, uint32_t len_inbits, void *buff) {
     if (map == null)    panic("bitmap_init(): invalid map");
+    bzero(buff, len_inbits / BITS_PER_BYTE);
     map->len_inbits_ = len_inbits;
     map->buff_ = (uint8_t *)buff;
     map->prev_free_ = 0;

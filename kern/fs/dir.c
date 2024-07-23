@@ -115,7 +115,7 @@ diritem_read(dirblock_t *block, const diritem_t *item) {
  * @param dir   the absolute path to be searched
  * @param found diritem object found
  */
-void
+bool
 diritem_find(const char *dir, diritem_t *found) {
     if (found == null)    panic("diritem_find(): null pointer");
     bzero(found, sizeof(diritem_t));
@@ -132,6 +132,7 @@ diritem_find(const char *dir, diritem_t *found) {
     for (uint32_t i = 0; i < strlen(dir); ++i)
         if (dir[i] == SEPARATE)    ++count;
 
+    bool fexit_in_advance = false;
     if (is_root_dir(dir) == false) {
         dirblock_t *dirblock = dyn_alloc(sizeof(dirblock_t));
         for (uint32_t i = 1; i <= count; ++i) {
@@ -160,25 +161,31 @@ diritem_find(const char *dir, diritem_t *found) {
                     temp = dirblock->dir_ + k;
                     if (memcmp(temp->name_, name_storage, strlen(name_storage))) {
                         memmove(&cur, temp, sizeof(diritem_t));
-                        if (i == count) {
-                            ffound = true;
-                            break;
-                        }
+                        ffound = true;
+                        break;
                     }
                 } // end for(k)
 
                 if (ffound)    break;
             } // end for(j)
 
-            if (temp == null || j == __super_block.inode_block_index_max_)
-                panic("diritem_find(): no such directory");
-            if (ffound)    break;
+            if (ffound == false) {
+                fexit_in_advance = true;
+                break;
+            }
 
         } // end for(i)
 
         dyn_free(dirblock);
     }
-    memmove(found, &cur, sizeof(diritem_t));
+
+    if (fexit_in_advance) {
+        bzero(found, sizeof(diritem_t));
+        return false;
+    } else {
+        memmove(found, &cur, sizeof(diritem_t));
+        return true;
+    }
 }
 
 /**

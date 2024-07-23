@@ -42,3 +42,15 @@ sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr) {
     pcb->hmngr_ = bucket;
     pcb->fmngr_ = fmngr;
 }
+
+#ifdef DEBUG
+void
+debug_print_pcb(pcb_t *pcb) {
+    kprintf("[DEBUG] .stack_cur(4B)=%p, .stack0(4B)=%p, .tid(4B)=%d, "
+        ".pgstruct(12B)=%p, .vmngr(36B)=%p, .ticks(4B)=%d, .sleeplock(4B)=%p"
+        ", .hmngr(4B)=%p, .fmngr(4B)=%p\n",
+        pcb->stack_cur_, pcb->stack0_, pcb->tid_, &pcb->pgstruct_,
+        &pcb->vmngr_, pcb->ticks_, pcb->sleeplock_, pcb->hmngr_,
+        pcb->fmngr_);
+}
+#endif

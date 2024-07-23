@@ -41,7 +41,6 @@ typedef int fd_t;
  * repeatly open a file
  */
 typedef struct files {
-    bool     used_;
     idx_t    inode_idx_;
     uint32_t ref_;
 } __attribute__((packed)) files_t;

@@ -13,5 +13,7 @@
 #define SYS_REMOVE      2
 #define SYS_OPEN        3
 #define SYS_CLOSE       4
+#define SYS_READ        5
+#define SYS_WRITE       6
 
 #endif

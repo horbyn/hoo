@@ -8,6 +8,9 @@
 #ifndef __KERN_SCHED_PCB_H__
 #define __KERN_SCHED_PCB_H__
 
+#ifdef DEBUG
+    #include "kern/driver/io.h"
+#endif
 #include "kern/x86.h"
 #include "kern/conf/page.h"
 #include "kern/conf/page_struct.h"
@@ -44,9 +47,12 @@ typedef struct pcb {
     fmngr_t      *fmngr_;
 } __attribute__((packed)) pcb_t;
 
-void  pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid,
+void pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid,
     pgstruct_t *pgs, void *va_vspace, void *va_node, void *va_vaddr,
     vspace_t *vspace, uint32_t ticks, sleeplock_t *sleeplock,
     buckx_mngr_t *bucket, fmngr_t *fmngr);
+#ifdef DEBUG
+    void debug_print_pcb(pcb_t *pcb);
+#endif
 
 #endif

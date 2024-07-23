@@ -33,14 +33,14 @@ test_fs() {
     fd_t fd = files_open("/opt/toOpen.txt");
     kprintf("\n\nopen file: /opt/toOpen.txt; %d\n", fd);
 
-#ifdef DEBUG
-    debug_print_files();
-#endif
+    files_write(fd, "Hello, world!", strlen("Hello, world!"));
+
+    char buf[16];
+    bzero(buf, sizeof(buf));
+    files_read(fd, buf, sizeof(buf));
+    kprintf("\n\nread file: /opt/toOpen.txt; %s\n", buf);
 
     kprintf("\n\nclose file: /opt/toOpen.txt\n");
     files_close(fd);
 
-#ifdef DEBUG
-    debug_print_files();
-#endif
 }

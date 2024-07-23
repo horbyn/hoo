@@ -82,10 +82,10 @@ inodes_rw_disk(idx_t inode_idx, ata_cmd_t cmd) {
     uint8_t sect[BYTES_SECTOR];
     bzero(sect, sizeof(sect));
     if (cmd == ATA_CMD_IO_WRITE)
-        memmove(sect, &(__fs_inodes[inode_idx]), sizeof(inode_t));
+        memmove(sect, __fs_inodes + inode_idx, sizeof(inode_t));
     ata_driver_rw(sect, sizeof(sect), __super_block.lba_inodes_ + inode_idx, cmd);
     if (cmd == ATA_CMD_IO_READ)
-        memmove(&(__fs_inodes[inode_idx]), sect, sizeof(inode_t));
+        memmove(__fs_inodes + inode_idx, sect, sizeof(inode_t));
 }
 
 /**
@@ -154,7 +154,8 @@ setup_inode(bool is_new) {
     // stash all the inode objects
     if (is_new == false) {
         for (uint32_t i = 0; i < MAX_INODES; ++i) {
-            if (bitmap_test(&__bmfs, i) == true)
+            // bitmap_test() will return non-zero
+            if (bitmap_test(&__bmfs, i) != false)
                 inodes_rw_disk(i, cmd);
         }
     }

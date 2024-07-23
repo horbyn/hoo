@@ -51,7 +51,6 @@ init_pit(void) {
 static void
 init_ata(void) {
     ata_space_init();
-    ata_driver_init(ATA_METHOD_IRQ);
 
     // select the first valid device (device no. is 0 default)
     ata_space_t *ata_space = get_ataspace();

@@ -5,23 +5,17 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_INTR_ROUTINE_H__
-#define __KERN_INTR_ROUTINE_H__
+#ifndef __KERN_DRIVER_8042_CMD_8042_H__
+#define __KERN_DRIVER_8042_CMD_8042_H__
 
 #include "kern/x86.h"
-#include "kern/driver/io.h"
-#include "kern/sched/tasks.h"
-#include "kern/driver/ata/ata_irq.h"
-#include "kern/driver/8042/8042.h"
 
-#define ISR14_PAGEFAULT         14
-#define ISR32_TIMER             32
-#define ISR33_KEYBOARD          33
-#define ISR46_HARD1             46
-#define ISR128_SYSCALL          128
+#define DATA_PORT_8042  0x60
 
-void isr_default(void);
-void page_fault(void);
-void timer(void);
+#define MAKE_LSHIFT     42
+#define MAKE_RSHIFT     54
+#define MAKE_CAPSLOCK   58
+#define BREAK_LSHIFT    170
+#define BREAK_RSHIFT    182
 
 #endif

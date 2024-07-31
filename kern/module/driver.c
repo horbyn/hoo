@@ -70,4 +70,5 @@ kinit_dirver(void) {
     init_pic();
     init_pit();
     init_ata();
+    init_8042();
 }

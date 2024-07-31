@@ -16,7 +16,8 @@
  * @brief definition of queue
  */
 typedef struct queue {
-    node_t null_;                                           // the head node always in front
+    // the head node always in front
+    node_t null_;
     node_t *head_, *tail_;
 } queue_t;
 
@@ -25,10 +26,10 @@ typedef enum enqueue_method {
     HEAD
 } enq_mth_t;
 
-void queue_init(queue_t *);
-bool queue_isempty(queue_t *);
-void queue_push(queue_t *, node_t *, enq_mth_t);
-node_t *queue_pop(queue_t *);
-node_t *queue_front(queue_t *);
+void queue_init(queue_t *q);
+bool queue_isempty(queue_t *q);
+void queue_push(queue_t *q, node_t *m, enq_mth_t mth);
+node_t *queue_pop(queue_t *q);
+node_t *queue_front(queue_t *q);
 
 #endif

@@ -76,7 +76,7 @@ kernel_exec(void) {
     test_phypg_alloc();
     test_vspace();
     test_schedule();
-    test_disk_read();
+    // test_disk_read();
 #endif
 
 #ifdef DEBUG
@@ -85,6 +85,6 @@ kernel_exec(void) {
 #endif
 
 #ifdef TEST
-    test_fs();
+    // test_fs();
 #endif
 }

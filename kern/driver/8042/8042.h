@@ -10,7 +10,12 @@
 
 #include "cmd_8042.h"
 #include "kern/driver/io.h"
+#include "kern/units/circular_buffer.h"
 
-void ps2_intr(void);
+#define MAXSIZE_KBBUFF  1024
+
+cclbuff_t *get_kb_buff(void);
+void       init_8042(void);
+void       ps2_intr(void);
 
 #endif

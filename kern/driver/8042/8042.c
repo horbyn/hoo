@@ -31,6 +31,25 @@ static char keymap[][2] = {
     { 0, 0 }
 };
 static bool gflag_make_shift, gflag_make_caps;
+static cclbuff_t *kb_buff;
+
+/**
+ * @brief get the keyboard data buffer
+ * 
+ * @return keyboard data buffer
+ */
+cclbuff_t *
+get_kb_buff(void) {
+    return kb_buff;
+}
+
+/**
+ * @brief initialize the 8042 keyboard controller
+ */
+void
+init_8042(void) {
+    kb_buff = cclbuff_alloc(MAXSIZE_KBBUFF);
+}
 
 /**
  * @brief PS/2 interrupt handler
@@ -66,5 +85,7 @@ ps2_intr(void) {
         else    result = keymap[ch][0];
     }
 
-    kprintf("%c", result);
+    cclbuff_t *kbuff = get_kb_buff();
+    if (cclbuff_put(kbuff, result) == false)
+        kprintf("too much characters input in one time");
 }

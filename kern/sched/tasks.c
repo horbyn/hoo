@@ -39,10 +39,10 @@ static thread_buckmngr_t *__mdata_buckmngr;
 static uint8_t *__mdata_bmbuff_tid;
 static bitmap_t __bm_tid;
 static const uint32_t IDLE_PAGES = 4;
-static const pgelem_t IDLE_RING3_VA = 0;
-static const pgelem_t IDLE_MD_VSPACE_VA = IDLE_RING3_VA + PGSIZE;
-static const pgelem_t IDLE_MD_NODE_VA = IDLE_MD_VSPACE_VA + PGSIZE;
-static const pgelem_t IDLE_MD_VADDR_VA = IDLE_MD_NODE_VA + PGSIZE;
+static const pgelem_t IDLE_MD_VADDR_VA = KERN_HIGH_MAPPING - PGSIZE;
+static const pgelem_t IDLE_MD_NODE_VA = IDLE_MD_VADDR_VA - PGSIZE;
+static const pgelem_t IDLE_MD_VSPACE_VA = IDLE_MD_NODE_VA - PGSIZE;
+static const pgelem_t IDLE_RING3_VA = IDLE_MD_VSPACE_VA - PGSIZE;
 
 #ifdef DEBUG
 /**
@@ -446,15 +446,16 @@ idle_init(void) {
         (uint32_t)idle_mapping_pa, flags);
     for (uint32_t i = kern_beg; i < kern_end; ++i)
         ((pgelem_t *)idle_mapping_va)[i] = hoo_pcb->pgstruct_.mapping_[i];
-    ((pgelem_t *)idle_mapping_va)[kern_end] = 0;
+    ((pgelem_t *)idle_mapping_va)[kern_end] = (pgelem_t)idle_pgdir_va;
 
     // setup the idle page table (1 page)
     void *idle_pg_pa = phy_alloc_page();
     void *idle_pg_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(&hoo_pcb->pgstruct_, (uint32_t)idle_pg_va,
         (uint32_t)idle_pg_pa, flags);
-    ((pgelem_t *)idle_pgdir_va)[0] = (pgelem_t)idle_pg_pa | flags;
-    ((pgelem_t *)idle_mapping_va)[0] = (pgelem_t)idle_pg_va;
+    idx_t pgtbl_idx = PD_INDEX(IDLE_RING3_VA);
+    ((pgelem_t *)idle_pgdir_va)[pgtbl_idx] = (pgelem_t)idle_pg_pa | flags;
+    ((pgelem_t *)idle_mapping_va)[pgtbl_idx] = (pgelem_t)idle_pg_va;
 
     // setup the idle ring0 stack (1 page)
     void *idle_ring0_pa = phy_alloc_page();
@@ -489,8 +490,7 @@ idle_init(void) {
         (void *)(IDLE_RING3_VA + PGSIZE),
         (void *)(hoo_ring3_va + PGSIZE), idle);
     pgstruct_t pgs;
-    pgstruct_set(&pgs, (void *)idle_pgdir_va, (void *)idle_pgdir_pa,
-        idle_mapping_va);
+    pgstruct_set(&pgs, idle_pgdir_va, idle_pgdir_pa, idle_mapping_va);
     pcb_t *idle_pcb = pcb_get(TID_IDLE);
     pcb_set(idle_pcb, cur_stack, (uint32_t *)((uint32_t)hoo_ring0_va + PGSIZE),
         TID_IDLE, &pgs, (void *)IDLE_MD_VSPACE_VA, (void *)IDLE_MD_NODE_VA,
@@ -558,8 +558,8 @@ fork(void) {
         (uint32_t)new_mapping_pa, flags);
     for (uint32_t i = idle_beg; i < idle_end; ++i)
         ((pgelem_t *)new_mapping_va)[i] =
-            ((pgelem_t *)idle_pcb->pgstruct_.pdir_va_)[i];
-    ((pgelem_t *)new_mapping_va)[idle_end] = 0;
+            ((pgelem_t *)idle_pcb->pgstruct_.mapping_)[i];
+    ((pgelem_t *)new_mapping_va)[idle_end] = (pgelem_t)new_pgdir_va;
 
     // ring0
     void *new_ring0_pa = phy_alloc_page();
@@ -572,21 +572,29 @@ fork(void) {
     void *new_pg_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(&hoo_pcb->pgstruct_, (uint32_t)new_pg_va,
         (uint32_t)new_pg_pa, flags);
-    ((pgelem_t *)new_pgdir_va)[0] = (pgelem_t)new_pg_pa | flags;
-    ((pgelem_t *)new_mapping_va)[0] = (pgelem_t)new_pg_va;
+    idx_t pgtbl_idx = PD_INDEX(IDLE_RING3_VA);
+    ((pgelem_t *)new_pgdir_va)[pgtbl_idx] = (pgelem_t)new_pg_pa | flags;
+    ((pgelem_t *)new_mapping_va)[pgtbl_idx] = (pgelem_t)new_pg_va;
 
-    // copy the first 4MB of idle linear space
-    idx_t idle_pde_4mb = PD_INDEX(MB4) - 1;
-    pgelem_t *idle_pg_4mb = idle_pcb->pgstruct_.mapping_ + idle_pde_4mb;
-    for (uint32_t i = 0; i < PG_STRUCT_SIZE; ++i)
-        ((pgelem_t *)new_pg_va)[i] = idle_pg_4mb[i] & ~PGENT_RW;
+    // copy the last 4MB of idle linear space
+    pgelem_t *idle_pg =
+        (pgelem_t *)(*((pgelem_t *)idle_pcb->pgstruct_.mapping_ + pgtbl_idx));
+    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_MD_VADDR_VA)] =
+        idle_pg[PT_INDEX(IDLE_MD_VADDR_VA)] & ~PGENT_RW;
+    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_MD_NODE_VA)] =
+        idle_pg[PT_INDEX(IDLE_MD_NODE_VA)] & ~PGENT_RW;
+    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_MD_VSPACE_VA)] =
+        idle_pg[PT_INDEX(IDLE_MD_VSPACE_VA)] & ~PGENT_RW;
+    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_RING3_VA)] =
+        idle_pg[PT_INDEX(IDLE_RING3_VA)] & ~PGENT_RW;
 
     // copy pcb
     tid_t new_tid = allocate_tid();
     pcb_t *new_pcb = pcb_get(new_tid);
     pgstruct_t pgs;
     pgstruct_set(&pgs, new_pgdir_va, new_pgdir_pa, new_mapping_va);
-    pcb_set(new_pcb, idle_pcb->stack_cur_, new_ring0_va, new_tid, &pgs,
+    pcb_set(new_pcb, idle_pcb->stack_cur_,
+        (uint32_t *)((uint32_t)new_ring0_va + PGSIZE), new_tid, &pgs,
         idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_, idle_pcb->vmngr_.vaddr_,
         &idle_pcb->vmngr_.head_, TIMETICKS, idle_pcb->sleeplock_,
         thread_buckmngr_get(new_tid), null);

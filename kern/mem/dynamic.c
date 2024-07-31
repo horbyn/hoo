@@ -85,7 +85,7 @@ arrlist_alloc(arrlist_t **plist, uint32_t size) {
         void *va = vir_alloc_pages(cur_pcb, 1);
         set_mapping(&cur_pcb->pgstruct_, (uint32_t)va, (uint32_t)pa,
             PGENT_US | PGENT_RW | PGENT_PS);
-        arrlist_init(va, size);// not null, 0x20
+        arrlist_init(va, size);
 
         if (pre == null)    *plist = list = va;
         else    pre->next_ = va;
@@ -149,6 +149,8 @@ arrlist_release(arrlist_t **plist, void *elem, uint32_t elem_size) {
  */
 void *
 dyn_alloc(uint32_t size) {
+    if (size == 0)    return null;
+
     pcb_t *cur_pcb = get_current_pcb();
     buckx_mngr_t *mngr = cur_pcb->hmngr_;
 
@@ -180,6 +182,8 @@ dyn_alloc(uint32_t size) {
  */
 void
 dyn_free(void *ptr) {
+    if (ptr == null)    return;
+
     pcb_t *cur_pcb = get_current_pcb();
     buckx_mngr_t *mngr = cur_pcb->hmngr_;
 

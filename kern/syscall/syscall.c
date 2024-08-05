@@ -19,5 +19,6 @@ void syscall_init(void) {
     __stub[SYS_CLOSE]  = (syscall_t)files_close;
     __stub[SYS_READ]   = (syscall_t)files_read;
     __stub[SYS_WRITE]  = (syscall_t)files_write;
+    __stub[SYS_FORK]   = (syscall_t)fork;
     __stub[MAX_SYSCALL - 1] = null;
 }

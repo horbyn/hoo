@@ -12,12 +12,13 @@
 
 extern void syscall_entry(int syscall_number, void *retval);
 
-void printf(const char *format, ...);
-void create(const char *filename);
-void remove(const char *filename);
-int  open(const char *filename);
-void close(int fd);
-void read(int fd, void *buf, unsigned int count);
-void write(int fd, const void *buf, unsigned int count);
+void sys_printf(const char *format, ...);
+void sys_create(const char *filename);
+void sys_remove(const char *filename);
+int  sys_open(const char *filename);
+void sys_close(int fd);
+void sys_read(int fd, void *buf, unsigned int count);
+void sys_write(int fd, const void *buf, unsigned int count);
+int  sys_fork(void);
 
 #endif

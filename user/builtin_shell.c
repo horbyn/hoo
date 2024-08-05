@@ -4,17 +4,10 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __USER_SYSCALL_NUM_H__
-#define __USER_SYSCALL_NUM_H__
+#include "builtin_shell.h"
 
-#define SYS_PRINTF      0
-#define SYS_CREATE      1
-#define SYS_REMOVE      2
-#define SYS_OPEN        3
-#define SYS_CLOSE       4
-#define SYS_READ        5
-#define SYS_WRITE       6
-#define SYS_FORK        7
-
-#endif
+void
+main_shell(void) {
+    sys_printf("this is a simple shell\n");
+    while (1);
+}

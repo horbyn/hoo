@@ -4,17 +4,15 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __USER_SYSCALL_NUM_H__
-#define __USER_SYSCALL_NUM_H__
+#include "main.h"
 
-#define SYS_PRINTF      0
-#define SYS_CREATE      1
-#define SYS_REMOVE      2
-#define SYS_OPEN        3
-#define SYS_CLOSE       4
-#define SYS_READ        5
-#define SYS_WRITE       6
-#define SYS_FORK        7
+void
+main(void) {
+    sys_printf("[IDLE] Hello, this is idle\n");
 
-#endif
+    tid_t tid = sys_fork();
+    if (tid == 0) {
+        sys_printf("[IDLE CHILD] Hello, this is idle child\n");
+        exec(main_shell);
+    }
+}

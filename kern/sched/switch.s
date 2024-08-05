@@ -77,6 +77,6 @@ mode_ring3:
     xorl %edx,           %edx
     xorl %esi,           %esi
     xorl %edi,           %edi
-    xorl %ebp,           %ebp
+    movl 0x4(%ebp),      %ebp   # user stack bottom
 
     iret

@@ -531,11 +531,12 @@ allocate_tid() {
 
 /**
  * @brief copy idle thread
- * 
- * @return thread id of the new thread
+ * @param entry the entry of the new process
+ * @return thread id of the new thread in the parent; 0 in the child
  */
 tid_t
-fork(void) {
+fork(void *entry) {
+
     pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
     pcb_t *hoo_pcb = get_hoo_pcb(), *idle_pcb = pcb_get(TID_IDLE);
     uint32_t idle_beg = (uint32_t)PD_INDEX(KERN_HIGH_MAPPING),
@@ -576,6 +577,14 @@ fork(void) {
     ((pgelem_t *)new_pgdir_va)[pgtbl_idx] = (pgelem_t)new_pg_pa | flags;
     ((pgelem_t *)new_mapping_va)[pgtbl_idx] = (pgelem_t)new_pg_va;
 
+    // ring3 stack
+    void *new_ring3_pa = phy_alloc_page();
+    void *new_ring3_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(&hoo_pcb->pgstruct_, (uint32_t)new_ring3_va,
+        (uint32_t)new_ring3_pa, flags);
+    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_RING3_VA)] =
+        (pgelem_t)new_ring3_pa | flags;
+
     // copy the last 4MB of idle linear space
     pgelem_t *idle_pg =
         (pgelem_t *)(*((pgelem_t *)idle_pcb->pgstruct_.mapping_ + pgtbl_idx));
@@ -585,15 +594,17 @@ fork(void) {
         idle_pg[PT_INDEX(IDLE_MD_NODE_VA)] & ~PGENT_RW;
     ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_MD_VSPACE_VA)] =
         idle_pg[PT_INDEX(IDLE_MD_VSPACE_VA)] & ~PGENT_RW;
-    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_RING3_VA)] =
-        idle_pg[PT_INDEX(IDLE_RING3_VA)] & ~PGENT_RW;
 
     // copy pcb
     tid_t new_tid = allocate_tid();
     pcb_t *new_pcb = pcb_get(new_tid);
+    uint32_t *cur_stack = setup_idle_ring0_stack(
+        (void *)((uint32_t)new_ring0_va + PGSIZE),
+        (void *)(IDLE_RING3_VA + PGSIZE),
+        (void *)(new_ring3_va + PGSIZE), entry);
     pgstruct_t pgs;
     pgstruct_set(&pgs, new_pgdir_va, new_pgdir_pa, new_mapping_va);
-    pcb_set(new_pcb, idle_pcb->stack_cur_,
+    pcb_set(new_pcb, cur_stack,
         (uint32_t *)((uint32_t)new_ring0_va + PGSIZE), new_tid, &pgs,
         idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_, idle_pcb->vmngr_.vaddr_,
         &idle_pcb->vmngr_.head_, TIMETICKS, idle_pcb->sleeplock_,

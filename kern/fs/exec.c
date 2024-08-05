@@ -4,17 +4,14 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __USER_SYSCALL_NUM_H__
-#define __USER_SYSCALL_NUM_H__
+#include "exec.h"
 
-#define SYS_PRINTF      0
-#define SYS_CREATE      1
-#define SYS_REMOVE      2
-#define SYS_OPEN        3
-#define SYS_CLOSE       4
-#define SYS_READ        5
-#define SYS_WRITE       6
-#define SYS_FORK        7
-
-#endif
+/**
+ * @brief change the control flow to jump to the specific entry point
+ * 
+ * @param prog_addr the specific program address to execute
+ */
+void
+exec(void (*prog_addr)(void)) {
+    prog_addr();
+}

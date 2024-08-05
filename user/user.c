@@ -12,7 +12,7 @@
  * @param format formatting string
  */
 void
-printf(const char *format, ...) {
+sys_printf(const char *format, ...) {
     syscall_entry(SYS_PRINTF, 0);
 }
 
@@ -22,7 +22,7 @@ printf(const char *format, ...) {
  * @param filename file or directory name
  */
 void
-create(const char *filename) {
+sys_create(const char *filename) {
     syscall_entry(SYS_CREATE, 0);
 }
 
@@ -32,7 +32,7 @@ create(const char *filename) {
  * @param filename file or directory name
  */
 void
-remove(const char *filename) {
+sys_remove(const char *filename) {
     syscall_entry(SYS_REMOVE, 0);
 }
 
@@ -43,7 +43,7 @@ remove(const char *filename) {
  * @return file descriptor
  */
 int
-open(const char *filename) {
+sys_open(const char *filename) {
     int fd = -1;
     syscall_entry(SYS_OPEN, &fd);
     return fd;
@@ -55,7 +55,7 @@ open(const char *filename) {
  * @param fd file descriptor
  */
 void
-close(int fd) {
+sys_close(int fd) {
     syscall_entry(SYS_CLOSE, 0);
 }
 
@@ -67,7 +67,7 @@ close(int fd) {
  * @param count amount
  */
 void
-read(int fd, void *buf, unsigned int count) {
+sys_read(int fd, void *buf, unsigned int count) {
     syscall_entry(SYS_READ, 0);
 }
 
@@ -79,6 +79,23 @@ read(int fd, void *buf, unsigned int count) {
  * @param count amount
  */
 void
-write(int fd, const void *buf, unsigned int count) {
+sys_write(int fd, const void *buf, unsigned int count) {
     syscall_entry(SYS_WRITE, 0);
+}
+
+/**
+ * @brief fork children process
+ * 
+ * @return child thread id
+ */
+int
+sys_fork(void) {
+    int tid = -1;
+    unsigned int backup = 0;
+    __asm__ ("movl 0x8(%%ebp), %0\n\t"
+        "movl 0x4(%%ebp), %%eax\n\t"
+        "movl %%eax, 0x8(%%ebp)" : "=a"(backup) :);
+    syscall_entry(SYS_FORK, &tid);
+    __asm__ ("movl %0, 0x8(%%ebp)" : : "a"(backup));
+    return tid;
 }

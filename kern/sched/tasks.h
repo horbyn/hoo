@@ -29,7 +29,7 @@ void  scheduler();
 void  task_ready(node_t *task);
 void  idle_init(void);
 void  idle_setup_vspace(void);
-tid_t fork(void);
+tid_t fork(void *entry);
 void  sleep(sleeplock_t *slock);
 void  wakeup(sleeplock_t *slock);
 void  wait_sleeplock(sleeplock_t *slock);

@@ -5,16 +5,13 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __USER_SYSCALL_NUM_H__
-#define __USER_SYSCALL_NUM_H__
+#ifndef __KERN_MODULE_MAIN_H__
+#define __KERN_MODULE_MAIN_H__
 
-#define SYS_PRINTF      0
-#define SYS_CREATE      1
-#define SYS_REMOVE      2
-#define SYS_OPEN        3
-#define SYS_CLOSE       4
-#define SYS_READ        5
-#define SYS_WRITE       6
-#define SYS_FORK        7
+#include "kern/fs/exec.h"
+#include "kern/sched/tasks.h"
+#include "user/builtin_shell.h"
+
+void main(void);
 
 #endif

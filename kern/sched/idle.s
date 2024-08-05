@@ -14,6 +14,7 @@
     .extern signal
     .extern get_hoo_sleeplock
     .extern exit
+    .extern main
 
 idle:
     # for caller-saved
@@ -38,4 +39,5 @@ idle:
     popl %ecx
     popl %eax
 
+    call main
     ret

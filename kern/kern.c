@@ -80,8 +80,8 @@ kernel_exec(void) {
 #endif
 
 #ifdef DEBUG
-    clear_screen();
-    debug_print_tasks();
+    // clear_screen();
+    // debug_print_tasks();
 #endif
 
 #ifdef TEST

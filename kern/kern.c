@@ -71,12 +71,14 @@ kernel_exec(void) {
     sleep(hoo_slplock);
     signal(&hoo_slplock->guard_);
     enable_intr();
+    load_builtins();
 
 #ifdef TEST
     test_phypg_alloc();
     test_vspace();
     test_schedule();
-    // test_disk_read();
+    test_disk_read();
+    test_fs();
 #endif
 
 #ifdef DEBUG
@@ -84,7 +86,8 @@ kernel_exec(void) {
     // debug_print_tasks();
 #endif
 
-#ifdef TEST
-    // test_fs();
-#endif
+    // clear_screen();
+    // __asm__ ("pushl %0\n\t"
+    //     "pushl %1\n\t"
+    //     "jmp mode_ring3" : : "r" (main), "r" (STACK_HOO_RING3));
 }

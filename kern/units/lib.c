@@ -21,6 +21,25 @@ strlen(const char *str) {
 }
 
 /**
+ * @brief compare two strings
+ * 
+ * @param a string a
+ * @param b string b
+ * @retval true: same strings
+ * @retval false: different strings
+ */
+bool
+strcmp(const char *a, const char *b) {
+    uint32_t alen = strlen(a), blen = strlen(b);
+    if (alen != blen)     return false;
+    for (uint32_t i = 0; i < alen; i++) {
+        if (a[i] != b[i])
+            return false;
+    }
+    return true;
+}
+
+/**
  * @brief setup the `fill` to the `buff` up to `bufflen` size
  * 
  * @param buff    the buff to be reseted
@@ -67,27 +86,6 @@ memmove(void *dst, const void *src, uint32_t size) {
     while (size--)    *pdst-- = *psrc--;
 
     return 0;
-}
-
-/**
- * @brief compare two buffer
- * 
- * @param a buffer a
- * @param b buffer b
- * @param max_cmp_size the max size to be compared
- * @retval true: same
- * @retval false: not same
- */
-bool
-memcmp(const void *a, const void *b, uint32_t max_cmp_size) {
-    const uint8_t *pa = a, *pb = b;
-
-    uint32_t i = 0;
-    for (; i < max_cmp_size; i++) {
-        if (pa[i] != pb[i])    break;
-    }
-
-    return i == max_cmp_size ? true : false;
 }
 
 /**

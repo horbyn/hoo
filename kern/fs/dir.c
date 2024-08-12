@@ -45,7 +45,7 @@ is_root_dir(const char *dir) {
         ROOT_DIR[1] = 0;
         is_init = true;
     }
-    return memcmp(dir, ROOT_DIR, strlen(dir));
+    return strcmp(dir, ROOT_DIR);
 }
 
 /**
@@ -83,7 +83,7 @@ diritem_compare(const diritem_t *d1, const diritem_t *d2) {
     if (d1 == null || d2 == null)    panic("diritem_compare(): null pointer");
     if (strlen(d1->name_) != strlen(d2->name_))    return false;
     return (d1->type_ == d2->type_
-        && memcmp(d1->name_, d2->name_, strlen(d1->name_)));
+        && strcmp(d1->name_, d2->name_));
 }
 
 /**
@@ -143,6 +143,10 @@ diritem_find(const char *dir, diritem_t *found) {
             //                    dir pointer
             bzero(name_storage, sizeof(name_storage));
             strsep(dir, SEPARATE, i, name_storage);
+            if (name_storage[0] == '\0') {
+                fexit_in_advance = false;
+                break;
+            }
 
             // traversal inode blocks
             diritem_t *temp = null;
@@ -159,7 +163,7 @@ diritem_find(const char *dir, diritem_t *found) {
                 free_rw_disk(dirblock, lba, ATA_CMD_IO_READ);
                 for (uint32_t k = 0; k < dirblock->amount_; ++k) {
                     temp = dirblock->dir_ + k;
-                    if (memcmp(temp->name_, name_storage, strlen(name_storage))) {
+                    if (strcmp(temp->name_, name_storage)) {
                         memmove(&cur, temp, sizeof(diritem_t));
                         ffound = true;
                         break;

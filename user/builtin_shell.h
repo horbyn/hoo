@@ -10,6 +10,8 @@
 
 #include "user.h"
 
+#define CMD_MAX_LEN     256
+
 void main_shell(void);
 
 #endif

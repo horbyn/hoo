@@ -87,7 +87,7 @@ filename_format(const char *filename, char *result) {
 }
 
 /**
- * @brief create a new file or directory
+ * @brief create a new file or directory (terminated with '/')
  * 
  * @param name the name to be create
  */
@@ -241,7 +241,7 @@ files_remove(const char *name) {
         for (uint32_t j = 0; j < db->amount_; ++j) {
             if ((i == 0 && j == 0 )|| (i == 0 && j == 1))    continue;
 
-            if (memcmp(cur_name, db->dir_[j].name_, strlen(cur_name))) {
+            if (strcmp(cur_name, db->dir_[j].name_)) {
                 delete_diritem(db->dir_ + j);
                 free_map_update();
                 inode_map_update();
@@ -291,9 +291,9 @@ fmngr_init(fmngr_t *fmngr) {
     bitmap_init(fmngr->fd_set_, MAX_FILES_PER_TASK, buff);
 
     // for stdin, stdout, stderr
-    bitmap_set(fmngr->fd_set_, 0);
-    bitmap_set(fmngr->fd_set_, 1);
-    bitmap_set(fmngr->fd_set_, 2);
+    bitmap_set(fmngr->fd_set_, FD_STDIN);
+    bitmap_set(fmngr->fd_set_, FD_STDOUT);
+    bitmap_set(fmngr->fd_set_, FD_STDERR);
 
     return fmngr;
 }
@@ -357,6 +357,14 @@ files_read(fd_t fd, char *buf, uint32_t size) {
     if (fd > MAX_FILES_PER_TASK)    panic("files_read(): invalid fd");
     if (buf == null)    panic("files_read(): invalid buffer");
 
+    if (fd == FD_STDIN || fd == FD_STDOUT || fd == FD_STDERR) {
+        cclbuff_t *cclbuff = get_kb_buff();
+        for (uint32_t i = 0; i < size; ++i) {
+            buf[i] = cclbuff_get(cclbuff);
+        }
+        return;
+    }
+
     pcb_t *cur_pcb = get_current_pcb();
     global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
     if (__fs_files[index].ref_ == 0)
@@ -403,11 +411,18 @@ files_write(fd_t fd, const char *buf, uint32_t size) {
         if (i == size / BYTES_SECTOR && size % BYTES_SECTOR != 0) {
             // the last one needs to be filled with 0
             memmove(buf_tmp, buf + i * BYTES_SECTOR, size % BYTES_SECTOR);
-            memmove(buf_tmp + size % BYTES_SECTOR, 0,
+            memset(buf_tmp + size % BYTES_SECTOR, 0,
                 BYTES_SECTOR - size % BYTES_SECTOR);
         } else    memmove(buf_tmp, buf + i * BYTES_SECTOR, BYTES_SECTOR);
 
-        free_rw_disk(buf_tmp, iblock_get(inode_idx, i), ATA_CMD_IO_WRITE);
+        lba_index_t lba = iblock_get(inode_idx, i);
+        if (lba == 0) {
+            lba = free_allocate();
+            free_map_setup(lba, true);
+            free_map_update();
+            __fs_inodes[inode_idx].iblocks_[i] = lba;
+        }
+        free_rw_disk(buf_tmp, lba, ATA_CMD_IO_WRITE);
     } // end for(i)
 
     // update inode

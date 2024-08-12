@@ -45,6 +45,13 @@ fmngr_files_set(fmngr_t *fmngr, fd_t fd, fd_t val) {
     fmngr->files_[fd] = val;
 }
 
+/**
+ * @brief get the files array element for specific index of file manager
+ * 
+ * @param fmngr file manager
+ * @param fd    file descriptor
+ * @return file array element
+ */
 fd_t
 fmngr_files_get(fmngr_t *fmngr, fd_t fd) {
     if (fmngr == null)    panic("fmngr_files_get(): null pointer");

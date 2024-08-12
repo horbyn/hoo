@@ -41,8 +41,8 @@ switch_to:
 next:
     movl 0xc(%ebp),  %eax       # fetch `node_t` pointer of next
     movl (%eax),     %eax       # fetch `pcb_t` pointer of next node
-    movl 0x10(%eax), %ebx       # the physical address of page directory table
-    movl %ebx,       %cr3
+    movl 0x10(%eax), %ecx       # the physical address of page directory table
+    movl %ecx,       %cr3
     movl (%eax),     %esp       # fetch the value the next pcb offset 0 pointed to
 
     ret

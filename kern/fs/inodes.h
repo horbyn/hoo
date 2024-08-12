@@ -38,6 +38,7 @@ void        inode_map_setup(idx_t inode_idx, bool is_set);
 void        inode_map_update();
 void        inode_set(idx_t inode_idx, uint32_t size, lba_index_t base_lba);
 void        inodes_rw_disk(idx_t inode_idx, ata_cmd_t cmd);
+void        iblock_set(idx_t inode_idx, idx_t iblock_idx, lba_index_t lba);
 lba_index_t iblock_get(idx_t inode_idx, idx_t iblock_idx);
 void        setup_inode(bool);
 

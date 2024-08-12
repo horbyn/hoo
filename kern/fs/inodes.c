@@ -89,19 +89,24 @@ inodes_rw_disk(idx_t inode_idx, ata_cmd_t cmd) {
 }
 
 /**
- * @brief get the element of array iblock according to specific inode
+ * @brief handle the iblock, either write or read
  * 
  * @param inode_idx  inode index
  * @param iblock_idx the index of the array iblock
- * @return lba
+ * @param write      to write
+ * @param read       to read
  */
-lba_index_t
-iblock_get(idx_t inode_idx, idx_t iblock_idx) {
+static void
+iblock_handle(idx_t inode_idx, idx_t iblock_idx, lba_index_t write, lba_index_t *read) {
     if (inode_idx == INVALID_INDEX || inode_idx >= MAX_INODES)
-        panic("iblock_get(): invalid inode index");
+        panic("iblock_handle(): invalid inode index");
     if (iblock_idx == INVALID_INDEX
         || iblock_idx >= __super_block.inode_block_index_max_)
-        panic("iblock_get(): invalid iblock index");
+        panic("iblock_handle(): invalid iblock index");
+    if (write < __super_block.lba_free_ && read == null)
+        panic("iblock_handle(): invalid lba");
+    if (write >= __super_block.lba_free_ && read)
+        panic("iblock_handle(): illegal operation");
 
     static const idx_t DIRECT_INDEX = MAX_INODE_BLOCKS - 2 - 1,
         LEVEL1_INDEX = DIRECT_INDEX + 1, LEVEL2_INDEX = LEVEL1_INDEX + 1;
@@ -110,14 +115,18 @@ iblock_get(idx_t inode_idx, idx_t iblock_idx) {
         LEVEL2_BORDER = LEVEL1_BORDER + LBA_ITEMS_PER_SECTOR * LBA_ITEMS_PER_SECTOR;
 
     inode_t *inode = __fs_inodes + inode_idx;
-    lba_index_t ret = 0;
     char *buf = dyn_alloc(BYTES_SECTOR);
     if (iblock_idx < DIRECT_BORDER) {
-        ret = inode->iblocks_[iblock_idx];
+        if (read)    *read = inode->iblocks_[iblock_idx];
+        else    inode->iblocks_[iblock_idx] = write;
     } else if (iblock_idx < LEVEL1_BORDER) {
         lba_index_t level1 = inode->iblocks_[LEVEL1_INDEX];
         ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
-        ret = ((lba_index_t *)buf)[iblock_idx - DIRECT_BORDER];
+        if (read)    *read = ((lba_index_t *)buf)[iblock_idx - DIRECT_BORDER];
+        else {
+            ((lba_index_t *)buf)[iblock_idx - DIRECT_BORDER] = write;
+            ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_WRITE);
+        }
     } else if (iblock_idx < LEVEL2_BORDER) {
         lba_index_t level2 = inode->iblocks_[LEVEL2_INDEX];
         ata_driver_rw(buf, BYTES_SECTOR, level2, ATA_CMD_IO_READ);
@@ -125,12 +134,41 @@ iblock_get(idx_t inode_idx, idx_t iblock_idx) {
 
         lba_index_t level1 = ((lba_index_t *)buf)[index / LBA_ITEMS_PER_SECTOR];
         ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
-        ret = ((lba_index_t *)buf)[index % LBA_ITEMS_PER_SECTOR];
+        if (read)    *read = ((lba_index_t *)buf)[index % LBA_ITEMS_PER_SECTOR];
+        else {
+            ((lba_index_t *)buf)[index % LBA_ITEMS_PER_SECTOR] = write;
+            ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_WRITE);
+        }
     } else {
-        panic("iblock_get(): invalid iblock index");
+        panic("iblock_handle(): invalid iblock index");
     }
 
     dyn_free(buf);
+}
+
+/**
+ * @brief settup the element of array iblock according to specific inode
+ * 
+ * @param inode_idx  inode index
+ * @param iblock_idx the index of the array iblock
+ * @param lba        the lba to set for the iblock
+ */
+void
+iblock_set(idx_t inode_idx, idx_t iblock_idx, lba_index_t lba) {
+    iblock_handle(inode_idx, iblock_idx, lba, null);
+}
+
+/**
+ * @brief get the element of array iblock according to specific inode
+ * 
+ * @param inode_idx  inode index
+ * @param iblock_idx the index of the array iblock
+ * @return lba
+ */
+lba_index_t
+iblock_get(idx_t inode_idx, idx_t iblock_idx) {
+    lba_index_t ret = 0;
+    iblock_handle(inode_idx, iblock_idx, 0, &ret);
     return ret;
 }
 

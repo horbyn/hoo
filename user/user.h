@@ -10,6 +10,10 @@
 
 #include "syscall_num.h"
 
+#define FD_STDIN    0
+#define FD_STDOUT   1
+#define FD_STDERR   2
+
 extern void syscall_entry(int syscall_number, void *retval);
 
 void sys_printf(const char *format, ...);

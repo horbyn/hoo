@@ -61,6 +61,8 @@ format_disk:
 	-rm -r $(DISK)
 	dd if=/dev/zero of=$(DISK) bs=541428736 count=1
 
+SEG := -j .text -j .rodata -j .data -j .ls
+
 # objdump -S: disassemble the text segment in a source intermixed style
 #         -D: disassemble all the segments
 #         -j: specify segments to be generated
@@ -68,7 +70,7 @@ $(BOOT_IMG): bootsect kernel.elf
 	dd if=bootsect of=$(BOOT_IMG) bs=512 count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
 	dd if=kernel of=$(BOOT_IMG) bs=512 count=896 seek=1 conv=notrunc
-	objdump -j .text -j .rodata -j .data -SD -m i386 kernel.elf > kernel.elf.dis
+	objdump $(SEG) -SD -m i386 kernel.elf > kernel.elf.dis
 
 # --oformat: output the pure binary format
 # -e: entry is `_start` by default, but this option can specify other entrys

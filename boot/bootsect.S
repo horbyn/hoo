@@ -149,7 +149,7 @@ move_cont:
     jz move_end
     movw %ax,           %es
     movw %ds,           %bx
-    addw %ax,           %bx
+    addw $0x1000,       %bx
     movw %bx,           %ds
     jmp move
 move_end:

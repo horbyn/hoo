@@ -634,7 +634,9 @@ sleep(sleeplock_t *slock) {
     pcb_t *cur = get_current_pcb();
     cur->sleeplock_ = slock;
     signal(&slock->guard_);
+    __asm__ ("pusha");
     scheduler();
+    __asm__ ("popa");
 
     // it is time to wakeup
     enable_intr();

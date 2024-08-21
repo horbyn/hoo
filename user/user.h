@@ -14,8 +14,6 @@
 #define FD_STDOUT   1
 #define FD_STDERR   2
 
-extern void syscall_entry(int syscall_number, void *retval);
-
 void sys_printf(const char *format, ...);
 void sys_create(const char *filename);
 void sys_remove(const char *filename);
@@ -24,5 +22,8 @@ void sys_close(int fd);
 void sys_read(int fd, void *buf, unsigned int count);
 void sys_write(int fd, const void *buf, unsigned int count);
 int  sys_fork(void);
+int  sys_exec(const char *program);
+void sys_wait(int pid);
+void sys_exit();
 
 #endif

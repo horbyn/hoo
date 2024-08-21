@@ -9,6 +9,7 @@
 #define __KERN_FS_INODES_H__
 
 #include "super_block.h"
+#include "free.h"
 #include "kern/mem/dynamic.h"
 #include "kern/units/bitmap.h"
 

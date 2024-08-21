@@ -1,5 +1,6 @@
 BOOT_IMG := fd1_44M.img
 DISK     := hd.img
+SIZE_SEC := 512
 
 # SSRC: the `.s` set, which is used the `find` command to find out all the `.s`
 #       in current dir and all the recursive sub-dir
@@ -61,16 +62,32 @@ format_disk:
 	-rm -r $(DISK)
 	dd if=/dev/zero of=$(DISK) bs=541428736 count=1
 
-SEG := -j .text -j .rodata -j .data -j .ls
+SEG := -j .text -j .rodata -j .data
+SIZE_KERNEL         := 499
+SIZE_BUILTIN        := 50
+BASE_SEC_BUILTIN_SH := $(SIZE_KERNEL) + 1
+BASE_SEC_BUILTIN_LS := $(BASE_SEC_BUILTIN_SH) + $(SIZE_BUILTIN)
+BASE_BUILTIN_SH     := $(shell echo $$((  (($(BASE_SEC_BUILTIN_SH) - 2) * $(SIZE_SEC))  )))
+END_BUILTIN_SH      := $(shell echo $$((  (($(BASE_SEC_BUILTIN_SH) + $(SIZE_BUILTIN) - 2) * $(SIZE_SEC) - 1)  )))
+BASE_BUILTIN_LS     := $(shell echo $$((  (($(BASE_SEC_BUILTIN_LS) - 2) * $(SIZE_SEC))  )))
+END_BUILTIN_LS      := $(shell echo $$((  (($(BASE_SEC_BUILTIN_LS) + $(SIZE_BUILTIN) - 2) * $(SIZE_SEC) - 1)  )))
 
 # objdump -S: disassemble the text segment in a source intermixed style
 #         -D: disassemble all the segments
 #         -j: specify segments to be generated
-$(BOOT_IMG): bootsect kernel.elf
-	dd if=bootsect of=$(BOOT_IMG) bs=512 count=1 conv=notrunc
+$(BOOT_IMG): bootsect kernel.elf sh.elf ls.elf
+	dd if=bootsect of=$(BOOT_IMG) bs=$(SIZE_SEC) count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
-	dd if=kernel of=$(BOOT_IMG) bs=512 count=896 seek=1 conv=notrunc
+	dd if=kernel of=$(BOOT_IMG) bs=$(SIZE_SEC) count=$(SIZE_KERNEL) seek=1 conv=notrunc
+	objcopy -S -O binary user/sh.elf user/sh
+	dd if=user/sh of=$(BOOT_IMG) bs=$(SIZE_SEC) count=$(SIZE_BUILTIN) \
+		seek=$(shell echo $$((  $(BASE_SEC_BUILTIN_SH) - 1  ))) conv=notrunc
+	objcopy -S -O binary user/ls.elf user/ls
+	dd if=user/ls of=$(BOOT_IMG) bs=$(SIZE_SEC) count=$(SIZE_BUILTIN) \
+		seek=$(shell echo $$((  $(BASE_SEC_BUILTIN_LS) - 1  ))) conv=notrunc
 	objdump $(SEG) -SD -m i386 kernel.elf > kernel.elf.dis
+	objdump $(SEG) -SD -m i386 user/sh.elf >> kernel.elf.dis
+	objdump $(SEG) -SD -m i386 user/ls.elf >> kernel.elf.dis
 
 # --oformat: output the pure binary format
 # -e: entry is `_start` by default, but this option can specify other entrys
@@ -86,6 +103,17 @@ bootsect: ./boot/bootsect.o
 kernel.elf: $(OBJS) $(OBJC)
 	$(LD) $(LDFLAGS) -T kernel.ld $^ -o $@
 
+sh.elf: user/builtin_shell.o user/user.o
+	$(LD) -m elf_i386 -e main_shell $^ -o user/$@
+
+ls.elf: user/builtin_ls.o user/user.o
+	$(LD) -m elf_i386 -e main_ls $^ -o user/$@
+
+CFLAGS += -D__BASE_BUILTIN_SH=$(BASE_BUILTIN_SH) \
+	-D__END_BUILTIN_SH=$(END_BUILTIN_SH) \
+	-D__BASE_BUILTIN_LS=$(BASE_BUILTIN_LS) \
+	-D__END_BUILTIN_LS=$(END_BUILTIN_LS)
+
 $(OBJS): %.o: %.s
 	$(CC) $(CFLAGS) $< -o $@
 
@@ -95,4 +123,5 @@ $(OBJC): %.o: %.c
 # -rm: some maybe not exist but we dont care
 clean:
 	-rm -r $(OBJS) $(OBJC) ./boot/bootsect.o bootsect \
-	./kernel ./kernel.elf ./kernel.elf.dis ./kernel.map $(BOOT_IMG)
+	./kernel ./kernel.elf ./*.dis ./kernel.map $(BOOT_IMG) \
+	user/*.elf user/sh user/ls

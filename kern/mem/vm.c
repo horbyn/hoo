@@ -106,7 +106,7 @@ vir_alloc_pages(pcb_t *pcb, uint32_t amount) {
             worker = worker->next_;
         } else {
             // there is enough space; or there is no next interval
-            if (!worker->next_ && last_end + amount >= ADDR_END)
+            if (!worker->next_ && last_end + amount * PGSIZE >= ADDR_END)
                 panic("vir_alloc_pages(): no enough space");
 
             vspace_t *temp = list_isempty(&worker->list_) ?

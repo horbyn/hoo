@@ -532,10 +532,11 @@ allocate_tid() {
 /**
  * @brief copy idle thread
  * @param entry the entry of the new process
+ * @param sl    the sleeplock to control synchronous for the parent and child
  * @return thread id of the new thread in the parent; 0 in the child
  */
 tid_t
-fork(void *entry) {
+fork(void *entry, sleeplock_t *sl) {
 
     pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
     pcb_t *hoo_pcb = get_hoo_pcb(), *idle_pcb = pcb_get(TID_IDLE);
@@ -607,8 +608,7 @@ fork(void *entry) {
     pcb_set(new_pcb, cur_stack,
         (uint32_t *)((uint32_t)new_ring0_va + PGSIZE), new_tid, &pgs,
         idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_, idle_pcb->vmngr_.vaddr_,
-        &idle_pcb->vmngr_.head_, TIMETICKS, idle_pcb->sleeplock_,
-        thread_buckmngr_get(new_tid), null);
+        &idle_pcb->vmngr_.head_, TIMETICKS, sl, thread_buckmngr_get(new_tid), null);
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);
@@ -667,10 +667,11 @@ wakeup(sleeplock_t *slock) {
 /**
  * @brief hold the sleeplock
  * 
- * @param slock sleeplock
+ * @param tid_child sleeplock
  */
 void
-wait_sleeplock(sleeplock_t *slock) {
+wait_sleeplock(tid_t tid_child) {
+    sleeplock_t *slock = pcb_get(tid_child)->sleeplock_;
     if (slock == null)    panic("wait_sleeplock(): null pointer");
 
     wait(&slock->guard_);
@@ -715,6 +716,9 @@ exit() {
 
     // release ring3 stack
     phy_release_vpage(pcb, (void *)IDLE_RING3_VA);
+
+    // wakeup the asleep process
+    if (pcb->sleeplock_)    signal_sleeplock(pcb->sleeplock_);
 
     // append to the expired list
     wait(&__spinlock_tasks);

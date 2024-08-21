@@ -26,5 +26,16 @@ main_shell(void) {
             sys_printf("%c", ch);
             if (i < CMD_MAX_LEN)    command[i++] = ch;
         } while (ch != '\n');
+
+        command[i - 1] = '\0';
+        int pid = sys_fork();
+        if (pid != 0) {
+            sys_wait(pid);
+        } else {
+            int result = sys_exec(command);
+            if (result == -1)
+                sys_printf("%s command not found\n", command);
+            sys_exit();
+        }
     } // end while()
 }

@@ -302,15 +302,14 @@ fmngr_init(fmngr_t *fmngr) {
  * @brief open the specific file
  * 
  * @param name file name
- * @return file descriptor
+ * @return file descriptor, -1 if the file is not found
  */
 fd_t
 files_open(const char *name) {
     if (name == null)    panic("files_open(): invalid filename");
 
     diritem_t *self = dyn_alloc(sizeof(diritem_t));
-    if (!diritem_find(name, self))
-        panic("files_open(): file or directory is not found");
+    if (!diritem_find(name, self))    return -1;
     if (self->type_ != INODE_TYPE_FILE || self->inode_idx_ > MAX_INODES)
         panic("files_open(): invalid file format");
 
@@ -419,15 +418,34 @@ files_write(fd_t fd, const char *buf, uint32_t size) {
         if (lba == 0) {
             lba = free_allocate();
             free_map_setup(lba, true);
-            free_map_update();
-            __fs_inodes[inode_idx].iblocks_[i] = lba;
+            iblock_set(inode_idx, i, lba);
         }
         free_rw_disk(buf_tmp, lba, ATA_CMD_IO_WRITE);
     } // end for(i)
 
-    // update inode
+    // update inode and free
     __fs_inodes[inode_idx].size_ = size;
     inodes_rw_disk(inode_idx, ATA_CMD_IO_WRITE);
+    free_map_update();
 
     dyn_free(buf_tmp);
+}
+
+/**
+ * @brief get the size of the specific file
+ * 
+ * @param fd file descriptor
+ * @return the size of the file
+ */
+uint32_t
+files_get_size(fd_t fd) {
+    if (fd == FD_STDIN || fd == FD_STDOUT || fd == FD_STDERR)
+        panic("files_get_size(): invalid file descriptor");
+
+    pcb_t *cur_pcb = get_current_pcb();
+    global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
+    if (__fs_files[index].ref_ == 0)
+        panic("files_get_size(): the file was in non-opening");
+
+    return (__fs_inodes + __fs_files[index].inode_idx_)->size_;
 }

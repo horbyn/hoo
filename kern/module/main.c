@@ -6,12 +6,12 @@
  **************************************************************************/
 #include "main.h"
 
+/**
+ * @brief kernel ring3 main process
+ */
 void
 main(void) {
-    tid_t tid = sys_fork();
-    if (tid == 0) {
-        exec(main_shell);
-    } else {
-        while (1);
-    }
+    // hoo ring3 jump into shell process and not return
+    int result = sys_exec(BUILT_SHELL);
+    if (result == -1)    sys_printf("cannot launch shell\n");
 }

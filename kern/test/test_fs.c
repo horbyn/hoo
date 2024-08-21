@@ -31,6 +31,7 @@ test_fs() {
     files_create("/opt/toOpen.txt");
 
     fd_t fd = files_open("/opt/toOpen.txt");
+    if (fd == -1)    panic("TEST FAILED: cannot open /opt/toOpen.txt");
     kprintf("\n\nopen file: /opt/toOpen.txt; %d\n", fd);
 
     files_write(fd, "Hello, world!", strlen("Hello, world!"));

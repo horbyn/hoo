@@ -9,6 +9,7 @@
 #define __KERN_SYSCALL_SYSCALL_H__
 
 #include "kern/driver/io.h"
+#include "kern/fs/exec.h"
 #include "kern/fs/files.h"
 #include "user/syscall_num.h"
 

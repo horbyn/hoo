@@ -82,12 +82,12 @@ kernel_exec(void) {
 #endif
 
 #ifdef DEBUG
-    // clear_screen();
-    // debug_print_tasks();
+    clear_screen();
+    debug_print_tasks();
 #endif
 
-    // clear_screen();
-    // __asm__ ("pushl %0\n\t"
-    //     "pushl %1\n\t"
-    //     "jmp mode_ring3" : : "r" (main), "r" (STACK_HOO_RING3));
+    clear_screen();
+    __asm__ ("pushl %0\n\t"
+        "pushl %1\n\t"
+        "jmp mode_ring3" : : "r" (main), "r" (STACK_HOO_RING3));
 }

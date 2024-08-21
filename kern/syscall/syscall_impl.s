@@ -9,7 +9,6 @@
     .code32
     .extern __stub
     .globl syscall
-    .globl syscall_entry
 
 # 0x80th interrupt handling routine
 syscall:
@@ -69,30 +68,5 @@ syscall:
 
 syscall_exit:
     addl %ebx,       %esp
-    popl %ebp
-    ret
-
-# ################################# #
-#                                   #
-# @brief syscall entry              #
-#                                   #
-# @param number: syscall number     #
-# @param retval: return value       #
-#                                   #
-# ################################# #
-syscall_entry:
-    pushl %ebp
-    movl %esp,          %ebp
-    pushal                                                  # save user context
-
-    movl (%ebp),        %ebx
-    addl $0x8,          %ebx                                # save user ring3 esp
-    movl (%ebp),        %ecx
-    movl (%ecx),        %ecx                                # save user ring3 ebp
-    movl 0x8(%ebp),     %eax                                # system call number 
-    movl 0xc(%ebp),     %edx                                # return value
-    int $0x80
-
-    popal                                                   # restore user context
     popl %ebp
     ret

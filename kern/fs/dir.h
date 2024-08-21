@@ -9,7 +9,6 @@
 #define __KERN_FS_DIR_H__
 
 #include "inodes.h"
-#include "free.h"
 #include "kern/units/lib.h"
 
 #define DIRITEM_NAME_LEN    16

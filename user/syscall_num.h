@@ -16,5 +16,8 @@
 #define SYS_READ        5
 #define SYS_WRITE       6
 #define SYS_FORK        7
+#define SYS_EXEC        8
+#define SYS_WAIT        9
+#define SYS_EXIT        10
 
 #endif

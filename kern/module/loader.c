@@ -5,7 +5,6 @@
  *                                                                        *
  **************************************************************************/
 #include "loader.h"
-#include "kern/driver/io.h"///
 
 /**
  * @brief the specific filename append to base filename
@@ -37,10 +36,9 @@ builtin_to_file(const char *filename, void *addr, uint32_t len) {
     char *specific_file = dyn_alloc(64);
     bzero(specific_file, 64);
     filename_append(DIR_LOADER, specific_file, filename);
-    kprintf("\tbuiltin_to_file(): sp file: %s\n", specific_file);
     files_create(specific_file);
     fd_t fd = files_open(specific_file);
-    kprintf("\tbuiltin_to_file(): fd: %d\n", fd);
+    if (fd == -1)    return;
     files_write(fd, addr, len);
     files_close(fd);
 
@@ -53,7 +51,11 @@ builtin_to_file(const char *filename, void *addr, uint32_t len) {
 void
 load_builtins(void) {
     files_create(DIR_LOADER);
-    kprintf("load_builtins(): ls base: 0x%x, len: %d\n", (uint32_t)__ls_base,
-        (uint32_t)__ls_end - (uint32_t)__ls_base);
-    builtin_to_file(BUILT_LS, (void *)__ls_base, (uint32_t)__ls_end - (uint32_t)__ls_base);
+
+#ifdef __BASE_BUILTIN_SH
+    builtin_to_file(BUILT_SHELL, (void *)__BASE_BUILTIN_SH,
+        (uint32_t)__END_BUILTIN_SH - (uint32_t)__BASE_BUILTIN_SH);
+    builtin_to_file(BUILT_LS, (void *)__BASE_BUILTIN_LS,
+        (uint32_t)__END_BUILTIN_LS - (uint32_t)__BASE_BUILTIN_LS);
+#endif
 }

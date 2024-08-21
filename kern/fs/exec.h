@@ -10,6 +10,10 @@
 
 #include "files.h"
 
-void exec(void (*prog_addr)(void));
+#define DIR_LOADER  "/bin/"
+#define BUILT_SHELL "shell"
+#define BUILT_LS    "ls"
+
+int exec(const char *filename);
 
 #endif

@@ -10,7 +10,7 @@
 
 #include "kern/fs/exec.h"
 #include "kern/sched/tasks.h"
-#include "user/builtin_shell.h"
+#include "user/user.h"
 
 void main(void);
 

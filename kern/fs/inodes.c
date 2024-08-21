@@ -118,10 +118,22 @@ iblock_handle(idx_t inode_idx, idx_t iblock_idx, lba_index_t write, lba_index_t 
     char *buf = dyn_alloc(BYTES_SECTOR);
     if (iblock_idx < DIRECT_BORDER) {
         if (read)    *read = inode->iblocks_[iblock_idx];
-        else    inode->iblocks_[iblock_idx] = write;
+        else {
+            inode->iblocks_[iblock_idx] = write;
+            inodes_rw_disk(inode_idx, ATA_CMD_IO_WRITE);
+        }
     } else if (iblock_idx < LEVEL1_BORDER) {
         lba_index_t level1 = inode->iblocks_[LEVEL1_INDEX];
-        ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
+        if (level1 == 0) {
+            if (read == null) {
+                level1 = free_allocate();
+                free_map_setup(level1, true);
+                inode->iblocks_[LEVEL1_INDEX] = level1;
+                inodes_rw_disk(inode_idx, ATA_CMD_IO_WRITE);
+            }
+            bzero(buf, BYTES_SECTOR);
+        } else    ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
+
         if (read)    *read = ((lba_index_t *)buf)[iblock_idx - DIRECT_BORDER];
         else {
             ((lba_index_t *)buf)[iblock_idx - DIRECT_BORDER] = write;
@@ -129,11 +141,28 @@ iblock_handle(idx_t inode_idx, idx_t iblock_idx, lba_index_t write, lba_index_t 
         }
     } else if (iblock_idx < LEVEL2_BORDER) {
         lba_index_t level2 = inode->iblocks_[LEVEL2_INDEX];
-        ata_driver_rw(buf, BYTES_SECTOR, level2, ATA_CMD_IO_READ);
-        idx_t index = iblock_idx - LEVEL1_BORDER;
+        if (level2 == 0) {
+            if (read == null) {
+                level2 = free_allocate();
+                free_map_setup(level2, true);
+                inode->iblocks_[LEVEL2_INDEX] = level2;
+                inodes_rw_disk(inode_idx, ATA_CMD_IO_WRITE);
+            }
+            bzero(buf, BYTES_SECTOR);
+        } else    ata_driver_rw(buf, BYTES_SECTOR, level2, ATA_CMD_IO_READ);
 
+        idx_t index = iblock_idx - LEVEL1_BORDER;
         lba_index_t level1 = ((lba_index_t *)buf)[index / LBA_ITEMS_PER_SECTOR];
-        ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
+        if (level1 == 0) {
+            if (read == null) {
+                level1 = free_allocate();
+                free_map_setup(level1, true);
+                ((lba_index_t *)buf)[index / LBA_ITEMS_PER_SECTOR] = level1;
+                ata_driver_rw(buf, BYTES_SECTOR, level2, ATA_CMD_IO_WRITE);
+            }
+            bzero(buf, BYTES_SECTOR);
+        } else    ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
+
         if (read)    *read = ((lba_index_t *)buf)[index % LBA_ITEMS_PER_SECTOR];
         else {
             ((lba_index_t *)buf)[index % LBA_ITEMS_PER_SECTOR] = write;

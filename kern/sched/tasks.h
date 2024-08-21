@@ -25,16 +25,16 @@ extern void idle(void);
 #endif
 pcb_t *get_current_pcb(void);
 void  init_tasks_system(void);
-void  scheduler();
+void  scheduler(void);
 void  task_ready(node_t *task);
 void  idle_init(void);
 void  idle_setup_vspace(void);
-tid_t fork(void *entry);
+tid_t fork(void *entry, sleeplock_t *sl);
 void  sleep(sleeplock_t *slock);
 void  wakeup(sleeplock_t *slock);
-void  wait_sleeplock(sleeplock_t *slock);
+void  wait_sleeplock(tid_t tid_child);
 void  signal_sleeplock(sleeplock_t *slock);
-void  exit();
+void  exit(void);
 void  kill(pcb_t *pcb);
 
 #endif

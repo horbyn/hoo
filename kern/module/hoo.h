@@ -15,6 +15,5 @@
 pgelem_t    *get_hoo_pgdir(void);
 tss_t       *get_hoo_tss(void);
 pcb_t       *get_hoo_pcb(void);
-sleeplock_t *get_hoo_sleeplock(void);
 
 #endif

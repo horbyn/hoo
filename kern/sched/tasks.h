@@ -18,7 +18,6 @@
 
 extern void switch_to(node_t *, node_t *);
 extern void mode_ring3(uint32_t *user_stack, void *user_entry);
-extern void idle(void);
 
 #ifdef DEBUG
     void  debug_print_tasks(void);
@@ -27,8 +26,7 @@ pcb_t *get_current_pcb(void);
 void  init_tasks_system(void);
 void  scheduler(void);
 void  task_ready(node_t *task);
-void  idle_init(void);
-void  idle_setup_vspace(void);
+void  idle_init(void *entry);
 tid_t fork(void *entry, sleeplock_t *sl);
 void  sleep(sleeplock_t *slock);
 void  wakeup(sleeplock_t *slock);

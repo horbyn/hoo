@@ -104,10 +104,10 @@ kernel.elf: $(OBJS) $(OBJC)
 	$(LD) $(LDFLAGS) -T kernel.ld $^ -o $@
 
 sh.elf: user/builtin_shell.o user/user.o
-	$(LD) -m elf_i386 -e main_shell $^ -o user/$@
+	$(LD) -m elf_i386 -e main_shell -T user/builtin.ld $^ -o user/$@
 
 ls.elf: user/builtin_ls.o user/user.o
-	$(LD) -m elf_i386 -e main_ls $^ -o user/$@
+	$(LD) -m elf_i386 -e main_ls -T user/builtin.ld $^ -o user/$@
 
 CFLAGS += -D__BASE_BUILTIN_SH=$(BASE_BUILTIN_SH) \
 	-D__END_BUILTIN_SH=$(END_BUILTIN_SH) \

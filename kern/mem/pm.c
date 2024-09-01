@@ -54,37 +54,24 @@ phy_release_page(void *page_phy_addr) {
 }
 
 /**
- * @brief get the mapping of the given virtual address
- * 
- * @param pgs   the paging structure
- * @param va    virtual address
- * @return page table entry pointer
- */
-pgelem_t *
-get_mapping(pgstruct_t *pgs, uint32_t va) {
-    if (pgs == null)    panic("get_mapping(): null pointer");
-
-    pgelem_t vaddr = PGUP(va, PGSIZE);
-    pgelem_t flags = *((pgelem_t *)pgs->pdir_va_ + PD_INDEX(vaddr)) & ~PG_MASK,
-        FLAGS = PGENT_US | PGENT_RW | PGENT_PS;
-    if ((flags & FLAGS) != FLAGS)
-        panic("get_mapping(): invalid page table structure");
-    return (pgelem_t *)(pgs->mapping_[PD_INDEX(vaddr)]) + PT_INDEX(vaddr);
-}
-
-/**
  * @brief create page table mappings
  * 
- * @param pgs   the paging structure
  * @param va    virtual address
  * @param pa    physical address
  * @param flags flags
  */
 void
-set_mapping(pgstruct_t *pgs, uint32_t va, uint32_t pa, pgelem_t flags) {
-    if (pgs == null)    panic("set_mapping(): null pointer");
+set_mapping(void *va, void *pa, pgelem_t flags) {
 
     __asm__ ("invlpg (%0)" : : "a" (va));
-    pgelem_t *pte = get_mapping(pgs, va);
-    *pte = ((pgelem_t)PGUP(pa, PGSIZE)) | flags;
+    pgelem_t *pgdir_va = (pgelem_t *)GET_PDE(va);
+    pgelem_t pde_flags = *pgdir_va & ~PG_MASK,
+        FLAGS = PGENT_US | PGENT_RW | PGENT_PS;
+    if ((pde_flags & FLAGS) != FLAGS) {
+        // lack of page table
+        void *pgtbl = phy_alloc_page();
+        *pgdir_va = (pgelem_t)pgtbl | FLAGS;
+    }
+    pgelem_t *pgtbl_va = (pgelem_t *)GET_PTE(va);
+    *pgtbl_va = (pgelem_t)pa | flags;
 }

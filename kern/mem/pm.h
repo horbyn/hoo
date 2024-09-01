@@ -19,10 +19,9 @@
 #define SIZE_BITMAP_PHYMM4G \
     ((0xffffffff / (PGSIZE) + 1) / BITS_PER_BYTE)
 
-void     init_phymm_system(uint32_t mem_size);
-void     *phy_alloc_page(void);
-void     phy_release_page(void *page_phy_addr);
-pgelem_t *get_mapping(pgstruct_t *pgs, uint32_t va);
-void     set_mapping(pgstruct_t *pgs, uint32_t va, uint32_t pa, pgelem_t flags);
+void init_phymm_system(uint32_t mem_size);
+void *phy_alloc_page(void);
+void phy_release_page(void *page_phy_addr);
+void set_mapping(void *va, void *pa, pgelem_t flags);
 
 #endif

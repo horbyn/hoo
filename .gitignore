@@ -17,3 +17,7 @@ kernel
 .vscode/
 
 *.json
+
+user/ls
+
+user/sh

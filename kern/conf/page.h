@@ -11,7 +11,7 @@
 #include "kern/x86.h"
 
 #define V2P(va)             (((uint32_t)(va)) - KERN_HIGH_MAPPING)
-#define PGDOWN(x, align)    ((x) & ~(align - 1))
+#define PGDOWN(x, align)    (((uint32_t)x) & ~(align - 1))
 #define PGUP(x, align)      (PGDOWN((x + align - 1), align))
 
 // used to calculate pg entry size
@@ -22,10 +22,13 @@ typedef uint32_t            pgelem_t;
 
 #define MB4                 0x400000
 #define PD_INDEX(x)         (((x)>>22) & 0x3ff)
-#define PT_INDEX(x)         (((x)>>12) & 0x3ff)
+#define PT_INDEX(x)         ((((uint32_t)(x))>>12) & 0x3ff)
 #define PG_OFFSET(x)        ((x) & 0xfff)
 #define PG_MASK             0xfffff000
-#define PG(x)               (((uint32_t)x) & (PG_MASK))
+#define PG(x)               (((uint32_t)(x)) & (PG_MASK))
+#define PG_DIR_VA           PG_MASK
+#define GET_PDE(va)         (PG_DIR_VA | PD_INDEX(PGDOWN((va), PGSIZE)))
+#define GET_PTE(va)         (0xffc00000 | ((PGDOWN((va), PGSIZE) >> 12) & 0x3fffff))
 
 /**
  * @brief page dir table/page table entry attribute

@@ -23,8 +23,8 @@ test_vspace() {
     void *va = vir_alloc_pages(hoo_pcb, T1);
     for (uint32_t i = 0; i < T1; ++i) {
         void *pa = phy_alloc_page();
-        set_mapping(&hoo_pcb->pgstruct_, (uint32_t)va + i * PGSIZE,
-            (uint32_t)pa, PGENT_US | PGENT_RW | PGENT_PS);
+        set_mapping((void *)((uint32_t)va + i * PGSIZE), pa,
+            PGENT_US | PGENT_RW | PGENT_PS);
         kprintf("va: 0x%x --> pa: 0x%x\n", va + i * PGSIZE, pa);
     }
 

@@ -63,20 +63,13 @@ kernel_init(void) {
  */
 void
 kernel_exec(void) {
-    idle_init();
-
-    // "hoo" sleeps until "idle" completes its initialization
-    sleeplock_t *hoo_slplock = get_hoo_sleeplock();
-    wait(&hoo_slplock->guard_);
-    sleep(hoo_slplock);
-    signal(&hoo_slplock->guard_);
     enable_intr();
     load_builtins();
+    disable_intr();
 
 #ifdef TEST
     test_phypg_alloc();
     test_vspace();
-    test_schedule();
     test_disk_read();
     test_fs();
 #endif
@@ -87,7 +80,6 @@ kernel_exec(void) {
 #endif
 
     clear_screen();
-    __asm__ ("pushl %0\n\t"
-        "pushl %1\n\t"
-        "jmp mode_ring3" : : "r" (main), "r" (STACK_HOO_RING3));
+    idle_init(main);
+    enable_intr();
 }

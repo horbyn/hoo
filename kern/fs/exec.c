@@ -15,12 +15,12 @@
  */
 int
 exec(const char *filename) {
+    // remind that we are in ring3 of the idle not the kernel
     if (filename == null)
         panic("exec(): null pointer");
 
     // formatting the filename
-    static const uint32_t MAXSIZE_PATH = 512;
-    char *absolute_path = dyn_alloc(MAXSIZE_PATH);
+    static char absolute_path[MAXSIZE_PATH];
     bzero(absolute_path, MAXSIZE_PATH);
     if (filename[0] != '/') {
         uint32_t size = strlen(DIR_LOADER);
@@ -29,19 +29,45 @@ exec(const char *filename) {
     } else
         memmove(absolute_path, filename, strlen(filename));
 
-    // data reading from the file to memory
     fd_t fd = files_open(absolute_path);
     if (fd == -1)    return -1;
-    uint32_t file_size = files_get_size(fd);
-    uint8_t *program = dyn_alloc(file_size);
+    uint32_t file_size = PGUP(files_get_size(fd), PGSIZE);
+    pcb_t *cur_pcb = get_current_pcb();
+    cur_pcb->break_ = file_size;
+
+    // setup page tables
+    uint32_t amount_pgdir = file_size / MB4;
+    if (file_size % MB4)    ++amount_pgdir;
+    uint32_t vaddr_program = 0;
+    for (uint32_t i = 0; i < amount_pgdir; ++i) {
+        // handle the page directory
+        void *pgtbl_pa = phy_alloc_page();
+        void *pgtbl_va = vir_alloc_pages(cur_pcb, 1);
+        pgelem_t flag = PGENT_US | PGENT_RW | PGENT_PS;
+        pgelem_t *pde = (pgelem_t *)GET_PDE(i * MB4);
+        *pde = (pgelem_t)pgtbl_pa | flag;
+        // ((pgelem_t *)cur_pcb->pgstruct_.pdir_va_)[PD_INDEX(i * MB4)] =
+        //     (pgelem_t)pgtbl_pa | flag;
+        cur_pcb->pgstruct_.mapping_[PD_INDEX(i * MB4)] = (pgelem_t)pgtbl_va;
+
+        // handle the page table
+        for (uint32_t j = 0; vaddr_program < file_size && j < MB4;) {
+            void *program_pa = phy_alloc_page();
+            set_mapping((void *)vaddr_program, program_pa, flag);
+            j += PGSIZE;
+            vaddr_program += PGSIZE;
+        } // end for(j)
+    } // end for(i)
+
+    // data reading from the file to memory
+    builtin_t program = 0;
     files_read(fd, (char *)program, file_size);
 
-    // change the control flow
-    __asm__ ("movl %0, %%eax\n\t"
-        "call *%%eax" : : "r"(program));
+    // change the control flows in ring3
+    __asm__ ("pushl %1\n\t"
+        "pushl %0\n\t"
+        "call mode_ring3" : : "r"(cur_pcb->stack3_), "r"(program));
 
-    dyn_free(program);
     files_close(fd);
-    dyn_free(absolute_path);
     return 0;
 }

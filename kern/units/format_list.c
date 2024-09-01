@@ -17,7 +17,7 @@ void
 fmtlist_init(fmtlist_t *page_va, uint32_t type_size, bool is_cycle) {
     if (page_va == null)    panic("fmtlist_init(): parameter invalid");
 
-    uint8_t *p = (uint8_t *)(PGDOWN((uint32_t)page_va, PGSIZE));
+    uint8_t *p = (uint8_t *)(PGDOWN(page_va, PGSIZE));
     if ((uint32_t)p != (uint32_t)page_va)
         panic("fmtlist_init(): page size is not 4KB");
     uint32_t head_sz = sizeof(fmtlist_t);
@@ -74,7 +74,7 @@ fmtlist_release(fmtlist_t *fmtlist, void *elem, uint32_t elem_size) {
     if (fmtlist == null)    panic("fmtlist_release(): parameter invalid");
     if (elem_size != fmtlist->type_size_)
         panic("fmtlist_release(): element type not match");
-    if ((void *)fmtlist != (void *)PGDOWN((uint32_t)elem, PGSIZE))
+    if ((void *)fmtlist != (void *)PGDOWN(elem, PGSIZE))
         panic("fmtlist_release(): the element reclaiming "
               "was not allocate from the list");
 

@@ -10,9 +10,13 @@
 
 #include "files.h"
 
-#define DIR_LOADER  "/bin/"
-#define BUILT_SHELL "shell"
-#define BUILT_LS    "ls"
+#define DIR_LOADER      "/bin/"
+#define BUILT_SHELL     "shell"
+#define BUILT_LS        "ls"
+#define MAXSIZE_PATH    512
+
+// prototype of all the builtin commands
+typedef void (*builtin_t)(void);
 
 int exec(const char *filename);
 

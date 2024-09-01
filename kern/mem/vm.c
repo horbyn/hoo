@@ -91,9 +91,9 @@ vir_alloc_pages(pcb_t *pcb, uint32_t amount) {
     if (amount == 0)    panic("vir_alloc_pages(): cannot request 0 page");
 
     // traversal the virtual space
-    const uint32_t ADDR_BASE = 0x00000000;
+    const uint32_t ADDR_BASE = pcb == get_hoo_pcb() ? 0 : pcb->break_;
     const uint32_t ADDR_END = pcb == get_hoo_pcb() ?
-        MAX_VSPACE_HOO : KERN_HIGH_MAPPING;
+        MAX_VSPACE_HOO : IDLE_RING3_VA;
     uint32_t last_end = ADDR_BASE, ret = 0;
     vspace_t *worker = &pcb->vmngr_.head_;
 
@@ -236,10 +236,8 @@ phy_release_vpage(pcb_t *pcb, void *page_vir_addr) {
         panic("phy_release_vpage(): cannot release kernel virtual space");
 
     bzero(page_vir_addr, PGSIZE);
-    pgelem_t *pte =
-        get_mapping(&pcb->pgstruct_, (uint32_t)page_vir_addr);
-    void *pa = (void *)PG(*pte);
-    phy_release_page(pa);
+    pgelem_t *pde = (pgelem_t *)GET_PDE(page_vir_addr);
+    phy_release_page((void *)PG(*pde));
 }
 
 /**

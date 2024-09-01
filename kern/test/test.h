@@ -12,7 +12,6 @@
 
 void test_phypg_alloc(void);
 void test_vspace(void);
-void test_schedule(void);
 void test_disk_read(void);
 void test_fs(void);
 

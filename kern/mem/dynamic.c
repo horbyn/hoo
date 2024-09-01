@@ -16,7 +16,7 @@ static void
 arrlist_init(arrlist_t *list, uint32_t type_size) {
     if (list == null)    panic("arrlist_init(): null pointer");
 
-    uint8_t *p = (uint8_t *)(PGDOWN((uint32_t)list, PGSIZE));
+    uint8_t *p = (uint8_t *)(PGDOWN(list, PGSIZE));
     if ((uint32_t)p != (uint32_t)list)
         panic("arrlist_init(): page size is not 4KB");
     arrlist_t *arrlist = (arrlist_t *)p;
@@ -83,8 +83,7 @@ arrlist_alloc(arrlist_t **plist, uint32_t size) {
         pcb_t *cur_pcb = get_current_pcb();
         void *pa = phy_alloc_page();
         void *va = vir_alloc_pages(cur_pcb, 1);
-        set_mapping(&cur_pcb->pgstruct_, (uint32_t)va, (uint32_t)pa,
-            PGENT_US | PGENT_RW | PGENT_PS);
+        set_mapping(va, pa, PGENT_US | PGENT_RW | PGENT_PS);
         arrlist_init(va, size);
 
         if (pre == null)    *plist = list = va;
@@ -117,7 +116,7 @@ arrlist_release(arrlist_t **plist, void *elem, uint32_t elem_size) {
         if (elem_size != list->type_size_)
             panic("arrlist_release(): element type not match");
 
-        if ((void *)list == (void *)PGDOWN((uint32_t)elem, PGSIZE)) {
+        if ((void *)list == (void *)PGDOWN(elem, PGSIZE)) {
             void *temp = list->head_;
             list->head_ = elem;
             *((void **)elem) = temp;
@@ -166,8 +165,8 @@ dyn_alloc(uint32_t size) {
         void *va = vir_alloc_pages(cur_pcb, pages);
         for (uint32_t i = 0; i < pages; ++i) {
             void *pa = phy_alloc_page();
-            set_mapping(&cur_pcb->pgstruct_, (uint32_t)va + i * PGSIZE,
-                (uint32_t)pa, PGENT_US | PGENT_RW | PGENT_PS);
+            set_mapping((void *)((uint32_t)va + i * PGSIZE),
+                pa, PGENT_US | PGENT_RW | PGENT_PS);
         }
         return va;
     }

@@ -9,9 +9,9 @@
 /**
  * @brief setup pcb object
  * 
- * @param pcb      the pcb object
- * @param scur     current stack
+ * @param pcb       the pcb object
  * @param s0        ring0 stack
+ * @param s3        ring3 stack
  * @param tid       thread id
  * @param pgs       pgstruct object
  * @param va_vspace virtual address of vspace metadata
@@ -22,16 +22,17 @@
  * @param sleeplock sleeplock
  * @param bucket    bucket manager
  * @param fmngr     files manager
+ * @param break     the end
  */
 void
-pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid, pgstruct_t *pgs,
+pcb_set(pcb_t *pcb, uint32_t *s0, uint32_t *s3, uint32_t tid, pgstruct_t *pgs,
 void *va_vspace, void *va_node, void *va_vaddr, vspace_t *vspace, uint32_t ticks,
-sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr) {
+sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk) {
     if (pcb == null)    panic("pcb_set(): null pointer");
     if (tid >= MAX_TASKS_AMOUNT)    panic("pcb_set(): thread id overflow");
 
-    pcb->stack_cur_ = scur;
     pcb->stack0_ = s0;
+    pcb->stack3_ = s3;
     pcb->tid_ = tid;
     memmove(&pcb->pgstruct_, pgs, sizeof(pgstruct_t));
     if (vspace == null)    bzero(&pcb->vmngr_.head_, sizeof(vspace_t));
@@ -41,15 +42,16 @@ sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr) {
     pcb->sleeplock_ = sleeplock;
     pcb->hmngr_ = bucket;
     pcb->fmngr_ = fmngr;
+    pcb->break_ = brk;
 }
 
 #ifdef DEBUG
 void
 debug_print_pcb(pcb_t *pcb) {
-    kprintf("[DEBUG] .stack_cur(4B)=%p, .stack0(4B)=%p, .tid(4B)=%d, "
+    kprintf("[DEBUG] .stack_cur(4B)=%p, .stack3(4B)=%p, .tid(4B)=%d, "
         ".pgstruct(12B)=%p, .vmngr(36B)=%p, .ticks(4B)=%d, .sleeplock(4B)=%p"
         ", .hmngr(4B)=%p, .fmngr(4B)=%p\n",
-        pcb->stack_cur_, pcb->stack0_, pcb->tid_, &pcb->pgstruct_,
+        pcb->stack0_, pcb->stack3_, pcb->tid_, &pcb->pgstruct_,
         &pcb->vmngr_, pcb->ticks_, pcb->sleeplock_, pcb->hmngr_,
         pcb->fmngr_);
 }

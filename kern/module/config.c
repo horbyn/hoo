@@ -19,7 +19,7 @@ paging() {
     pgelem_t *pdir = get_hoo_pgdir();
     pdir[0] = (pgelem_t)((SEG_PGTABLE * 16) | flags);
     pdir[PD_INDEX(KERN_HIGH_MAPPING)] = pdir[0];
-    pdir[PG_STRUCT_SIZE - 1] = (pgelem_t)((uint32_t)pdir | flags);
+    pdir[PG_STRUCT_SIZE - 1] = (pgelem_t)(V2P(pdir) | flags);
 
     pgelem_t *pg = (pgelem_t *)(SEG_PGTABLE * 16);
     for (uint32_t i = 0; i < (MM_BASE / PGSIZE); ++i)

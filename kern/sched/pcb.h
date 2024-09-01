@@ -25,14 +25,20 @@
 #define TID_HOO     0
 #define TID_IDLE    1
 
+// some metadata virtual addresses
+#define IDLE_MD_VADDR_VA    ((KERN_HIGH_MAPPING) - (PGSIZE))
+#define IDLE_MD_NODE_VA     ((IDLE_MD_VADDR_VA) - (PGSIZE))
+#define IDLE_MD_VSPACE_VA   ((IDLE_MD_NODE_VA) - (PGSIZE))
+#define IDLE_RING3_VA       ((IDLE_MD_VSPACE_VA) - (PGSIZE))
+
 /**
  * @brief definition of Process Control Block
  */
 typedef struct pcb {
     // current stack that either kernel stack or user stack
-    uint32_t     *stack_cur_;
-    // kernel stack
     uint32_t     *stack0_;
+    // user stack
+    uint32_t     *stack3_;
     // thread id
     tid_t        tid_;
     pgstruct_t   pgstruct_;
@@ -45,12 +51,14 @@ typedef struct pcb {
     // for heap memory allocation
     buckx_mngr_t *hmngr_;
     fmngr_t      *fmngr_;
+    // the end of all segments
+    uint32_t     break_;
 } __attribute__((packed)) pcb_t;
 
-void pcb_set(pcb_t *pcb, uint32_t *scur, uint32_t *s0, uint32_t tid,
+void pcb_set(pcb_t *pcb, uint32_t *s0, uint32_t *s3, uint32_t tid,
     pgstruct_t *pgs, void *va_vspace, void *va_node, void *va_vaddr,
     vspace_t *vspace, uint32_t ticks, sleeplock_t *sleeplock,
-    buckx_mngr_t *bucket, fmngr_t *fmngr);
+    buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk);
 #ifdef DEBUG
     void debug_print_pcb(pcb_t *pcb);
 #endif

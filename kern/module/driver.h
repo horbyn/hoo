@@ -13,6 +13,6 @@
 #include "kern/driver/8259a/8259a.h"
 #include "kern/driver/8253/8253.h"
 
-void kinit_dirver(void);
+void kinit_driver(void);
 
 #endif

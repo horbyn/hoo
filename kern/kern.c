@@ -25,7 +25,7 @@ kernel_init(void) {
     kinit_config();
     kinit_tasks_system();
     kinit_isr_idt();
-    kinit_dirver();
+    kinit_driver();
     kinit_fs();
 
 #ifndef DEBUG
@@ -80,6 +80,6 @@ kernel_exec(void) {
 #endif
 
     clear_screen();
-    idle_init(main);
+    idle_init(ring3_first);
     enable_intr();
 }

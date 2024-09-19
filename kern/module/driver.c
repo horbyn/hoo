@@ -66,7 +66,7 @@ init_ata(void) {
  * @brief driver initialization
  */
 void
-kinit_dirver(void) {
+kinit_driver(void) {
     init_pic();
     init_pit();
     init_ata();

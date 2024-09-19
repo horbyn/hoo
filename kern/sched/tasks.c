@@ -6,7 +6,6 @@
  **************************************************************************/
 #include "tasks.h"
 
-__attribute__((aligned(4096))) static pgelem_t mappings[PG_STRUCT_SIZE] = { 0 };
 __attribute__((aligned(4096))) static uint32_t mdata_vspace[PG_STRUCT_SIZE] = { 0 },
     mdata_node[PG_STRUCT_SIZE] = { 0 }, mdata_vaddr[PG_STRUCT_SIZE] = { 0 };
 
@@ -40,13 +39,41 @@ static uint8_t *__mdata_bmbuff_tid;
 static bitmap_t __bm_tid;
 
 #ifdef DEBUG
+
+/**
+ * @brief debug mode: print queue
+ * @param queue the queue to print
+ */
+static void
+debug_print_queue(queue_t *queue) {
+    if (queue == null)    return;
+    for (node_t *n = queue->head_->next_; n; n = n->next_) {
+        kprintf("0x%x", n);
+        if (n->next_)    kprintf(", ");
+    }
+}
+
+/**
+ * @brief debug mode: print list
+ * @param list the list to print
+ */
+static void
+debug_print_list(list_t *list) {
+    if (list == null)    return;
+    for (idx_t i = 1; i <= list->size_; ++i) {
+        node_t *n = list_find(list, i);
+        kprintf("0x%x", n);
+        if (n->next_)    kprintf(", ");
+    }
+}
+
 /**
  * @brief debug mode: print tasks metadata
  */
 void
 debug_print_tasks() {
     kprintf(
-        "[DEBUG] sizeof(pgstruct_t): %d\tsizeof(vsmngr_t): %d\tsizeof(pcb_t): %d\n"
+        "[DEBUG] sizeof(vsmngr_t): %d\tsizeof(pcb_t): %d\n"
         "[DEBUG] hoo pcb pointer:    0x%x\n"
         "[DEBUG] __mdata_node:       0x%x\n"
         "[DEBUG] __mdata_pcb:        0x%x\n"
@@ -54,37 +81,50 @@ debug_print_tasks() {
         "[DEBUG] __queue_running:    0x%x\n"
         "[DEBUG] __list_sleeping:    0x%x\n"
         "[DEBUG] __list_expired:     0x%x\n",
-        sizeof(pgstruct_t), sizeof(vsmngr_t), sizeof(pcb_t), get_hoo_pcb(),
+        sizeof(vsmngr_t), sizeof(pcb_t), get_hoo_pcb(),
         __mdata_node, __mdata_pcb, &__queue_ready, &__queue_running,
         &__list_sleeping, &__list_expired);
     debug_print_pcb(get_hoo_pcb());
 
     kprintf("\n[DEBUG] running: ");
-    for (node_t *n = __queue_running.head_->next_; n; n = n->next_) {
-        kprintf("0x%x", n);
-        if (n->next_)    kprintf(", ");
-    }
+    debug_print_queue(&__queue_running);
 
     kprintf("\n[DEBUG] ready: ");
-    for (node_t *n = __queue_ready.head_->next_; n; n = n->next_) {
-        kprintf("0x%x", n);
-        if (n->next_)    kprintf(", ");
-    }
+    debug_print_queue(&__queue_ready);
 
     kprintf("\n[DEBUG] sleeping: ");
-    for (idx_t i = 1; i <= __list_sleeping.size_; ++i) {
-        node_t *n = list_find(&__list_sleeping, i);
-        kprintf("0x%x", n);
-        if (n->next_)    kprintf(", ");
-    }
+    debug_print_list(&__list_sleeping);
 
     kprintf("\n[DEBUG] expired: ");
-    for (idx_t i = 1; i <= __list_expired.size_; ++i) {
-        node_t *n = list_find(&__list_expired, i);
-        kprintf("0x%x", n);
-        if (n->next_)    kprintf(", ");
-    }
+    debug_print_list(&__list_expired);
 
+    kprintf("\n");
+}
+
+/**
+ * @brief debug mode: print virtual space of current pcb
+ */
+void
+debug_print_vspace(void) {
+    debug_print_vspace_pcb(get_current_pcb());
+}
+
+void
+debug_print_pgdir(void) {
+    kprintf("\n[DEBUG] page directories: \n");
+    for (uint32_t i = 0; i < PG_STRUCT_SIZE; ++i) {
+        pgelem_t *pde = (pgelem_t *)GET_PDE(i * MB4);
+        pgelem_t pgtbl_addr = (pgelem_t)PG(*pde);
+        if (pgtbl_addr) {
+            kprintf("PDE[%d] 0x%x\n\t", i, pgtbl_addr);
+            for (uint32_t j = 0; j < PG_STRUCT_SIZE; ++j) {
+                pgelem_t *pte = (pgelem_t *)GET_PTE(0 | (i << 22) | (j << 12));
+                pgelem_t addr = (pgelem_t)PG(*pte);
+                if (addr)    kprintf("%d, ", j);
+            } // end for(j)
+            kprintf("\n");
+        }
+    } // end for(i)
     kprintf("\n");
 }
 #endif
@@ -168,7 +208,6 @@ init_tasks_system() {
     spinlock_init(&__spinlock_alloc_tid);
 
     // metadata
-    bzero(mappings, sizeof(mappings));
     bzero(mdata_vspace, sizeof(mdata_vspace));
     bzero(mdata_node, sizeof(mdata_node));
     bzero(mdata_vaddr, sizeof(mdata_vaddr));
@@ -178,40 +217,26 @@ init_tasks_system() {
     // hoo thread, and the stack it used is hoo stack
     pcb_t *hoo_pcb = get_hoo_pcb();
 
-    pgstruct_t pgs;
-    pgstruct_set(&pgs, get_hoo_pgdir(), (void *)(V2P(get_hoo_pgdir())), mappings);
     static thread_buckmngr_t hoo_bucket;
     thread_buckmngr_set(&hoo_bucket);
     pcb_set(hoo_pcb, (uint32_t *)STACK_HOO_RING0, (uint32_t *)STACK_HOO_RING3,
-        TID_HOO, &pgs, mdata_vspace, mdata_node, mdata_vaddr, null, TIMETICKS,
-        null, hoo_bucket.head_, null, 0);
+        TID_HOO, (pgelem_t *)(V2P(get_hoo_pgdir())), mdata_vspace, mdata_node,
+        mdata_vaddr, null, TIMETICKS, null, hoo_bucket.head_, null, 0);
+
     static node_t hoo_node;
     node_set(&hoo_node, hoo_pcb, null);
     wait(&__spinlock_tasks);
     queue_push(&__queue_running, &hoo_node, TAIL);
     signal(&__spinlock_tasks);
 
-    vir_alloc_pages(hoo_pcb, (KERN_HIGH_MAPPING + MM_BASE) / PGSIZE);
-
-    // fill up kernel mappings for [0x8040_0000, 0xffc0_0000)
-    uint32_t beg = PD_INDEX(KERN_HIGH_MAPPING) + 1, end = (PG_STRUCT_SIZE - 1);
-    mappings[0] = (uint32_t)KERN_HIGH_MAPPING + SEG_PGTABLE * 16;
-    mappings[beg - 1] = mappings[0];
-    mappings[end] = (uint32_t)hoo_pcb->pgstruct_.pdir_va_;
-    pgelem_t *va_base = vir_alloc_pages(hoo_pcb, end - beg), *pa = null;
+    vir_alloc_pages(hoo_pcb, (KERN_HIGH_MAPPING + MB4) / PGSIZE);
     pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
-    for (uint32_t i = beg; i < end; ++i) {
-        pa = phy_alloc_page();
-        *((pgelem_t *)PG_DIR_VA + i) = (pgelem_t)pa | flags;
-        pgelem_t *va = va_base + (i - beg) * PGSIZE;
-        mappings[i] = (pgelem_t)va;
-        set_mapping((void *)va, pa, flags);
-    }
 
     // initialize the tasks system
     uint32_t metadata_node_pages =
         (sizeof(node_t) * MAX_TASKS_AMOUNT + PGSIZE - 1) / PGSIZE;
     __mdata_node = vir_alloc_pages(hoo_pcb, metadata_node_pages);
+
     for (uint32_t i = 0; i < metadata_node_pages; ++i) {
         void *va = (void *)((uint32_t)__mdata_node + i * PGSIZE);
         void *pa = phy_alloc_page();
@@ -309,19 +334,18 @@ task_ready(node_t *task) {
 }
 
 /**
- * @brief setup the ring0 stack of hoo
+ * @brief setup the ring0 stack
  * 
- * @param r0 top of idle thread ring 0 stack
- * @param r3_idle top of idle thread ring 3 stack (idle access allowing)
- * @param r3_hoo top of idle thread ring 3 stack (hoo access allowing)
- * @param entry  thread entry
+ * @param r0    top of ring 0 stack
+ * @param r3    top of ring 3 stack
+ * @param entry thread entry
  * @return ring0 stack pointer after setup
  */
 static uint32_t *
-setup_idle_ring0_stack(void *r0, void *r3_idle, void *r3_hoo, void *entry) {
+setup_ring0_stack(void *r0, void *r3, void *entry) {
 
     // setup user stack
-    uint8_t *pstack = (uint8_t *)r3_hoo;
+    uint8_t *pstack = (uint8_t *)r3;
     pstack -= sizeof(uint32_t);
     *((uint32_t *)pstack) = (DIED_INSTRUCTION + KERN_HIGH_MAPPING);
 
@@ -362,7 +386,7 @@ setup_idle_ring0_stack(void *r0, void *r3_idle, void *r3_hoo, void *entry) {
 
     // user mode stack
     pstack -= sizeof(uint32_t);
-    *((uint32_t *)pstack) = (uint32_t)r3_idle - sizeof(uint32_t);
+    *((uint32_t *)pstack) = (uint32_t)r3 - sizeof(uint32_t);
 
     pstack -= sizeof(istackcpu_t);
     istackcpu_t *workercpu = (istackcpu_t *)pstack;
@@ -417,7 +441,8 @@ pcb_get(tid_t tid) {
 
 /**
  * @brief setup the first ring3 thread, idle
- * 
+ * @note MUST BE setup by kernel,
+ * because this logic will use the kernel linear space
  * @param entry the entry point
  */
 void
@@ -428,67 +453,41 @@ idle_init(void *entry) {
         kern_end = PG_STRUCT_SIZE - 1;
 
     // setup the idle page directory table (1 page)
-    void *idle_pgdir_pa = phy_alloc_page();
-    void *idle_pgdir_va = vir_alloc_pages(hoo_pcb, 1);
-    set_mapping(idle_pgdir_va, idle_pgdir_pa, flags);
+    void *pgdir_pa = phy_alloc_page();
+    void *pgdir_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(pgdir_va, pgdir_pa, flags);
     for (uint32_t i = kern_beg; i < kern_end; ++i)
-        ((pgelem_t *)idle_pgdir_va)[i] =
-            ((pgelem_t *)hoo_pcb->pgstruct_.pdir_va_)[i];
-    ((pgelem_t *)idle_pgdir_va)[kern_end] = (pgelem_t)idle_pgdir_pa | flags;
-
-    // setup the idle page tables mapping (1 page)
-    void *idle_mapping_pa = phy_alloc_page();
-    pgelem_t *idle_mapping_va = vir_alloc_pages(hoo_pcb, 1);
-    set_mapping(idle_mapping_va, idle_mapping_pa, flags);
-    for (uint32_t i = kern_beg; i < kern_end; ++i)
-        ((pgelem_t *)idle_mapping_va)[i] = hoo_pcb->pgstruct_.mapping_[i];
-    ((pgelem_t *)idle_mapping_va)[kern_end] = (pgelem_t)idle_pgdir_va;
-
-    // setup the idle page table (1 page)
-    void *idle_pg_pa = phy_alloc_page();
-    void *idle_pg_va = vir_alloc_pages(hoo_pcb, 1);
-    set_mapping(idle_pg_va, idle_pg_pa, flags);
-    idx_t pgtbl_idx = PD_INDEX(IDLE_RING3_VA);
-    ((pgelem_t *)idle_pgdir_va)[pgtbl_idx] = (pgelem_t)idle_pg_pa | flags;
-    ((pgelem_t *)idle_mapping_va)[pgtbl_idx] = (pgelem_t)idle_pg_va;
+        ((pgelem_t *)pgdir_va)[i] = *((pgelem_t *)PG_DIR_VA + i);
+    ((pgelem_t *)pgdir_va)[kern_end] = (pgelem_t)pgdir_pa | flags;
 
     // setup the idle ring0 stack (1 page)
-    void *idle_ring0_pa = phy_alloc_page();
-    void *hoo_ring0_va = vir_alloc_pages(hoo_pcb, 1);
-    set_mapping(hoo_ring0_va, idle_ring0_pa, flags);
+    void *ring0_pa = phy_alloc_page();
+    void *ring0_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(ring0_va, ring0_pa, flags);
 
     // setup the idle ring3 stack (1 page)
-    void *idle_ring3_pa = phy_alloc_page();
-    void *hoo_ring3_va = vir_alloc_pages(hoo_pcb, 1);
-    set_mapping(hoo_ring3_va, idle_ring3_pa, flags);
-    ((pgelem_t *)idle_pg_va)[PT_INDEX(IDLE_RING3_VA)] =
-        (pgelem_t)idle_ring3_pa | flags;
+    void *ring3_pa = phy_alloc_page();
+    void *ring3_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(ring3_va, ring3_pa, flags);
 
-    // setup the idle metadata (3 pages)
-    void *idle_vspace_pa = phy_alloc_page();
-    ((pgelem_t *)idle_pg_va)[PT_INDEX(IDLE_MD_VSPACE_VA)] =
-        (pgelem_t)idle_vspace_pa | flags;
-
-    void *idle_node_pa = phy_alloc_page();
-    ((pgelem_t *)idle_pg_va)[PT_INDEX(IDLE_MD_NODE_VA)] =
-        (pgelem_t)idle_node_pa | flags;
-
-    void *idle_vaddr_pa = phy_alloc_page();
-    ((pgelem_t *)idle_pg_va)[PT_INDEX(IDLE_MD_VADDR_VA)] =
-        (pgelem_t)idle_vaddr_pa | flags;
+    // setup metadata (3 pages)
+    void *mdata_vspace_pa = phy_alloc_page();
+    void *mdata_vspace_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(mdata_vspace_va, mdata_vspace_pa, flags);
+    void *mdata_node_pa = phy_alloc_page();
+    void *mdata_node_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(mdata_node_va, mdata_node_pa, flags);
+    void *mdata_vaddr_pa = phy_alloc_page();
+    void *mdata_vaddr_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(mdata_vaddr_va, mdata_vaddr_pa, flags);
 
     // setup the idle thread
-    uint32_t *cur_stack = setup_idle_ring0_stack(
-        (void *)((uint32_t)hoo_ring0_va + PGSIZE),
-        (void *)(IDLE_RING3_VA + PGSIZE),
-        (void *)(hoo_ring3_va + PGSIZE), entry);
-    pgstruct_t pgs;
-    pgstruct_set(&pgs, idle_pgdir_va, idle_pgdir_pa, idle_mapping_va);
+    uint32_t *cur_stack = setup_ring0_stack(
+        (void *)((uint32_t)ring0_va + PGSIZE), (void *)(ring3_va + PGSIZE), entry);
     pcb_t *idle_pcb = pcb_get(TID_IDLE);
-    pcb_set(idle_pcb, cur_stack, (uint32_t *)((uint32_t)IDLE_RING3_VA + PGSIZE),
-        TID_IDLE, &pgs, (void *)IDLE_MD_VSPACE_VA, (void *)IDLE_MD_NODE_VA,
-        (void *)IDLE_MD_VADDR_VA, null, TIMETICKS, null,
-        thread_buckmngr_get(TID_IDLE), null, 0);
+    pcb_set(idle_pcb, cur_stack, (uint32_t *)(ring3_va + PGSIZE), TID_IDLE,
+        pgdir_pa, mdata_vspace_va, mdata_node_va, mdata_vaddr_va, null, TIMETICKS,
+        null, thread_buckmngr_get(TID_IDLE), null, 0);
 
     node_t *n = mdata_alloc_node(TID_IDLE);
     node_set(n, idle_pcb, null);
@@ -524,71 +523,47 @@ tid_t
 fork(void *entry, sleeplock_t *sl) {
 
     pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
-    pcb_t *hoo_pcb = get_hoo_pcb(), *idle_pcb = pcb_get(TID_IDLE);
-    uint32_t idle_beg = (uint32_t)PD_INDEX(KERN_HIGH_MAPPING),
-        idle_end = PG_STRUCT_SIZE - 1;
+    pcb_t *hoo_pcb = get_hoo_pcb(), *cur_pcb = get_current_pcb();
 
     // page directory table
     void *new_pgdir_pa = phy_alloc_page();
-    void *new_pgdir_va = vir_alloc_pages(hoo_pcb, 1);
+    pgelem_t *new_pgdir_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(new_pgdir_va, new_pgdir_pa, flags);
-    for (uint32_t i = idle_beg; i < idle_end; ++i)
-        ((pgelem_t *)new_pgdir_va)[i] =
-            ((pgelem_t *)idle_pcb->pgstruct_.pdir_va_)[i];
-    ((pgelem_t *)new_pgdir_va)[idle_end] = (pgelem_t)new_pgdir_pa | flags;
-
-    // page table mappings
-    void *new_mapping_pa = phy_alloc_page();
-    void *new_mapping_va = vir_alloc_pages(hoo_pcb, 1);
-    set_mapping(new_mapping_va, new_mapping_pa, flags);
-    for (uint32_t i = idle_beg; i < idle_end; ++i)
-        ((pgelem_t *)new_mapping_va)[i] =
-            ((pgelem_t *)idle_pcb->pgstruct_.mapping_)[i];
-    ((pgelem_t *)new_mapping_va)[idle_end] = (pgelem_t)new_pgdir_va;
 
     // ring0
     void *new_ring0_pa = phy_alloc_page();
     void *new_ring0_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(new_ring0_va, new_ring0_pa, flags);
 
-    // page table
-    void *new_pg_pa = phy_alloc_page();
-    void *new_pg_va = vir_alloc_pages(hoo_pcb, 1);
-    set_mapping(new_pg_va, new_pg_pa, flags);
-    idx_t pgtbl_idx = PD_INDEX(IDLE_RING3_VA);
-    ((pgelem_t *)new_pgdir_va)[pgtbl_idx] = (pgelem_t)new_pg_pa | flags;
-    ((pgelem_t *)new_mapping_va)[pgtbl_idx] = (pgelem_t)new_pg_va;
-
     // ring3 stack
     void *new_ring3_pa = phy_alloc_page();
     void *new_ring3_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(new_ring3_va, new_ring3_pa, flags);
-    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_RING3_VA)] =
-        (pgelem_t)new_ring3_pa | flags;
 
-    // copy the last 4MB of idle linear space
-    pgelem_t *idle_pg =
-        (pgelem_t *)(*((pgelem_t *)idle_pcb->pgstruct_.mapping_ + pgtbl_idx));
-    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_MD_VADDR_VA)] =
-        idle_pg[PT_INDEX(IDLE_MD_VADDR_VA)] & ~PGENT_RW;
-    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_MD_NODE_VA)] =
-        idle_pg[PT_INDEX(IDLE_MD_NODE_VA)] & ~PGENT_RW;
-    ((pgelem_t *)new_pg_va)[PT_INDEX(IDLE_MD_VSPACE_VA)] =
-        idle_pg[PT_INDEX(IDLE_MD_VSPACE_VA)] & ~PGENT_RW;
+    // copy all the linear space
+    uint32_t copy_beg = (uint32_t)PD_INDEX(KERN_HIGH_MAPPING),
+        copy_end = PG_STRUCT_SIZE - 1;
+    for (idx_t i = 0; i < copy_beg; ++i) {
+        pgelem_t *pde = (pgelem_t *)PG_DIR_VA + i;
+        if (*pde) {
+            uint32_t pgtbl_addr = (uint32_t)(*pde & ~PG_MASK);
+            new_pgdir_va[i] = pgtbl_addr | PGENT_US | PGENT_PS;
+        } else    new_pgdir_va[i] = 0;
+    }
+    for (uint32_t i = copy_beg; i < copy_end; ++i)
+        new_pgdir_va[i] = *((pgelem_t *)PG_DIR_VA + i);
+    new_pgdir_va[copy_end] = (pgelem_t)new_pgdir_pa | flags;
 
     // copy pcb
     tid_t new_tid = allocate_tid();
     pcb_t *new_pcb = pcb_get(new_tid);
-    uint32_t *cur_stack = setup_idle_ring0_stack(
+    uint32_t *cur_stack = setup_ring0_stack(
         (void *)((uint32_t)new_ring0_va + PGSIZE),
-        (void *)(IDLE_RING3_VA + PGSIZE),
         (void *)(new_ring3_va + PGSIZE), entry);
-    pgstruct_t pgs;
-    pgstruct_set(&pgs, new_pgdir_va, new_pgdir_pa, new_mapping_va);
-    pcb_set(new_pcb, cur_stack, (uint32_t *)((uint32_t)IDLE_RING3_VA + PGSIZE),
-        new_tid, &pgs, idle_pcb->vmngr_.vspace_, idle_pcb->vmngr_.node_,
-        idle_pcb->vmngr_.vaddr_, &idle_pcb->vmngr_.head_, TIMETICKS, sl,
-        thread_buckmngr_get(new_tid), null, 0);
+    pcb_set(new_pcb, cur_stack, new_ring3_va, new_tid, new_pgdir_pa,
+        cur_pcb->vmngr_.vspace_, cur_pcb->vmngr_.node_, cur_pcb->vmngr_.vaddr_,
+        &cur_pcb->vmngr_.head_, TIMETICKS, sl, thread_buckmngr_get(new_tid),
+        null, 0);
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);
@@ -694,9 +669,6 @@ exit() {
     phy_release_vpage(pcb, pcb->vmngr_.node_);
     phy_release_vpage(pcb, pcb->vmngr_.vaddr_);
 
-    // release ring3 stack
-    phy_release_vpage(pcb, (void *)IDLE_RING3_VA);
-
     // wakeup the asleep process
     if (pcb->sleeplock_)    signal_sleeplock(pcb->sleeplock_);
 
@@ -705,6 +677,9 @@ exit() {
     node_t *n = queue_pop(&__queue_running);
     list_insert(&__list_expired, n, LSIDX_AFTAIL(&__list_expired));
     signal(&__spinlock_tasks);
+
+    // the "exited" task cannot return to ring3
+    scheduler();
 }
 
 /**
@@ -732,17 +707,19 @@ kill(pcb_t *pcb) {
     phy_release_vpage(master,
         (void *)PGDOWN((pcb->stack0_ - PGSIZE), PGSIZE));
 
-    // release page directory table
-    phy_release_vpage(master, pcb->pgstruct_.pdir_va_);
+    // release ring3 stack
+    phy_release_vpage(master,
+        (void *)PGDOWN((pcb->stack3_ - PGSIZE), PGSIZE));
 
     // release page tables
     for (idx_t i = 0; i < PD_INDEX(KERN_HIGH_MAPPING); ++i) {
-        void *va = (void *)pcb->pgstruct_.mapping_[i];
-        if (va)    phy_release_vpage(master, va);
+        pgelem_t *pde = (pgelem_t *)(PG_DIR_VA + i * sizeof(uint32_t));
+        pgelem_t *pgtbl = (pgelem_t *)(*pde & ~PG_MASK);
+        if (pgtbl)    phy_release_vpage(master, pgtbl);
     }
 
-    // release page tables mapping
-    phy_release_vpage(master, pcb->pgstruct_.mapping_);
+    // release page directory table
+    phy_release_page(pcb->pgdir_pa_);
 
     bzero(pcb, sizeof(pcb_t));
 }

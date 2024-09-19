@@ -6,6 +6,31 @@
  **************************************************************************/
 #include "dynamic.h"
 
+#ifdef DEBUG
+void
+debug_print_dyn(void) {
+    buckx_mngr_t *hmngr = get_current_pcb()->hmngr_;
+    kprintf("[DEBUG] heap: ");
+    while (hmngr) {
+        arrlist_t *chain = hmngr->chain_;
+        bool fnext =false;
+        if (chain) {
+            fnext = true;
+            kprintf("(%d, %d/%d) 0x%x", hmngr->size_, chain->size_,
+                chain->capacity_, chain);
+            chain = chain->next_;
+            while (chain) {
+                kprintf(", 0x%x", chain);
+                chain = chain->next_;
+            }
+        }
+        hmngr = hmngr->next_;
+        if (hmngr && fnext)    kprintf(" -> ");
+    }
+    kprintf("\n");
+}
+#endif
+
 /**
  * @brief array list formatting
  * 
@@ -14,7 +39,7 @@
  */
 static void
 arrlist_init(arrlist_t *list, uint32_t type_size) {
-    if (list == null)    panic("arrlist_init(): null pointer");
+    // if (list == null)    panic("arrlist_init(): null pointer");
 
     uint8_t *p = (uint8_t *)(PGDOWN(list, PGSIZE));
     if ((uint32_t)p != (uint32_t)list)
@@ -126,7 +151,7 @@ arrlist_release(arrlist_t **plist, void *elem, uint32_t elem_size) {
                 if (pre)
                     pre->next_ = list->next_;
 
-                phy_release_vpage(get_current_pcb(), list);
+                vir_release_pages(get_current_pcb(), list);
                 *plist = null;
             }
 

@@ -13,7 +13,6 @@
 #endif
 #include "kern/x86.h"
 #include "kern/conf/page.h"
-#include "kern/conf/page_struct.h"
 #include "kern/mem/bucket_mngr.h"
 #include "kern/mem/vaddr.h"
 #include "kern/fs/fmngr.h"
@@ -25,12 +24,6 @@
 #define TID_HOO     0
 #define TID_IDLE    1
 
-// some metadata virtual addresses
-#define IDLE_MD_VADDR_VA    ((KERN_HIGH_MAPPING) - (PGSIZE))
-#define IDLE_MD_NODE_VA     ((IDLE_MD_VADDR_VA) - (PGSIZE))
-#define IDLE_MD_VSPACE_VA   ((IDLE_MD_NODE_VA) - (PGSIZE))
-#define IDLE_RING3_VA       ((IDLE_MD_VSPACE_VA) - (PGSIZE))
-
 /**
  * @brief definition of Process Control Block
  */
@@ -41,7 +34,7 @@ typedef struct pcb {
     uint32_t     *stack3_;
     // thread id
     tid_t        tid_;
-    pgstruct_t   pgstruct_;
+    pgelem_t     *pgdir_pa_;
     // virtual space manager
     vsmngr_t     vmngr_;
     // the rest ticks
@@ -56,7 +49,7 @@ typedef struct pcb {
 } __attribute__((packed)) pcb_t;
 
 void pcb_set(pcb_t *pcb, uint32_t *s0, uint32_t *s3, uint32_t tid,
-    pgstruct_t *pgs, void *va_vspace, void *va_node, void *va_vaddr,
+    pgelem_t *pd_pa, void *va_vspace, void *va_node, void *va_vaddr,
     vspace_t *vspace, uint32_t ticks, sleeplock_t *sleeplock,
     buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk);
 #ifdef DEBUG

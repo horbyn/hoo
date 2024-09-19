@@ -15,7 +15,6 @@
  */
 int
 exec(const char *filename) {
-    // remind that we are in ring3 of the idle not the kernel
     if (filename == null)
         panic("exec(): null pointer");
 
@@ -42,13 +41,9 @@ exec(const char *filename) {
     for (uint32_t i = 0; i < amount_pgdir; ++i) {
         // handle the page directory
         void *pgtbl_pa = phy_alloc_page();
-        void *pgtbl_va = vir_alloc_pages(cur_pcb, 1);
         pgelem_t flag = PGENT_US | PGENT_RW | PGENT_PS;
         pgelem_t *pde = (pgelem_t *)GET_PDE(i * MB4);
         *pde = (pgelem_t)pgtbl_pa | flag;
-        // ((pgelem_t *)cur_pcb->pgstruct_.pdir_va_)[PD_INDEX(i * MB4)] =
-        //     (pgelem_t)pgtbl_pa | flag;
-        cur_pcb->pgstruct_.mapping_[PD_INDEX(i * MB4)] = (pgelem_t)pgtbl_va;
 
         // handle the page table
         for (uint32_t j = 0; vaddr_program < file_size && j < MB4;) {

@@ -4,14 +4,14 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_MODULE_MAIN_H__
-#define __KERN_MODULE_MAIN_H__
+#include "first.h"
 
-#include "kern/fs/exec.h"
-#include "kern/sched/tasks.h"
-#include "user/user.h"
-
-void main(void);
-
-#endif
+/**
+ * @brief ring3 main process
+ */
+void
+ring3_first(void) {
+    // launch from idle ring3
+    int result = sys_exec(BUILT_SHELL);
+    if (result == -1)    sys_printf("cannot launch shell\n");
+}

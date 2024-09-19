@@ -8,6 +8,29 @@
 
 static spinlock_t __spinlock_virmm;
 
+#ifdef DEBUG
+/**
+ * @brief debug mode: print virtual space of current pcb
+ */
+void
+debug_print_vspace_pcb(pcb_t *pcb) {
+    vspace_t *vspace = pcb->vmngr_.head_.next_;
+    while (vspace) {
+        kprintf("[DEBUG] .begin=0x%x, .end=0x%x, .next=0x%x\n[DEBUG] .list: \n",
+            vspace->begin_, vspace->end_, vspace->next_);
+        list_t *list = &(vspace->list_);
+        for (idx_t i = 1; i <= list->size_; ++i) {
+            node_t *n = list_find(list, i);
+            vaddr_t *va = n->data_;
+            kprintf("[0x%x, 0x%x]", va->va_, va->length_);
+            if (n->next_)    kprintf(", ");
+        }
+        kprintf("\n");
+        vspace = vspace->next_;
+    }
+}
+#endif
+
 /**
  * @brief initialize virtual memory system
  */
@@ -93,7 +116,7 @@ vir_alloc_pages(pcb_t *pcb, uint32_t amount) {
     // traversal the virtual space
     const uint32_t ADDR_BASE = pcb == get_hoo_pcb() ? 0 : pcb->break_;
     const uint32_t ADDR_END = pcb == get_hoo_pcb() ?
-        MAX_VSPACE_HOO : IDLE_RING3_VA;
+        MAX_VSPACE_HOO : KERN_HIGH_MAPPING;
     uint32_t last_end = ADDR_BASE, ret = 0;
     vspace_t *worker = &pcb->vmngr_.head_;
 
@@ -186,14 +209,35 @@ vir_release_pages(pcb_t *pcb, void *va) {
     }
     if (worker_vs == null)    panic("vir_release_pages(): invalid virtual address");
 
+    enum location_e {
+        LCT_BEGIN = 0,
+        LCT_MIDDLE,
+        LCT_END
+    } lct;
+
     // search the `vaddr` object according to virtual address
     node_t *worker_node = null;
     idx_t i = 1;
+    vspace_t *new_vs = null;
     do {
         worker_node = list_find(&worker_vs->list_, i);
         if (worker_node) {
             if ((uint32_t)va == ((vaddr_t*)(worker_node->data_))->va_) {
                 list_remove(&worker_vs->list_, i);
+
+                lct = (i == 1) ? LCT_BEGIN : ((i == worker_vs->list_.size_)
+                    ? LCT_END : LCT_MIDDLE);
+
+                if (lct == LCT_MIDDLE) {
+                    // it is the middle node
+                    new_vs = vsmngr_alloc_vspace(&pcb->vmngr_);
+                    for (uint32_t j = i, k = 1; j <= worker_vs->list_.size_;) {
+                        node_t *n = list_remove(&worker_vs->list_, j);
+                        list_insert(&new_vs->list_, n, k++);
+                        prev_vs->next_ = new_vs;
+                    } // end for(j)
+                    vspace_append(new_vs, worker_vs);
+                }
                 break;
             }
         }
@@ -210,17 +254,26 @@ vir_release_pages(pcb_t *pcb, void *va) {
         phy_release_vpage(pcb, (void *)(va + i * PGSIZE));
     }
 
-    // reclaim the metadata
-    vsmngr_release_vaddr(&pcb->vmngr_, worker_node->data_);
-    vsmngr_release_node(&pcb->vmngr_, worker_node);
-
     // reclaim `vspace` list
     if (list_isempty(&worker_vs->list_)) {
         vspace_append(prev_vs, worker_vs->next_);
         vsmngr_release_vspace(&pcb->vmngr_, worker_vs);
     } else {
-        worker_vs->end_ -= (pages_amount * PGSIZE);
+        if (lct == LCT_BEGIN)    worker_vs->end_ -= (pages_amount * PGSIZE);
+        else if (lct == LCT_END)    worker_vs->begin_ += (pages_amount * PGSIZE);
+        else {
+            if (new_vs == null)    panic("vir_release_pages(): bug");
+            worker_vs->begin_ = ((vaddr_t *)(worker_node->data_))->va_
+                + ((vaddr_t *)(worker_node->data_))->length_ * PGSIZE;
+            new_vs->end_ = ((vaddr_t *)(worker_node->data_))->va_;
+            node_t *n = list_find(&new_vs->list_, new_vs->list_.size_);
+            new_vs->begin_ = ((vaddr_t *)(n->data_))->va_;
+        }
     }
+
+    // reclaim the metadata
+    vsmngr_release_vaddr(&pcb->vmngr_, worker_node->data_);
+    vsmngr_release_node(&pcb->vmngr_, worker_node);
 }
 
 /**

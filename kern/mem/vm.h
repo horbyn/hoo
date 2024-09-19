@@ -18,6 +18,9 @@
 // 4-MB is that the last entry of its page directory table is not allowed to use
 #define MAX_VSPACE_HOO      (PG_MASK - MB4 + PGSIZE)
 
+#ifdef DEBUG
+    void debug_print_vspace_pcb(pcb_t *pcb);
+#endif
 void init_virmm_system(void);
 void *vir_alloc_pages(pcb_t *pcb, uint32_t amount);
 void vir_release_pages(pcb_t *pcb, void *va);

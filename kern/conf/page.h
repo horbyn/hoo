@@ -12,7 +12,7 @@
 
 #define V2P(va)             (((uint32_t)(va)) - KERN_HIGH_MAPPING)
 #define PGDOWN(x, align)    (((uint32_t)x) & ~(align - 1))
-#define PGUP(x, align)      (PGDOWN((x + align - 1), align))
+#define PGUP(x, align)      (PGDOWN(((uint32_t)x + align - 1), align))
 
 // used to calculate pg entry size
 typedef uint32_t            pgelem_t;
@@ -27,8 +27,11 @@ typedef uint32_t            pgelem_t;
 #define PG_MASK             0xfffff000
 #define PG(x)               (((uint32_t)(x)) & (PG_MASK))
 #define PG_DIR_VA           PG_MASK
-#define GET_PDE(va)         (PG_DIR_VA | PD_INDEX(PGDOWN((va), PGSIZE)))
-#define GET_PTE(va)         (0xffc00000 | ((PGDOWN((va), PGSIZE) >> 12) & 0x3fffff))
+#define GET_PDE(va)         \
+    (PG_DIR_VA | (PD_INDEX(PGDOWN((va), PGSIZE)) * sizeof(uint32_t)))
+#define GET_PTE(va)         \
+    (0xffc00000 | ((PD_INDEX(PGDOWN((va), PGSIZE)) << 12) \
+    | (PT_INDEX(PGDOWN((va), PGSIZE)) * sizeof(uint32_t))))
 
 /**
  * @brief page dir table/page table entry attribute

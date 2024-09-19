@@ -10,7 +10,6 @@
 
 #include "kern/x86.h"
 #include "kern/conf/page.h"
-#include "kern/conf/page_struct.h"
 #include "kern/driver/io.h"
 #include "kern/units/bitmap.h"
 #include "kern/units/spinlock.h"

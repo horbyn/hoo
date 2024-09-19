@@ -128,13 +128,13 @@ trace() {
     __asm__ __volatile__ ("mov %%ebp, %0" : "=r"(ebp));
 
     for (uint32_t i = 0; ebp != 0; ++i) {
+        ret = *(uint32_t *)(ebp + sizeof(uint32_t));
+
         for (uint32_t space = 0; space < i; ++space) {
             kprintf("  ");
         }
-        kprintf("- ");
-
-        ret = *(uint32_t *)(ebp + sizeof(uint32_t));
-        kprintf("0x%x", ret);
+        kprintf("- 0x%x", ret);
+        if (ret == DIED_INSTRUCTION + KERN_HIGH_MAPPING)    break;
 
         // check whether it is interrupt stack
         if (ret == (uint32_t)isr_part3) {

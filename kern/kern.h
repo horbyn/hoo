@@ -13,7 +13,7 @@
 #include "module/driver.h"
 #include "module/fs.h"
 #include "module/loader.h"
-#include "module/main.h"
+#include "module/first.h"
 #include "module/mem.h"
 #include "module/sched.h"
 #include "driver/io.h"

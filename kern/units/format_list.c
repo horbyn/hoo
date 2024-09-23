@@ -15,7 +15,7 @@
  */
 void
 fmtlist_init(fmtlist_t *page_va, uint32_t type_size, bool is_cycle) {
-    if (page_va == null)    panic("fmtlist_init(): parameter invalid");
+    if (page_va == null)    panic("fmtlist_init(): null pointer");
 
     uint8_t *p = (uint8_t *)(PGDOWN(page_va, PGSIZE));
     if ((uint32_t)p != (uint32_t)page_va)
@@ -56,7 +56,7 @@ fmtlist_init(fmtlist_t *page_va, uint32_t type_size, bool is_cycle) {
  */
 void *
 fmtlist_alloc(fmtlist_t *fmtlist) {
-    if (fmtlist == null)    panic("fmtlist_alloc(): parameter invalid");
+    if (fmtlist == null)    panic("fmtlist_alloc(): null pointer");
     if (fmtlist->list_.size_ <= 0)    return null;
     return list_remove(&fmtlist->list_, 1)->data_;
 }
@@ -71,7 +71,7 @@ fmtlist_alloc(fmtlist_t *fmtlist) {
  */
 void
 fmtlist_release(fmtlist_t *fmtlist, void *elem, uint32_t elem_size) {
-    if (fmtlist == null)    panic("fmtlist_release(): parameter invalid");
+    if (fmtlist == null)    panic("fmtlist_release(): null pointer");
     if (elem_size != fmtlist->type_size_)
         panic("fmtlist_release(): element type not match");
     if ((void *)fmtlist != (void *)PGDOWN(elem, PGSIZE))

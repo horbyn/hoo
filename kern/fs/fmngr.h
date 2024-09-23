@@ -15,7 +15,7 @@
  * @brief files manager for each process
  */
 typedef struct file_manager {
-    bitmap_t *fd_set_;
+    bitmap_t fd_set_;
     fd_t     *files_;
 } __attribute__((packed)) fmngr_t;
 

@@ -41,7 +41,8 @@ sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk) {
     pcb->ticks_ = ticks;
     pcb->sleeplock_ = sleeplock;
     pcb->hmngr_ = bucket;
-    pcb->fmngr_ = fmngr;
+    if (fmngr == null)    bzero(&pcb->fmngr_, sizeof(fmngr_t));
+    else    memmove(&pcb->fmngr_, fmngr, sizeof(fmngr_t));
     pcb->break_ = brk;
 }
 
@@ -55,9 +56,12 @@ debug_print_pcb(pcb_t *pcb) {
         sizeof(uint32_t *), pcb->tid_, sizeof(pgelem_t *), pcb->pgdir_pa_,
         pcb->vmngr_.vspace_, pcb->vmngr_.node_, pcb->vmngr_.vaddr_, pcb->vmngr_.head_);
     kprintf(".ticks(%dB)=%d, .sleeplock(%dB)=%p, .hmngr(%dB)=%p, "
-        ".fmngr(%dB)=%p, .break(%dB)=%d\n",
+        ".fmngr(%dB)=(bitmap_len_inbit=0x%x, bitmap_buff=0x%x, bitmap_prev=0x%x,"
+        "files=0x%x), .break(%dB)=%d\n",
         sizeof(uint32_t), pcb->ticks_, sizeof(sleeplock_t *), pcb->sleeplock_,
-        sizeof(buckx_mngr_t *), pcb->hmngr_, sizeof(fmngr_t *), pcb->fmngr_,
+        sizeof(buckx_mngr_t *), pcb->hmngr_, sizeof(fmngr_t *),
+        pcb->fmngr_.fd_set_.len_inbits_, pcb->fmngr_.fd_set_.buff_,
+        pcb->fmngr_.fd_set_.prev_free_, pcb->fmngr_.files_,
         sizeof(uint32_t), pcb->break_);
 }
 #endif

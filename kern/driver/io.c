@@ -126,15 +126,15 @@ trace() {
 
     uint32_t ebp = 0, ret = 0;
     __asm__ __volatile__ ("mov %%ebp, %0" : "=r"(ebp));
+    uint32_t border = PGUP(ebp, PGSIZE);
 
-    for (uint32_t i = 0; ebp != 0; ++i) {
+    for (uint32_t i = 0; ebp <= border; ++i) {
         ret = *(uint32_t *)(ebp + sizeof(uint32_t));
 
         for (uint32_t space = 0; space < i; ++space) {
             kprintf("  ");
         }
         kprintf("- 0x%x", ret);
-        if (ret == DIED_INSTRUCTION + KERN_HIGH_MAPPING)    break;
 
         // check whether it is interrupt stack
         if (ret == (uint32_t)isr_part3) {

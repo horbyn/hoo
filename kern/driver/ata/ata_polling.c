@@ -23,6 +23,7 @@ ata_polling_init(void) {
  */
 void
 ata_polling_rw(atabuff_t *buff, bool is_irq){
+    if (buff == null)    panic("ata_polling_rw(): null pointer");
 
     if (buff->len_ < BYTES_SECTOR)
         panic("ata_polling_rw(): not meet a sector size");

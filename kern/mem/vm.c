@@ -47,10 +47,8 @@ init_virmm_system() {
  */
 static void
 vspace_append(vspace_t *cur, vspace_t *next) {
-    if (cur == null || next == null)
+    if (cur == null)
         panic("vspace_append(): invalid parameter");
-
-    next->next_ = cur->next_;
     cur->next_ = next;
 }
 
@@ -132,8 +130,11 @@ vir_alloc_pages(pcb_t *pcb, uint32_t amount) {
             if (!worker->next_ && last_end + amount * PGSIZE >= ADDR_END)
                 panic("vir_alloc_pages(): no enough space");
 
-            vspace_t *temp = list_isempty(&worker->list_) ?
-                vsmngr_alloc_vspace(&pcb->vmngr_) : worker;
+            vspace_t *temp = worker;
+            if (list_isempty(&worker->list_)) {
+                temp = vsmngr_alloc_vspace(&pcb->vmngr_);
+                vspace_set(temp, null, last_end, last_end, null);
+            }
             node_t   *node_free = vsmngr_alloc_node(&pcb->vmngr_);
             vaddr_t  *vaddr_free = vsmngr_alloc_vaddr(&pcb->vmngr_);
 
@@ -141,10 +142,7 @@ vir_alloc_pages(pcb_t *pcb, uint32_t amount) {
             node_set(node_free, vaddr_free, null);
             list_insert(&temp->list_, node_free, 1);
 
-            if (list_isempty(&worker->list_)) {
-                // list append: worker->temp
-                vspace_append(worker, temp);
-            }
+            if (list_isempty(&worker->list_))    vspace_append(worker, temp);
 
             ret = last_end;
             temp->end_ += amount * PGSIZE;
@@ -223,10 +221,10 @@ vir_release_pages(pcb_t *pcb, void *va) {
         worker_node = list_find(&worker_vs->list_, i);
         if (worker_node) {
             if ((uint32_t)va == ((vaddr_t*)(worker_node->data_))->va_) {
-                list_remove(&worker_vs->list_, i);
 
                 lct = (i == 1) ? LCT_BEGIN : ((i == worker_vs->list_.size_)
                     ? LCT_END : LCT_MIDDLE);
+                list_remove(&worker_vs->list_, i);
 
                 if (lct == LCT_MIDDLE) {
                     // it is the middle node

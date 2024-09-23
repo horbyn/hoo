@@ -50,7 +50,8 @@ return:
     popl %ebp
     ret
 
-    # called as a function, `mode_ring3(uint32_t *user_stack, void *user_entry)`
+    # CANNOT consider as a function, because iret instruction
+    #   would also use to restore the %eip
 mode_ring3:
     pushl %ebp
     movl %esp,           %ebp

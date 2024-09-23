@@ -219,9 +219,10 @@ init_tasks_system() {
 
     static thread_buckmngr_t hoo_bucket;
     thread_buckmngr_set(&hoo_bucket);
+    fmngr_t hoo_fmngr;
     pcb_set(hoo_pcb, (uint32_t *)STACK_HOO_RING0, (uint32_t *)STACK_HOO_RING3,
         TID_HOO, (pgelem_t *)(V2P(get_hoo_pgdir())), mdata_vspace, mdata_node,
-        mdata_vaddr, null, TIMETICKS, null, hoo_bucket.head_, null, 0);
+        mdata_vaddr, null, TIMETICKS, null, hoo_bucket.head_, &hoo_fmngr, 0);
 
     static node_t hoo_node;
     node_set(&hoo_node, hoo_pcb, null);
@@ -230,6 +231,7 @@ init_tasks_system() {
     signal(&__spinlock_tasks);
 
     vir_alloc_pages(hoo_pcb, (KERN_HIGH_MAPPING + MB4) / PGSIZE);
+    task_init_fmngr(&hoo_pcb->fmngr_);
     pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
 
     // initialize the tasks system
@@ -485,9 +487,11 @@ idle_init(void *entry) {
     uint32_t *cur_stack = setup_ring0_stack(
         (void *)((uint32_t)ring0_va + PGSIZE), (void *)(ring3_va + PGSIZE), entry);
     pcb_t *idle_pcb = pcb_get(TID_IDLE);
+    fmngr_t idle_fmngr;
+    task_init_fmngr(&idle_fmngr);
     pcb_set(idle_pcb, cur_stack, (uint32_t *)(ring3_va + PGSIZE), TID_IDLE,
         pgdir_pa, mdata_vspace_va, mdata_node_va, mdata_vaddr_va, null, TIMETICKS,
-        null, thread_buckmngr_get(TID_IDLE), null, 0);
+        null, thread_buckmngr_get(TID_IDLE), &idle_fmngr, VIR_BASE_IDLE);
 
     node_t *n = mdata_alloc_node(TID_IDLE);
     node_set(n, idle_pcb, null);
@@ -563,7 +567,7 @@ fork(void *entry, sleeplock_t *sl) {
     pcb_set(new_pcb, cur_stack, new_ring3_va, new_tid, new_pgdir_pa,
         cur_pcb->vmngr_.vspace_, cur_pcb->vmngr_.node_, cur_pcb->vmngr_.vaddr_,
         &cur_pcb->vmngr_.head_, TIMETICKS, sl, thread_buckmngr_get(new_tid),
-        null, 0);
+        &cur_pcb->fmngr_, cur_pcb->break_);
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);
@@ -722,4 +726,43 @@ kill(pcb_t *pcb) {
     phy_release_page(pcb->pgdir_pa_);
 
     bzero(pcb, sizeof(pcb_t));
+}
+
+/**
+ * @brief file manager initialization
+ * 
+ * @param fmngr file manager
+ */
+void
+task_init_fmngr(fmngr_t *fmngr) {
+    if (fmngr == null)    panic("task_init_fmngr(): null pointer");
+    bzero(fmngr, sizeof(fmngr_t));
+
+    pcb_t *hoo_pcb = get_hoo_pcb();
+    uint32_t bitmap_pages = (MAX_FILES_PER_TASK / BITS_PER_BYTE + PGSIZE) / PGSIZE;
+    void *va = vir_alloc_pages(hoo_pcb, bitmap_pages);
+    for (uint32_t i = 0; i < bitmap_pages; ++i) {
+        void *pa = phy_alloc_page();
+        // we could revise the kernel mappings anytime as long as
+        //   using the kernel linear addresses
+        set_mapping((void *)((uint32_t)va + i * PGSIZE), pa,
+            (pgelem_t)PGENT_US | PGENT_RW | PGENT_PS);
+    }
+    bitmap_init(&fmngr->fd_set_, MAX_FILES_PER_TASK, va);
+
+    // for stdin, stdout, stderr
+    bitmap_set(&fmngr->fd_set_, FD_STDIN);
+    bitmap_set(&fmngr->fd_set_, FD_STDOUT);
+    bitmap_set(&fmngr->fd_set_, FD_STDERR);
+
+    uint32_t file_arr_pages = (MAX_FILES_PER_TASK * sizeof(fd_t) + PGSIZE) / PGSIZE;
+    va = vir_alloc_pages(hoo_pcb, file_arr_pages);
+    for (uint32_t i = 0; i < file_arr_pages; ++i) {
+        void *pa = phy_alloc_page();
+        // we could revise the kernel mappings anytime as long as
+        //   using the kernel linear addresses
+        set_mapping((void *)((uint32_t)va + i * PGSIZE), pa,
+            (pgelem_t)PGENT_US | PGENT_RW | PGENT_PS);
+    }
+    fmngr->files_ = va;
 }

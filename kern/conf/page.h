@@ -11,8 +11,8 @@
 #include "kern/x86.h"
 
 #define V2P(va)             (((uint32_t)(va)) - KERN_HIGH_MAPPING)
-#define PGDOWN(x, align)    (((uint32_t)x) & ~(align - 1))
-#define PGUP(x, align)      (PGDOWN(((uint32_t)x + align - 1), align))
+#define PGDOWN(x, align)    (((uint32_t)(x)) & ~((align) - 1))
+#define PGUP(x, align)      (PGDOWN(((uint32_t)(x) + (align) - 1), (align)))
 
 // used to calculate pg entry size
 typedef uint32_t            pgelem_t;

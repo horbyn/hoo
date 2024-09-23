@@ -43,7 +43,7 @@ typedef struct pcb {
     sleeplock_t  *sleeplock_;
     // for heap memory allocation
     buckx_mngr_t *hmngr_;
-    fmngr_t      *fmngr_;
+    fmngr_t      fmngr_;
     // the end of all segments
     uint32_t     break_;
 } __attribute__((packed)) pcb_t;

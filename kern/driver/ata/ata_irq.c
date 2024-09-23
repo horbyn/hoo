@@ -60,6 +60,7 @@ ata_irq_intr() {
  */
 void
 ata_irq_rw(atabuff_t *buff, bool is_irq) {
+    if (buff == null)    panic("ata_irq_rw(): null pointer");
     pcb_t *cur_pcb = get_current_pcb();
     ata_space_t *ata_space = get_ataspace();
     uint16_t io_port =

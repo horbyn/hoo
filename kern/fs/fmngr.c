@@ -15,7 +15,7 @@
 fd_t
 fmngr_alloc(fmngr_t *fmngr) {
     if (fmngr == null)    panic("fmngr_alloc(): null pointer");
-    return (fd_t)(bitmap_scan_empty(fmngr->fd_set_));
+    return (fd_t)(bitmap_scan_empty(&fmngr->fd_set_));
 }
 
 /**
@@ -27,7 +27,7 @@ fmngr_alloc(fmngr_t *fmngr) {
 void
 fmngr_free(fmngr_t *fmngr, fd_t fd) {
     if (fmngr == null)    panic("fmngr_free(): null pointer");
-    bitmap_clear(fmngr->fd_set_, fd);
+    bitmap_clear(&fmngr->fd_set_, fd);
 }
 
 /**

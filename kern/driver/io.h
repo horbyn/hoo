@@ -9,6 +9,7 @@
 #define __KERN_DRIVER_IO_H__
 
 #include "cga/cga.h"
+#include "kern/conf/page.h"
 #include "kern/units/spinlock.h"
 #include "kern/intr/intr_stack.h"
 

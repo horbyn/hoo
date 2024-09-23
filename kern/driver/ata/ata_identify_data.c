@@ -16,7 +16,8 @@
 const char *
 ata_print_string(const void *buff, uint32_t bufflen) {
     if (bufflen % 2 != 0)
-        panic("ata_print_string(): bad buffer size\n");
+        panic("ata_print_string(): bad buffer size");
+    if (buff == null)    panic("ata_print_string(): null pointer");
 
     static char __ata_string_buff[SIZE_ATA_STRING_BUFF];
     bzero(__ata_string_buff, sizeof(__ata_string_buff));
@@ -36,6 +37,7 @@ ata_print_string(const void *buff, uint32_t bufflen) {
  */
 enum_ata_type_device
 ata_get_device_type(const ata_identify_data_t *buff) {
+    if (buff == null)    panic("ata_get_device_type(): null pointer");
     if (buff->word0_ata_device_ == 0)    return ATA_TYPE_DEVICE_ATA;
     else    return ATA_TYPE_DEVICE_UNKNOWN;
 }

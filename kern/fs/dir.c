@@ -96,7 +96,7 @@ diritem_compare(const diritem_t *d1, const diritem_t *d2) {
 diritem_t *
 diritem_read(dirblock_t *block, const diritem_t *item) {
     diritem_t *ret = null;
-    if (block == null)    panic("diritem_write(): null pointer");
+    if (block == null)    panic("diritem_read(): null pointer");
     if (item == null)    return ret;
 
     for (uint32_t i = 0; i < block->amount_; ++i) {

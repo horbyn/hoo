@@ -31,11 +31,12 @@ vaddr_set(vaddr_t *vaddr, uint32_t addr, uint32_t length) {
  */
 void
 vspace_set(vspace_t *vs, list_t *ls, uint32_t begin, uint32_t end,
-               vspace_t *next) {
+vspace_t *next) {
 
-    if (vs == null || ls == null)    panic("vspace_set(): invalid virtual space");
-    if (&vs->list_ != ls)
+    if (vs == null)    panic("vspace_set(): null pointer");
+    if (ls && &vs->list_ != ls)
         memmove(&vs->list_, ls, sizeof(list_t));
+    else    bzero(&vs->list_, sizeof(list_t));
     vs->begin_ = begin;
     vs->end_ = end;
     vs->next_ = next;

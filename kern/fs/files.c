@@ -273,32 +273,6 @@ files_remove(const char *name) {
 }
 
 /**
- * @brief file manager initialization
- * 
- * @param fmngr file manager
- */
-static fmngr_t *
-fmngr_init(fmngr_t *fmngr) {
-    if (fmngr != null)    return fmngr;
-
-    // release when the task is terminated
-    fmngr = dyn_alloc(sizeof(fmngr_t));
-    fmngr->fd_set_ = dyn_alloc(sizeof(bitmap_t));
-    fmngr->files_  = dyn_alloc(MAX_FILES_PER_TASK * sizeof(fd_t));
-    bzero(fmngr->files_, MAX_FILES_PER_TASK * sizeof(fd_t));
-
-    void *buff = dyn_alloc(MAX_FILES_PER_TASK / BITS_PER_BYTE);
-    bitmap_init(fmngr->fd_set_, MAX_FILES_PER_TASK, buff);
-
-    // for stdin, stdout, stderr
-    bitmap_set(fmngr->fd_set_, FD_STDIN);
-    bitmap_set(fmngr->fd_set_, FD_STDOUT);
-    bitmap_set(fmngr->fd_set_, FD_STDERR);
-
-    return fmngr;
-}
-
-/**
  * @brief open the specific file
  * 
  * @param name file name
@@ -318,9 +292,8 @@ files_open(const char *name) {
     ++__fs_files[index].ref_;
 
     pcb_t *cur_pcb = get_current_pcb();
-    cur_pcb->fmngr_ = fmngr_init(cur_pcb->fmngr_);
-    fd_t fd = fmngr_alloc(cur_pcb->fmngr_);
-    fmngr_files_set(cur_pcb->fmngr_, fd, index);
+    fd_t fd = fmngr_alloc(&cur_pcb->fmngr_);
+    fmngr_files_set(&cur_pcb->fmngr_, fd, index);
 
     dyn_free(self);
     return fd;
@@ -336,7 +309,7 @@ files_close(fd_t fd) {
     if (fd > MAX_FILES_PER_TASK)    panic("files_close(): invalid fd");
 
     pcb_t *cur_pcb = get_current_pcb();
-    global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
+    global_fd_t index = fmngr_files_get(&cur_pcb->fmngr_, fd);
     if (__fs_files[index].ref_ == 0)
         panic("files_close(): the file was already closed");
 
@@ -365,7 +338,7 @@ files_read(fd_t fd, char *buf, uint32_t size) {
     }
 
     pcb_t *cur_pcb = get_current_pcb();
-    global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
+    global_fd_t index = fmngr_files_get(&cur_pcb->fmngr_, fd);
     if (__fs_files[index].ref_ == 0)
         panic("files_close(): the file was in non-opening");
 
@@ -399,7 +372,7 @@ files_write(fd_t fd, const char *buf, uint32_t size) {
     if (buf == null || size == 0)    return;
 
     pcb_t *cur_pcb = get_current_pcb();
-    global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
+    global_fd_t index = fmngr_files_get(&cur_pcb->fmngr_, fd);
     if (__fs_files[index].ref_ == 0)
         panic("files_write(): the file was in non-opening");
 
@@ -443,7 +416,7 @@ files_get_size(fd_t fd) {
         panic("files_get_size(): invalid file descriptor");
 
     pcb_t *cur_pcb = get_current_pcb();
-    global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
+    global_fd_t index = fmngr_files_get(&cur_pcb->fmngr_, fd);
     if (__fs_files[index].ref_ == 0)
         panic("files_get_size(): the file was in non-opening");
 

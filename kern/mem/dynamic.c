@@ -39,7 +39,6 @@ debug_print_dyn(void) {
  */
 static void
 arrlist_init(arrlist_t *list, uint32_t type_size) {
-    // if (list == null)    panic("arrlist_init(): null pointer");
 
     uint8_t *p = (uint8_t *)(PGDOWN(list, PGSIZE));
     if ((uint32_t)p != (uint32_t)list)

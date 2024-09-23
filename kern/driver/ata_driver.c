@@ -38,6 +38,7 @@ void
 ata_driver_rw(void *buff, uint32_t bufflen, idx_t lba, ata_cmd_t cmd) {
     if (lba == INVALID_INDEX)
         panic("ata_driver_rw(): invalid lba");
+    if (buff == null)    panic("ata_driver_rw(): null pointer");
 
     pcb_t *cur_pcb = get_current_pcb();
     atabuff_t *atabuff = &__mdata_atabuff[cur_pcb->tid_];

@@ -13,8 +13,10 @@
 #include "kern/mem/vm.h"
 #include "kern/units/list.h"
 #include "kern/units/queue.h"
+#include "user/user.h"
 
-#define KERN_AVAIL_VMBASE   (KERN_HIGH_MAPPING + MM_BASE)
+// #define KERN_AVAIL_VMBASE   (KERN_HIGH_MAPPING + MM_BASE)
+#define VIR_BASE_IDLE       0x1000
 
 extern void switch_to(node_t *, node_t *);
 extern void mode_ring3(uint32_t *user_stack, void *user_entry);
@@ -36,5 +38,6 @@ void  wait_sleeplock(tid_t tid_child);
 void  signal_sleeplock(sleeplock_t *slock);
 void  exit(void);
 void  kill(pcb_t *pcb);
+void  task_init_fmngr(fmngr_t *fmngr);
 
 #endif

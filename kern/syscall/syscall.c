@@ -21,7 +21,7 @@ void syscall_init(void) {
     __stub[SYS_WRITE]  = (syscall_t)files_write;
     __stub[SYS_FORK]   = (syscall_t)fork;
     __stub[SYS_EXEC]   = (syscall_t)exec;
-    __stub[SYS_WAIT]   = (syscall_t)wait_sleeplock;
+    __stub[SYS_WAIT]   = (syscall_t)wait_child;
     __stub[SYS_EXIT]   = (syscall_t)exit;
     __stub[MAX_SYSCALL - 1] = null;
 }

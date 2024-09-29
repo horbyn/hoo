@@ -23,7 +23,7 @@ void sys_read(int fd, void *buf, unsigned int count);
 void sys_write(int fd, const void *buf, unsigned int count);
 int  sys_fork(void);
 int  sys_exec(const char *program);
-void sys_wait(int pid);
+void sys_wait();
 void sys_exit();
 
 #endif

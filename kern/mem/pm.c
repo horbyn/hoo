@@ -65,9 +65,10 @@ set_mapping(void *va, void *pa, pgelem_t flags) {
 
     __asm__ ("invlpg (%0)" : : "a" (va));
     pgelem_t *pgdir_va = (pgelem_t *)GET_PDE(va);
-    pgelem_t pde_flags = *pgdir_va & ~PG_MASK,
-        FLAGS = PGENT_US | PGENT_RW | PGENT_PS;
-    if ((pde_flags & FLAGS) != FLAGS) {
+    const pgelem_t FLAGS = PGENT_US | PGENT_RW | PGENT_PS,
+        FLAGS_PF = PGENT_US | PGENT_PS;
+    pgelem_t pde_flags = (*pgdir_va & ~PG_MASK) & FLAGS;
+    if (pde_flags != FLAGS && pde_flags != FLAGS_PF) {
         // lack of page table
         void *pgtbl = phy_alloc_page();
         *pgdir_va = (pgelem_t)pgtbl | FLAGS;

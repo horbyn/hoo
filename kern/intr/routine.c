@@ -88,6 +88,8 @@ page_fault(void) {
         //memmove(va, (void *)linear_addr, PGSIZE);
     }
 
+    panic(null);
+
     return;
 }
 

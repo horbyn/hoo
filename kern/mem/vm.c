@@ -287,8 +287,8 @@ phy_release_vpage(pcb_t *pcb, void *page_vir_addr) {
         panic("phy_release_vpage(): cannot release kernel virtual space");
 
     bzero(page_vir_addr, PGSIZE);
-    pgelem_t *pde = (pgelem_t *)GET_PDE(page_vir_addr);
-    phy_release_page((void *)PG(*pde));
+    pgelem_t *pte = (pgelem_t *)GET_PTE(page_vir_addr);
+    phy_release_page((void *)PG(*pte));
 }
 
 /**

@@ -110,20 +110,14 @@ sys_write(int fd, const void *buf, unsigned int count) {
 int
 sys_fork(void) {
     int tid = -1;
-    unsigned int bak_sleeplock = 0, bak_entry = 0;
-    unsigned int temp_sleeplock[2]; // the real sleeplock is also 8 bytes
-    temp_sleeplock[0] = 0;
-    temp_sleeplock[1] = 0;
-    __asm__ ("movl 0xc(%%ebp), %1\n\t"
-        "movl 0x8(%%ebp), %0\n\t"
+    unsigned int bak_entry = 0;
+    __asm__ ("movl 0x8(%%ebp), %0\n\t"
         "movl 0x4(%%ebp), %%eax\n\t"
-        "movl %2,    0xc(%%ebp)\n\t"
         "movl %%eax, 0x8(%%ebp)"
-        : "=a"(bak_entry), "=d"(bak_sleeplock)
-        : "r"(temp_sleeplock));
+        : "=c"(bak_entry));
     syscall_entry(SYS_FORK, &tid);
-    __asm__ ("movl %0, 0x8(%%ebp)\n\t"
-        "movl %1, 0xc(%%ebp)" : : "a"(bak_entry), "d"(bak_sleeplock));
+    __asm__ ("movl %0, 0x8(%%ebp)"
+        : : "a"(bak_entry));
     return tid;
 }
 
@@ -143,12 +137,21 @@ sys_exec(const char *program) {
 
 /**
  * @brief parent wait for temination of child
- * 
- * @param pid child pid
  */
 void
-sys_wait(int pid) {
+sys_wait() {
+    unsigned int bak_sleeplock = 0;
+    // the real sleeplock is also 8 bytes
+    unsigned int temp_sleeplock[2];
+    temp_sleeplock[0] = 0;
+    temp_sleeplock[1] = 0;
+    __asm__ ("movl 0x8(%%ebp), %0\n\t"
+        "movl %1, 0x8(%%ebp)"
+        : "=a"(bak_sleeplock)
+        : "c"(temp_sleeplock));
     syscall_entry(SYS_WAIT, 0);
+    __asm__ ("movl %0, 0x8(%%ebp)"
+        : : "a"(bak_sleeplock));
 }
 
 /**

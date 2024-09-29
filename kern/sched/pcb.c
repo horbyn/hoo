@@ -23,11 +23,13 @@
  * @param bucket    bucket manager
  * @param fmngr     files manager
  * @param break     the end
+ * @param parent    the parent
  */
 void
 pcb_set(pcb_t *pcb, uint32_t *s0, uint32_t *s3, uint32_t tid, pgelem_t *pd_pa,
 void *va_vspace, void *va_node, void *va_vaddr, vspace_t *vspace, uint32_t ticks,
-sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk) {
+sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk,
+tid_t parent) {
     if (pcb == null)    panic("pcb_set(): null pointer");
     if (tid >= MAX_TASKS_AMOUNT)    panic("pcb_set(): thread id overflow");
 
@@ -44,6 +46,7 @@ sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk) {
     if (fmngr == null)    bzero(&pcb->fmngr_, sizeof(fmngr_t));
     else    memmove(&pcb->fmngr_, fmngr, sizeof(fmngr_t));
     pcb->break_ = brk;
+    pcb->parent_ = parent;
 }
 
 #ifdef DEBUG
@@ -53,15 +56,16 @@ debug_print_pcb(pcb_t *pcb) {
         ".pgdir pa(%dB)=%p, .vmngr.vspace=%p, .vmngr.node=%p, .vmngr.vaddr=%p, "
         ".vmngr.head=%p, ",
         sizeof(uint32_t *), pcb->stack0_, sizeof(uint32_t *), pcb->stack3_,
-        sizeof(uint32_t *), pcb->tid_, sizeof(pgelem_t *), pcb->pgdir_pa_,
+        sizeof(tid_t), pcb->tid_, sizeof(pgelem_t *), pcb->pgdir_pa_,
         pcb->vmngr_.vspace_, pcb->vmngr_.node_, pcb->vmngr_.vaddr_, pcb->vmngr_.head_);
     kprintf(".ticks(%dB)=%d, .sleeplock(%dB)=%p, .hmngr(%dB)=%p, "
         ".fmngr(%dB)=(bitmap_len_inbit=0x%x, bitmap_buff=0x%x, bitmap_prev=0x%x,"
-        "files=0x%x), .break(%dB)=%d\n",
+        "files=0x%x), .break(%dB)=%d, ",
         sizeof(uint32_t), pcb->ticks_, sizeof(sleeplock_t *), pcb->sleeplock_,
         sizeof(buckx_mngr_t *), pcb->hmngr_, sizeof(fmngr_t *),
         pcb->fmngr_.fd_set_.len_inbits_, pcb->fmngr_.fd_set_.buff_,
         pcb->fmngr_.fd_set_.prev_free_, pcb->fmngr_.files_,
         sizeof(uint32_t), pcb->break_);
+    kprintf(".parent(%dB)=%d\n", sizeof(tid_t), pcb->parent_);
 }
 #endif

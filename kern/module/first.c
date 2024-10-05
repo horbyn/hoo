@@ -12,6 +12,5 @@
 void
 ring3_first(void) {
     // launch from idle ring3
-    int result = sys_exec(BUILT_SHELL);
-    if (result == -1)    sys_printf("cannot launch shell\n");
+    sys_exec(BUILT_SHELL);
 }

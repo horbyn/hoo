@@ -25,11 +25,11 @@ paging() {
     for (uint32_t i = 0; i < (MM_BASE / PGSIZE); ++i)
         pg[i] = ((pgelem_t)(i * PGSIZE) | flags);
 
-    // paging
+    // Paging and Write-Protect (COW pre-requisite)
     __asm__ ("movl %0, %%cr3" : :"r"(V2P(pdir)));
     __asm__ ("\r\n"
         "movl %cr0,       %eax\r\n"
-        "orl $0x80000000, %eax\r\n"
+        "orl $0x80010000, %eax\r\n"
         "movl %eax,       %cr0");
 }
 

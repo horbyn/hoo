@@ -57,13 +57,7 @@ main_shell(void) {
 
         command[i] = '\0';
         int pid = sys_fork();
-        if (pid != 0) {
-            sys_wait();
-        } else {
-            int result = sys_exec(command);
-            if (result == -1)
-                sys_printf("%s command not found\n", command);
-            sys_exit();
-        }
+        if (pid != 0)    sys_wait();
+        else    sys_exec(command);
     } // end while()
 }

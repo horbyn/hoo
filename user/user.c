@@ -125,14 +125,10 @@ sys_fork(void) {
  * @brief change the control flow
  * 
  * @param program the program to execute
- * @retval 0: success
- * @retval -1: command not found
  */
-int
+void
 sys_exec(const char *program) {
-    int ret = 0;
-    syscall_entry(SYS_EXEC, &ret);
-    return ret;
+    syscall_entry(SYS_EXEC, 0);
 }
 
 /**

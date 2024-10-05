@@ -8,12 +8,10 @@
 
 /**
  * @brief change the control flow to execute the specific program
- * 
+ * @note would not return
  * @param filename the specific program filename
- * @retval 0: success
- * @retval -1: command not found
  */
-int
+void
 exec(const char *filename) {
     if (filename == null)
         panic("exec(): null pointer");
@@ -29,7 +27,10 @@ exec(const char *filename) {
         memmove(absolute_path, filename, strlen(filename));
 
     fd_t fd = files_open(absolute_path);
-    if (fd == -1)    return -1;
+    if (fd == -1) {
+        kprintf("Command: \"%s\" not found\n", absolute_path);
+        exit();
+    }
     uint32_t file_size = files_get_size(fd);
     uint32_t file_pages = PGUP(file_size, PGSIZE);
     pcb_t *cur_pcb = get_current_pcb();
@@ -63,10 +64,18 @@ exec(const char *filename) {
     files_read(fd, (char *)program, file_size);
 
     // change the control flows in ring3
-    __asm__ ("pushl %1\n\t"
-        "pushl %0\n\t"
-        "jmp mode_ring3" : : "r"(cur_pcb->stack3_), "r"(program));
-
-    files_close(fd);
-    return 0;
+    // NOTE: a wholly new ring3 stack would be used after jump into `mode_ring3()`
+    //   so we will setup something special stuff in it before jumping
+    __asm__ ("movl %0, %%eax\n\t"
+        "movl %2, -0x4(%%eax)\n\t"
+        "movl $next_insc, -0x8(%%eax)\n\t"
+        "subl $0x8, %%eax\n\t"
+        "pushl %1\n\t"
+        "pushl %%eax\n\t"
+        "jmp mode_ring3\n\t"
+        "next_insc:\n\t"
+        "movl %%esp, %%ebp\n\t"
+        "call sys_close\n\t"
+        "call sys_exit"
+        : : "c"(cur_pcb->stack3_), "d"(program), "b"(fd));
 }

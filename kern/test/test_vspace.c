@@ -28,6 +28,6 @@ test_vspace() {
         kprintf("va: 0x%x --> pa: 0x%x\n", va + i * PGSIZE, pa);
     }
 
-    vir_release_pages(hoo_pcb, va);
+    vir_release_pages(hoo_pcb, va, true);
 
 }

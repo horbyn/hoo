@@ -23,7 +23,7 @@
 #endif
 void init_virmm_system(void);
 void *vir_alloc_pages(pcb_t *pcb, uint32_t amount);
-void vir_release_pages(pcb_t *pcb, void *va);
+void vir_release_pages(pcb_t *pcb, void *va, bool rel);
 void phy_release_vpage(pcb_t *pcb, void *page_vir_addr);
 void release_vspace(pcb_t *pcb);
 

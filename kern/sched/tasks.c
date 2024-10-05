@@ -551,8 +551,19 @@ fork(void *entry) {
     for (idx_t i = 0; i < copy_beg; ++i) {
         pgelem_t *pde = (pgelem_t *)PG_DIR_VA + i;
         if (*pde) {
-            uint32_t pgtbl_addr = (uint32_t)(*pde & PG_MASK);
-            new_pgdir_va[i] = pgtbl_addr | PGENT_US | PGENT_PS;
+            void *new_page_table = phy_alloc_page();
+            pgelem_t *new_page_table_va = vir_alloc_pages(hoo_pcb, 1);
+            set_mapping(new_page_table_va, (void *)new_page_table, flags);
+
+            // change all the PTE flags in this PDE of the child to read-only
+            for (idx_t j = 0; j < PG_STRUCT_SIZE; ++j) {
+                pgelem_t *pte = (pgelem_t *)(
+                    ((uint32_t)pde << 10) | (j * sizeof(uint32_t)));
+                if (*pte)    new_page_table_va[j] = *pte & ~((pgelem_t)PGENT_RW);
+            }
+
+            new_pgdir_va[i] = (pgelem_t)new_page_table | flags;
+            vir_release_pages(hoo_pcb, (void *)new_page_table_va, false);
         } else    new_pgdir_va[i] = 0;
     }
     for (uint32_t i = copy_beg; i < copy_end; ++i)
@@ -567,7 +578,7 @@ fork(void *entry) {
     pcb_set(new_pcb, cur_stack, new_ring3_va + PGSIZE, new_tid, new_pgdir_pa,
         cur_pcb->vmngr_.vspace_, cur_pcb->vmngr_.node_, cur_pcb->vmngr_.vaddr_,
         &cur_pcb->vmngr_.head_, TIMETICKS, null, thread_buckmngr_get(new_tid),
-        &cur_pcb->fmngr_, cur_pcb->break_, cur_pcb->tid_);
+        &cur_pcb->fmngr_, VIR_BASE_IDLE, cur_pcb->tid_);
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);

@@ -18,6 +18,6 @@
 // prototype of all the builtin commands
 typedef void (*builtin_t)(void);
 
-int exec(const char *filename);
+void exec(const char *filename);
 
 #endif

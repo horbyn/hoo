@@ -191,10 +191,11 @@ vsmngr_release_vaddr(vsmngr_t *mngr, vaddr_t *vaddr) {
  * @brief release some virtual addresses
  * 
  * @param pcb the thread pcb to be request
- * @param va the beginning virtual address
+ * @param va  the beginning virtual address
+ * @param rel whether release the physical page corresponding the virtual address
  */
 void
-vir_release_pages(pcb_t *pcb, void *va) {
+vir_release_pages(pcb_t *pcb, void *va, bool rel) {
     if (pcb == null)    panic("vir_release_pages(): paremeter invalid");
 
     // search the `vspace` list according to virtual address
@@ -247,9 +248,11 @@ vir_release_pages(pcb_t *pcb, void *va) {
 
     // release pages
     uint32_t pages_amount = ((vaddr_t *)(worker_node->data_))->length_;
-    for (uint32_t i = 0; i < pages_amount; ++i) {
-        uint32_t va = ((vaddr_t *)(worker_node->data_))->va_;
-        phy_release_vpage(pcb, (void *)(va + i * PGSIZE));
+    if (rel) {
+        for (uint32_t i = 0; i < pages_amount; ++i) {
+            uint32_t va = ((vaddr_t *)(worker_node->data_))->va_;
+            phy_release_vpage(pcb, (void *)(va + i * PGSIZE));
+        }
     }
 
     // reclaim `vspace` list
@@ -277,6 +280,7 @@ vir_release_pages(pcb_t *pcb, void *va) {
 /**
  * @brief release a physical page
  * 
+ * @param pcb           the pcb
  * @param page_vir_addr the corresponding virtual address
  */
 void

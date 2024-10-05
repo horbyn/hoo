@@ -150,7 +150,7 @@ arrlist_release(arrlist_t **plist, void *elem, uint32_t elem_size) {
                 if (pre)
                     pre->next_ = list->next_;
 
-                vir_release_pages(get_current_pcb(), list);
+                vir_release_pages(get_current_pcb(), list, true);
                 *plist = null;
             }
 
@@ -214,5 +214,5 @@ dyn_free(void *ptr) {
         if (arrlist_release(&mngr->chain_, ptr, mngr->size_))    break;
         mngr = mngr->next_;
     }
-    if (mngr == null)    vir_release_pages(cur_pcb, ptr);
+    if (mngr == null)    vir_release_pages(cur_pcb, ptr, true);
 }

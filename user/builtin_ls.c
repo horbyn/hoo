@@ -8,9 +8,5 @@
 
 void
 main_ls(void) {
-    unsigned int val = 0;
-    (void)val;
-    static char arr[4];
-    (void)arr;
-    __asm__ ("movl $0x4, %eax");
+    sys_printf("hello ls command\n");
 }

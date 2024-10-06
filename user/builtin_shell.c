@@ -30,9 +30,8 @@ main_shell(void) {
         do {
             sys_read(FD_STDIN, &ch, 1);
 
-            if (ch != '\b') {
-                sys_printf("%c", ch);
-            } else {
+            if (ch != '\b')    sys_printf("%c", ch);
+            else {
                 if (ch == '\b') {
                     if (i > 0) {
                         sys_printf("\b");

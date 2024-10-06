@@ -545,6 +545,17 @@ fork(void *entry) {
     void *new_ring3_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(new_ring3_va, new_ring3_pa, flags);
 
+    // metadata
+    void *new_vspace_pa = phy_alloc_page();
+    void *new_vspace_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(new_vspace_va, new_vspace_pa, flags);
+    void *new_node_pa = phy_alloc_page();
+    void *new_node_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(new_node_va, new_node_pa, flags);
+    void *new_vaddr_pa = phy_alloc_page();
+    void *new_vaddr_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(new_vaddr_va, new_vaddr_pa, flags);
+
     // copy all the linear space
     uint32_t copy_beg = (uint32_t)PD_INDEX(KERN_HIGH_MAPPING),
         copy_end = PG_STRUCT_SIZE - 1;
@@ -576,9 +587,9 @@ fork(void *entry) {
     uint32_t *cur_stack = setup_ring0_stack(new_ring0_va + PGSIZE,
         new_ring3_va + PGSIZE, entry);
     pcb_set(new_pcb, cur_stack, new_ring3_va + PGSIZE, new_tid, new_pgdir_pa,
-        cur_pcb->vmngr_.vspace_, cur_pcb->vmngr_.node_, cur_pcb->vmngr_.vaddr_,
-        &cur_pcb->vmngr_.head_, TIMETICKS, null, thread_buckmngr_get(new_tid),
-        &cur_pcb->fmngr_, VIR_BASE_IDLE, cur_pcb->tid_);
+        new_vspace_va, new_node_va, new_vaddr_va, &cur_pcb->vmngr_.head_,
+        TIMETICKS, null, thread_buckmngr_get(new_tid), &cur_pcb->fmngr_,
+        VIR_BASE_IDLE, cur_pcb->tid_);
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);
@@ -662,6 +673,24 @@ exit() {
     phy_release_vpage(pcb, pcb->vmngr_.node_);
     phy_release_vpage(pcb, pcb->vmngr_.vaddr_);
 
+    // release page tables
+    for (idx_t i = 0; i < PD_INDEX(KERN_HIGH_MAPPING); ++i) {
+        pgelem_t *pde = (pgelem_t *)(PG_DIR_VA + i * sizeof(uint32_t));
+        if (*pde & ~PG_MASK) {
+            for (idx_t j = 0; j < PG_STRUCT_SIZE; ++j) {
+                pgelem_t *pte = (pgelem_t *)(
+                    ((uint32_t)pde << 10) | (j * sizeof(uint32_t)));
+                if (*pte & ~PG_MASK) {
+                    phy_release_page((void *)(*pte & PG_MASK));
+                    *pte = 0;
+                }
+            } // end for(j)
+
+            phy_release_page((void *)(*pde & PG_MASK));
+            *pde = 0;
+        }
+    } // end for(i)
+
     // wakeup the asleep process
     if (pcb->parent_ != INVALID_INDEX) {
         pcb_t *parent_pcb = pcb_get(pcb->parent_);
@@ -680,48 +709,6 @@ exit() {
 
     // the "exited" task cannot return to ring3
     scheduler();
-}
-
-/**
- * @brief kill the specific task by the current task if in expired list
- * 
- * @param pcb the task going to be terminated
- */
-void
-kill(pcb_t *pcb) {
-    if (pcb == null)    panic("kill(): null pointer");
-    bool is_finish_exit = false;
-    for (idx_t i = 1; i <= __list_expired.size_; ++i) {
-        node_t *n = list_find(&__list_expired, i);
-        if (n->data_ == pcb) {
-            list_remove(&__list_expired, i);
-            is_finish_exit = true;
-            break;
-        }
-    }
-    // the conditions still not to meet
-    if (!is_finish_exit)    return;
-
-    // release ring0 stack
-    pcb_t *master = get_hoo_pcb();
-    phy_release_vpage(master,
-        (void *)PGDOWN((pcb->stack0_ - PGSIZE), PGSIZE));
-
-    // release ring3 stack
-    phy_release_vpage(master,
-        (void *)PGDOWN((pcb->stack3_ - PGSIZE), PGSIZE));
-
-    // release page tables
-    for (idx_t i = 0; i < PD_INDEX(KERN_HIGH_MAPPING); ++i) {
-        pgelem_t *pde = (pgelem_t *)(PG_DIR_VA + i * sizeof(uint32_t));
-        pgelem_t *pgtbl = (pgelem_t *)(*pde & ~PG_MASK);
-        if (pgtbl)    phy_release_vpage(master, pgtbl);
-    }
-
-    // release page directory table
-    phy_release_page(pcb->pgdir_pa_);
-
-    bzero(pcb, sizeof(pcb_t));
 }
 
 /**
@@ -761,4 +748,29 @@ task_init_fmngr(fmngr_t *fmngr) {
             (pgelem_t)PGENT_US | PGENT_RW | PGENT_PS);
     }
     fmngr->files_ = va;
+}
+
+/**
+ * @brief clear resources of the expired task
+ */
+void
+kill(void) {
+
+    for (idx_t i = 1; i <= __list_expired.size_; ++i) {
+        node_t *n = list_find(&__list_expired, i);
+        pcb_t *pcb = (pcb_t *)n->data_;
+        list_remove(&__list_expired, i);
+
+        // release ring0 stack
+        phy_release_vpage(pcb, (void *)PGDOWN(pcb->stack0_, PGSIZE));
+
+        // release ring3 stack
+        phy_release_vpage(pcb,
+            (void *)PGDOWN(((void *)pcb->stack3_ - PGSIZE), PGSIZE));
+
+        // release page directory table
+        phy_release_page(pcb->pgdir_pa_);
+        bzero(pcb, sizeof(pcb_t));
+
+    } // end for()
 }

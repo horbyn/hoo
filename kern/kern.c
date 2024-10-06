@@ -83,3 +83,11 @@ kernel_exec(void) {
     idle_init(ring3_first);
     enable_intr();
 }
+
+/**
+ * @brief check whether there are expired tasks to clear
+ */
+void
+kernel_loop(void) {
+    while (1)    kill();
+}

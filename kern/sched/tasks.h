@@ -36,7 +36,7 @@ void  sleep(sleeplock_t *slock);
 void  wakeup(sleeplock_t *slock);
 void  wait_child(sleeplock_t *slock);
 void  exit(void);
-void  kill(pcb_t *pcb);
 void  task_init_fmngr(fmngr_t *fmngr);
+void  kill(void);
 
 #endif

@@ -32,6 +32,7 @@ entry(void) {
 
     kernel_init();
     kernel_exec();
+    kernel_loop();
 
     /**********************************************************************
      * NEED NOT TO RETURN NORMALLY                                        *

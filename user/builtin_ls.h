@@ -10,6 +10,6 @@
 
 #include "user.h"
 
-void main_ls(void);
+void main_ls(int argc, char **argv);
 
 #endif

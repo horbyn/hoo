@@ -24,12 +24,14 @@
  * @param fmngr     files manager
  * @param break     the end
  * @param parent    the parent
+ * @param dir       the current directory
+ * @param dirlen    the length of current directory
  */
 void
 pcb_set(pcb_t *pcb, uint32_t *s0, uint32_t *s3, uint32_t tid, pgelem_t *pd_pa,
 void *va_vspace, void *va_node, void *va_vaddr, vspace_t *vspace, uint32_t ticks,
 sleeplock_t *sleeplock, buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk,
-tid_t parent) {
+tid_t parent, char *dir, uint32_t dirlen) {
     if (pcb == null)    panic("pcb_set(): null pointer");
     if (tid >= MAX_TASKS_AMOUNT)    panic("pcb_set(): thread id overflow");
 
@@ -47,6 +49,8 @@ tid_t parent) {
     else    memmove(&pcb->fmngr_, fmngr, sizeof(fmngr_t));
     pcb->break_ = brk;
     pcb->parent_ = parent;
+    pcb->dir_ = dir;
+    pcb->dirlen_ = dirlen;
 }
 
 #ifdef DEBUG
@@ -66,6 +70,7 @@ debug_print_pcb(pcb_t *pcb) {
         pcb->fmngr_.fd_set_.len_inbits_, pcb->fmngr_.fd_set_.buff_,
         pcb->fmngr_.fd_set_.prev_free_, pcb->fmngr_.files_,
         sizeof(uint32_t), pcb->break_);
-    kprintf(".parent(%dB)=%d\n", sizeof(tid_t), pcb->parent_);
+    kprintf(".parent(%dB)=%d, .dir(%dB)=0x%x, .dirlen(%dB)=%d\n", sizeof(tid_t),
+        pcb->parent_, sizeof(char *), pcb->dir_, sizeof(uint32_t), pcb->dirlen_);
 }
 #endif

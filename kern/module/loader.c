@@ -55,7 +55,11 @@ load_builtins(void) {
 #ifdef __BASE_BUILTIN_SH
     builtin_to_file(BUILT_SHELL, (void *)__BASE_BUILTIN_SH,
         (uint32_t)__END_BUILTIN_SH - (uint32_t)__BASE_BUILTIN_SH);
+    builtin_to_file(BUILT_PWD, (void *)__BASE_BUILTIN_PWD,
+        (uint32_t)__END_BUILTIN_PWD - (uint32_t)__BASE_BUILTIN_PWD);
     builtin_to_file(BUILT_LS, (void *)__BASE_BUILTIN_LS,
         (uint32_t)__END_BUILTIN_LS - (uint32_t)__BASE_BUILTIN_LS);
+    builtin_to_file(BUILT_CD, (void *)__BASE_BUILTIN_CD,
+        (uint32_t)__END_BUILTIN_CD - (uint32_t)__BASE_BUILTIN_CD);
 #endif
 }

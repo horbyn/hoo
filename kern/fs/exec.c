@@ -16,16 +16,39 @@ exec(const char *filename) {
     if (filename == null)
         panic("exec(): null pointer");
 
+    static char param[MAXSIZE_PATH], cmd[MAXSIZE_PATH];
+    bzero(param, MAXSIZE_PATH);
+    bzero(cmd, MAXSIZE_PATH);
+    uint32_t flen = strlen(filename);
+    // whether there are parameters
+    idx_t i = 0;
+    for (; i < flen; ++i) {
+        if (filename[i] == ' ') {
+            memmove(cmd, filename, i);
+            memmove(param, filename + i + 1, flen - i - 1);
+            break;
+        }
+    }
+    if (i == flen)    memmove(cmd, filename, flen);
+
     // formatting the filename
-    static char absolute_path[MAXSIZE_PATH];
-    bzero(absolute_path, MAXSIZE_PATH);
-    if (filename[0] != '/') {
+    static char absolute_path[MAXSIZE_PATH * 2];
+    bzero(absolute_path, MAXSIZE_PATH * 2);
+    if (cmd[0] != '/') {
         uint32_t size = strlen(DIR_LOADER);
         memmove(absolute_path, DIR_LOADER, size);
-        memmove(absolute_path + size, filename, strlen(filename));
+        memmove(absolute_path + size, cmd, flen);
     } else
-        memmove(absolute_path, filename, strlen(filename));
+        memmove(absolute_path, cmd, flen);
 
+    // handle argc, argv (TODO: more arguments in argv)
+    static char *argv[MAX_ARGV];
+    bzero(argv, MAX_ARGV * sizeof(char *));
+    argv[0] = cmd;
+    argv[1] = param;
+    uint32_t argc = param[0] == 0 ? 1 : 2;
+
+    // open the binary command
     fd_t fd = files_open(absolute_path);
     if (fd == -1) {
         kprintf("Command: \"%s\" not found\n", absolute_path);
@@ -34,13 +57,14 @@ exec(const char *filename) {
     uint32_t file_size = files_get_size(fd);
     uint32_t file_pages = PGUP(file_size, PGSIZE);
     pcb_t *cur_pcb = get_current_pcb();
+    // dynamic allocation MUST be finished before here
     cur_pcb->break_ += file_pages;
 
     // setup page tables
     uint32_t amount_pgdir = file_pages / MB4;
     if (file_pages % MB4)    ++amount_pgdir;
     uint32_t vaddr_program = VIR_BASE_IDLE;
-    for (uint32_t i = 0; i < amount_pgdir; ++i) {
+    for (i = 0; i < amount_pgdir; ++i) {
         // handle the page directory
         void *pgtbl_pa = phy_alloc_page();
         pgelem_t flag = PGENT_US | PGENT_RW | PGENT_PS;
@@ -48,7 +72,7 @@ exec(const char *filename) {
         *pde = (pgelem_t)pgtbl_pa | flag;
 
         // the first page table we start at 0x1000, the rests start at 0
-        uint32_t j = i == 0 ? VIR_BASE_IDLE : 0;
+        idx_t j = i == 0 ? VIR_BASE_IDLE : 0;
 
         // handle the page table
         for (; vaddr_program < (VIR_BASE_IDLE + file_pages) && j < MB4;) {
@@ -68,14 +92,17 @@ exec(const char *filename) {
     //   so we will setup something special stuff in it before jumping
     __asm__ ("movl %0, %%eax\n\t"
         "movl %2, -0x4(%%eax)\n\t"
-        "movl $next_insc, -0x8(%%eax)\n\t"
-        "subl $0x8, %%eax\n\t"
+        "movl %3, -0x8(%%eax)\n\t"
+        "movl %4, -0xc(%%eax)\n\t"
+        "movl $next_insc, -0x10(%%eax)\n\t"
+        "subl $0x10, %%eax\n\t"
         "pushl %1\n\t"
         "pushl %%eax\n\t"
         "jmp mode_ring3\n\t"
         "next_insc:\n\t"
+        "addl $0x8, %%esp\n\t"
         "movl %%esp, %%ebp\n\t"
         "call sys_close\n\t"
         "call sys_exit"
-        : : "c"(cur_pcb->stack3_), "d"(program), "b"(fd));
+        : : "c"(cur_pcb->stack3_), "d"(program), "b"(fd), "S"(argv), "D"(argc));
 }

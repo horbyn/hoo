@@ -157,3 +157,44 @@ void
 sys_exit() {
     syscall_entry(SYS_EXIT, 0);
 }
+
+/**
+ * @brief print working directory
+ * 
+ */
+void
+sys_pwd() {
+    syscall_entry(SYS_PWD, 0);
+}
+
+/**
+ * @brief change the current directory
+ * 
+ * @param dir the directory to change
+ * 
+ * @retval 0: change succeed
+ * @retval -1: change failed, no such directory
+ * @retval -2: change failed, the given path is a file
+ */
+int
+sys_cd(const char *dir) {
+    int ret = -1;
+    syscall_entry(SYS_CD, &ret);
+    return ret;
+}
+
+/**
+ * @brief list all the files of current directory (if it is directory)
+ * or the absolute name of the file
+ * 
+ * @param dir_or_file specify a directory or a file
+ * 
+ * @retval 0: normal
+ * @retval -1: no such directory or file
+ */
+int
+sys_ls(const char *dir_or_file) {
+    int ret = -1;
+    syscall_entry(SYS_LIST, &ret);
+    return ret;
+}

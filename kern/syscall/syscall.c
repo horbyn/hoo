@@ -23,5 +23,8 @@ void syscall_init(void) {
     __stub[SYS_EXEC]   = (syscall_t)exec;
     __stub[SYS_WAIT]   = (syscall_t)wait_child;
     __stub[SYS_EXIT]   = (syscall_t)exit;
+    __stub[SYS_PWD]    = (syscall_t)print_working_dir;
+    __stub[SYS_CD]     = (syscall_t)dir_change;
+    __stub[SYS_LIST]   = (syscall_t)files_list;
     __stub[MAX_SYSCALL - 1] = null;
 }

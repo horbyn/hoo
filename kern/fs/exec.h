@@ -12,8 +12,11 @@
 
 #define DIR_LOADER      "/bin/"
 #define BUILT_SHELL     "shell"
+#define BUILT_PWD       "pwd"
 #define BUILT_LS        "ls"
-#define MAXSIZE_PATH    512
+#define BUILT_CD        "cd"
+#define MAXSIZE_PATH    128
+#define MAX_ARGV        16
 
 // prototype of all the builtin commands
 typedef void (*builtin_t)(void);

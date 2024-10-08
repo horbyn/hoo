@@ -25,5 +25,8 @@ int  sys_fork(void);
 void sys_exec(const char *program);
 void sys_wait();
 void sys_exit();
+void sys_pwd();
+int  sys_cd(const char *dir);
+int  sys_ls(const char *dir_or_file);
 
 #endif

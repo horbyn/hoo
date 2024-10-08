@@ -121,20 +121,18 @@ cga_putc(char ch) {
     // special: `\b` `\t` `\n`
     if (ch == '\b') {
         if (!(row == 0 && col == 0)) {
-            do {
-                pos--;
+            pos--;
 
-                // new v.m. addr
-                pv = (uint16_t *)VIDEO_MEM;
-                pv += pos;
-                tch |= ' ';
-                *pv = tch;
+            // new v.m. addr
+            pv = (uint16_t *)VIDEO_MEM;
+            pv += pos;
+            tch |= ' ';
+            *pv = tch;
 
-                if (col - 1 < 0) {
-                    col = CGA_WIDTH - 1;
-                    row--;
-                } else    col -= 1;
-            } while ((*(pv - 1) | 0xff20) == 0xff20);
+            if (col - 1 < 0) {
+                col = CGA_WIDTH - 1;
+                row--;
+            } else    col -= 1;
         }
     } else if (ch == '\t') {
         // mod 4

@@ -8,6 +8,7 @@
 
 __attribute__((aligned(4096))) static uint32_t mdata_vspace[PG_STRUCT_SIZE] = { 0 },
     mdata_node[PG_STRUCT_SIZE] = { 0 }, mdata_vaddr[PG_STRUCT_SIZE] = { 0 };
+__attribute__((aligned(4096))) static char current_dir[PGSIZE] = { 0 };
 
 /**
  * @brief bucket size array
@@ -211,6 +212,7 @@ init_tasks_system() {
     bzero(mdata_vspace, sizeof(mdata_vspace));
     bzero(mdata_node, sizeof(mdata_node));
     bzero(mdata_vaddr, sizeof(mdata_vaddr));
+    bzero(current_dir, sizeof(current_dir));
 
     // The executable flow as far from boot to there,
     // uses the boot stack. Now we call this flow to
@@ -223,7 +225,7 @@ init_tasks_system() {
     pcb_set(hoo_pcb, (uint32_t *)STACK_HOO_RING0, (uint32_t *)STACK_HOO_RING3,
         TID_HOO, (pgelem_t *)(V2P(get_hoo_pgdir())), mdata_vspace, mdata_node,
         mdata_vaddr, null, TIMETICKS, null, hoo_bucket.head_, &hoo_fmngr, 0,
-        INVALID_INDEX);
+        INVALID_INDEX, current_dir, sizeof(current_dir));
 
     static node_t hoo_node;
     node_set(&hoo_node, hoo_pcb, null);
@@ -484,6 +486,11 @@ idle_init(void *entry) {
     void *mdata_vaddr_va = vir_alloc_pages(hoo_pcb, 1);
     set_mapping(mdata_vaddr_va, mdata_vaddr_pa, flags);
 
+    // setup the current directory
+    void *dir_pa = phy_alloc_page();
+    char *dir_va = vir_alloc_pages(hoo_pcb, 1);
+    set_mapping(dir_va, dir_pa, flags);
+
     // setup the idle thread
     uint32_t *cur_stack = setup_ring0_stack(ring0_va + PGSIZE,
         ring3_va + PGSIZE, entry);
@@ -493,7 +500,7 @@ idle_init(void *entry) {
     pcb_set(idle_pcb, cur_stack, ring3_va + PGSIZE, TID_IDLE, pgdir_pa,
         mdata_vspace_va, mdata_node_va, mdata_vaddr_va, null, TIMETICKS,
         null, thread_buckmngr_get(TID_IDLE), &idle_fmngr, VIR_BASE_IDLE,
-        hoo_pcb->tid_);
+        INVALID_INDEX, dir_va, PGSIZE);
 
     node_t *n = mdata_alloc_node(TID_IDLE);
     node_set(n, idle_pcb, null);
@@ -589,7 +596,7 @@ fork(void *entry) {
     pcb_set(new_pcb, cur_stack, new_ring3_va + PGSIZE, new_tid, new_pgdir_pa,
         new_vspace_va, new_node_va, new_vaddr_va, &cur_pcb->vmngr_.head_,
         TIMETICKS, null, thread_buckmngr_get(new_tid), &cur_pcb->fmngr_,
-        VIR_BASE_IDLE, cur_pcb->tid_);
+        VIR_BASE_IDLE, cur_pcb->tid_, cur_pcb->dir_, cur_pcb->dirlen_);
 
     // add to ready queue
     node_t *n = mdata_alloc_node(new_tid);
@@ -767,6 +774,10 @@ kill(void) {
         // release ring3 stack
         phy_release_vpage(pcb,
             (void *)PGDOWN(((void *)pcb->stack3_ - PGSIZE), PGSIZE));
+
+        // release the working directories if it is the parent
+        if (pcb->parent_ == INVALID_INDEX)
+            phy_release_vpage(pcb, pcb->dir_);
 
         // release page directory table
         phy_release_page(pcb->pgdir_pa_);

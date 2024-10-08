@@ -422,3 +422,58 @@ files_get_size(fd_t fd) {
 
     return (__fs_inodes + __fs_files[index].inode_idx_)->size_;
 }
+
+/**
+ * @brief show all the files of current directory or
+ * the absolute name of current file
+ * 
+ * @param dir_or_file specify a directory or a file
+ * @retval 0: normal
+ * @retval -1: no such directory or file
+ */
+int
+files_list(const char *dir_or_file) {
+    char *absolute = dyn_alloc(PGSIZE);
+    bzero(absolute, PGSIZE);
+
+    if (!dir_or_file || (dir_or_file && dir_or_file[0] != DIRNAME_ROOT_ASCII)) {
+        dir_get_current(absolute, PGSIZE);
+
+        if (dir_or_file && dir_or_file[0] != DIRNAME_ROOT_ASCII)
+            memmove(absolute + strlen(absolute), dir_or_file, strlen(dir_or_file));
+    } else    memmove(absolute, dir_or_file, strlen(dir_or_file));
+
+    diritem_t *found = dyn_alloc(sizeof(diritem_t));
+    if (diritem_find(absolute, found) == false)    return -1;
+
+    if (found->type_ == INODE_TYPE_FILE) {
+        kprintf("%dB\t\t%s\n", (__fs_inodes + found->inode_idx_)->size_, absolute);
+    } else if (found->type_ == INODE_TYPE_DIR) {
+        dirblock_t *dirblock = dyn_alloc(sizeof(dirblock_t));
+        for (uint32_t i = 0; i < __super_block.inode_block_index_max_; ++i) {
+            lba_index_t lba = iblock_get(found->inode_idx_, i);
+            if (lba < __super_block.lba_free_)    break;
+            else    free_rw_disk(dirblock, lba, ATA_CMD_IO_READ);
+
+            diritem_t *temp = null;
+            for (uint32_t j = 0; j < dirblock->amount_; ++j) {
+                temp = dirblock->dir_ + j;
+                kprintf("%s", temp->name_);
+                if (temp->type_ == INODE_TYPE_DIR) {
+                    if (!strcmp(temp->name_, DIR_CUR)
+                        && !strcmp(temp->name_, DIR_PRE)) {
+                        kprintf("/");
+                    }
+                }
+                kprintf("\t");
+            } // end for(j)
+        } // end for(i)
+        kprintf("\n");
+        dyn_free(dirblock);
+    } else    panic("files_list(): bug");
+
+    dyn_free(found);
+    if (dir_or_file == null || absolute[0] != DIRNAME_ROOT_ASCII)
+        dyn_free(absolute);
+    return 0;
+}

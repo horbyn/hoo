@@ -19,5 +19,8 @@
 #define SYS_EXEC        8
 #define SYS_WAIT        9
 #define SYS_EXIT        10
+#define SYS_PWD         11
+#define SYS_CD          12
+#define SYS_LIST        13
 
 #endif

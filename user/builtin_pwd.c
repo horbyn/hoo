@@ -4,14 +4,15 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __USER_BUILTIN_SHELL_H__
-#define __USER_BUILTIN_SHELL_H__
+#include "builtin_pwd.h"
 
-#include "user.h"
-
-#define MAX_CMD_LEN     128
-
-void main_shell(int argc, char **argv);
-
-#endif
+/**
+ * @brief pwd command
+ * 
+ * @param argc parameter number
+ * @param argv parameter(s)
+ */
+void
+main_pwd(int argc, char **argv) {
+    sys_pwd();
+}

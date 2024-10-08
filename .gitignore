@@ -1,23 +1,18 @@
+.vscode/
+
 *.img
-
 *.o
-
 *.dis
 
 bootsect
-
 kernel
 
 *.out
-
 *.map
-
 *.elf
-
-.vscode/
-
 *.json
 
+user/cd
 user/ls
-
+user/pwd
 user/sh

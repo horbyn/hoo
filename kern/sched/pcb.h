@@ -47,12 +47,16 @@ typedef struct pcb {
     // the end of all segments
     uint32_t     break_;
     tid_t        parent_;
+    // current directory
+    char *       dir_;
+    uint32_t     dirlen_;
 } __attribute__((packed)) pcb_t;
 
 void pcb_set(pcb_t *pcb, uint32_t *s0, uint32_t *s3, uint32_t tid,
     pgelem_t *pd_pa, void *va_vspace, void *va_node, void *va_vaddr,
     vspace_t *vspace, uint32_t ticks, sleeplock_t *sleeplock,
-    buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk, tid_t parent);
+    buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk, tid_t parent,
+    char *dir, uint32_t dirlen);
 #ifdef DEBUG
     void debug_print_pcb(pcb_t *pcb);
 #endif

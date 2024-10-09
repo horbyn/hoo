@@ -12,19 +12,21 @@
 syscall_t __stub[MAX_SYSCALL];
 
 void syscall_init(void) {
-    __stub[SYS_PRINTF] = (syscall_t)kprintf;
-    __stub[SYS_CREATE] = (syscall_t)files_create;
-    __stub[SYS_REMOVE] = (syscall_t)files_remove;
-    __stub[SYS_OPEN]   = (syscall_t)files_open;
-    __stub[SYS_CLOSE]  = (syscall_t)files_close;
-    __stub[SYS_READ]   = (syscall_t)files_read;
-    __stub[SYS_WRITE]  = (syscall_t)files_write;
-    __stub[SYS_FORK]   = (syscall_t)fork;
-    __stub[SYS_EXEC]   = (syscall_t)exec;
-    __stub[SYS_WAIT]   = (syscall_t)wait_child;
-    __stub[SYS_EXIT]   = (syscall_t)exit;
-    __stub[SYS_PWD]    = (syscall_t)print_working_dir;
-    __stub[SYS_CD]     = (syscall_t)dir_change;
-    __stub[SYS_LIST]   = (syscall_t)files_list;
+    __stub[SYS_PRINTF]      = (syscall_t)kprintf;
+    __stub[SYS_CREATE]      = (syscall_t)files_create;
+    __stub[SYS_REMOVE]      = (syscall_t)files_remove;
+    __stub[SYS_OPEN]        = (syscall_t)files_open;
+    __stub[SYS_CLOSE]       = (syscall_t)files_close;
+    __stub[SYS_READ]        = (syscall_t)files_read;
+    __stub[SYS_WRITE]       = (syscall_t)files_write;
+    __stub[SYS_FORK]        = (syscall_t)fork;
+    __stub[SYS_EXEC]        = (syscall_t)exec;
+    __stub[SYS_WAIT]        = (syscall_t)wait_child;
+    __stub[SYS_EXIT]        = (syscall_t)exit;
+    __stub[SYS_WORKINGDIR]  = (syscall_t)dir_get_current;
+    __stub[SYS_CD]          = (syscall_t)dir_change;
+    __stub[SYS_LIST]        = (syscall_t)files_list;
+    __stub[SYS_ALLOC]       = (syscall_t)dyn_alloc;
+    __stub[SYS_FREE]        = (syscall_t)dyn_free;
     __stub[MAX_SYSCALL - 1] = null;
 }

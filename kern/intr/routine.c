@@ -68,24 +68,30 @@ isr_default(void) {
  */
 void
 page_fault(void) {
-    uint32_t linear_addr = 0;
+    void *linear_addr = 0;
     __asm__ ("movl %%cr2, %0": "=a"(linear_addr) ::);
-    if (linear_addr == 0)    return;
 
     uint32_t err = 0;
+    // error code fetched at 60(%%ebp) is because
+    // +4: ebp + 4 reaches the return address
+    // +(4 * 12): cross the intrupt frame
+    // +4: vector code which the CPU automatically pushes
+    // +4: error code we want to
     __asm__ ("movl 60(%%ebp), %0": "=a"(err) ::);
-    static const uint32_t FLAG_WR = 0x10;
 
-    if ((err & FLAG_WR) == FLAG_WR) {
-        // C.O.W
+    // C.O.W
+    if ((err & PGENT_RW) == PGENT_RW) {
+        pcb_t *hoo_pcb = get_hoo_pcb();
+        pgelem_t flags = PGENT_US | PGENT_RW | PGENT_PS;
 
-        //void *va = vir_alloc_pages(get_hoo_pcb(), 1);
-        //if (va < KERN_AVAIL_VMBASE)    panic("page_fault(): bug");
-        //void *pa = phy_alloc_page();
-        //set_mapping(get_hoo_pgdir(), (uint32_t)va, (uint32_t)pa,
-        //    PGENT_US | PGENT_RW | PGENT_PS);
+        void *new_page_pa = phy_alloc_page();
+        void *new_page_va = vir_alloc_pages(hoo_pcb, 1);
+        set_mapping(new_page_va, new_page_pa, flags);
+        memmove(new_page_va, linear_addr, PGSIZE);
+        vir_release_pages(hoo_pcb, new_page_va, false);
 
-        //memmove(va, (void *)linear_addr, PGSIZE);
+        pgelem_t *pte = (pgelem_t *)GET_PTE(linear_addr);
+        (*pte) = (pgelem_t)new_page_pa | flags;
     }
 
     panic(null);

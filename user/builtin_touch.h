@@ -5,11 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_UNITS_LIB_H__
-#define __KERN_UNITS_LIB_H__
+#ifndef __USER_BUILTIN_TOUCH_H__
+#define __USER_BUILTIN_TOUCH_H__
 
-#include "kern/types.h"
+#include "ulib.h"
 
-void strsep(const char *str, char sep, int cr, char *result);
+void main_touch(int argc, char **argv);
 
 #endif

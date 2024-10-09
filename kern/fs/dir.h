@@ -49,8 +49,7 @@ diritem_t *diritem_read(dirblock_t *block, const diritem_t *item);
 bool      diritem_find(const char *dir, diritem_t *found);
 void      dirblock_get_new(dirblock_t *result, idx_t self, idx_t parent);
 void      setup_root_dir(bool is_new);
-void      dir_get_current(char *buff, uint32_t bufflen);
-void      print_working_dir(void);
+int       dir_get_current(char *buff, uint32_t bufflen);
 int       dir_change(const char *dir);
 
 #endif

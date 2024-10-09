@@ -571,7 +571,7 @@ fork(void *entry) {
         if (*pde) {
             void *new_page_table = phy_alloc_page();
             pgelem_t *new_page_table_va = vir_alloc_pages(hoo_pcb, 1);
-            set_mapping(new_page_table_va, (void *)new_page_table, flags);
+            set_mapping(new_page_table_va, new_page_table, flags);
 
             // change all the PTE flags in this PDE of the child to read-only
             for (idx_t j = 0; j < PG_STRUCT_SIZE; ++j) {

@@ -14,5 +14,8 @@
  */
 void
 main_pwd(int argc, char **argv) {
-    sys_pwd();
+    char *wd = alloc(512);
+    if (workingdir(wd, 512) == 0)    sys_printf("%s\n", wd);
+    else    sys_printf("pwd: cannot get current directory\n");
+    free(wd);
 }

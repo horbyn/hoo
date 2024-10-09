@@ -61,5 +61,11 @@ load_builtins(void) {
         (uint32_t)__END_BUILTIN_LS - (uint32_t)__BASE_BUILTIN_LS);
     builtin_to_file(BUILT_CD, (void *)__BASE_BUILTIN_CD,
         (uint32_t)__END_BUILTIN_CD - (uint32_t)__BASE_BUILTIN_CD);
+    builtin_to_file(BUILT_MKDIR, (void *)__BASE_BUILTIN_MKDIR,
+        (uint32_t)__END_BUILTIN_MKDIR - (uint32_t)__BASE_BUILTIN_MKDIR);
+    builtin_to_file(BUILT_TOUCH, (void *)__BASE_BUILTIN_TOUCH,
+        (uint32_t)__END_BUILTIN_TOUCH - (uint32_t)__BASE_BUILTIN_TOUCH);
+    builtin_to_file(BUILT_RM, (void *)__BASE_BUILTIN_RM,
+        (uint32_t)__END_BUILTIN_RM - (uint32_t)__BASE_BUILTIN_RM);
 #endif
 }

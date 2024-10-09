@@ -159,12 +159,19 @@ sys_exit() {
 }
 
 /**
- * @brief print working directory
+ * @brief get working directory
  * 
+ * @param wd  buffer to store the working directory
+ * @param len buffer length
+ * 
+ * @retval 0: succeed
+ * @retval -1: failed, and the buffer will be fill in zero
  */
-void
-sys_pwd() {
-    syscall_entry(SYS_PWD, 0);
+int
+sys_workingdir(char *wd, unsigned int len) {
+    int ret = 0;
+    syscall_entry(SYS_WORKINGDIR, &ret);
+    return ret;
 }
 
 /**
@@ -197,4 +204,27 @@ sys_ls(const char *dir_or_file) {
     int ret = -1;
     syscall_entry(SYS_LIST, &ret);
     return ret;
+}
+
+/**
+ * @brief memory dynamic allocation
+ * 
+ * @param size the size to allocate
+ * @return pointer pointed to the memory
+ */
+void *
+sys_alloc(unsigned int size) {
+    void *ret = 0;
+    syscall_entry(SYS_ALLOC, &ret);
+    return ret;
+}
+
+/**
+ * @brief release memory
+ * 
+ * @param ptr specify the memory
+ */
+void
+sys_free(void *ptr) {
+    syscall_entry(SYS_FREE, 0);
 }

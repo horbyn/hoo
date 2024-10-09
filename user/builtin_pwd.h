@@ -8,7 +8,7 @@
 #ifndef __USER_BUILTIN_PWD_H__
 #define __USER_BUILTIN_PWD_H__
 
-#include "user.h"
+#include "ulib.h"
 
 void main_pwd(int argc, char **argv);
 

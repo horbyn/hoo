@@ -8,7 +8,7 @@
 #ifndef __KERN_INTR_ROUTINE_H__
 #define __KERN_INTR_ROUTINE_H__
 
-#include "kern/x86.h"
+#include "kern/conf/page.h"
 #include "kern/driver/io.h"
 #include "kern/sched/tasks.h"
 #include "kern/driver/ata/ata_irq.h"

@@ -5,11 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_UNITS_LIB_H__
-#define __KERN_UNITS_LIB_H__
+#ifndef __USER_BUILTIN_RM_H__
+#define __USER_BUILTIN_RM_H__
 
-#include "kern/types.h"
+#include "ulib.h"
 
-void strsep(const char *str, char sep, int cr, char *result);
+void main_rm(int argc, char **argv);
 
 #endif

@@ -252,10 +252,14 @@ setup_root_dir(bool is_new) {
 
 /**
  * @brief get current directory
+ * 
  * @param buff    buffer of the current directory
  * @param bufflen size of the buffer
+ * 
+ * @retval 0: succeed
+ * @retval -1: failed, and the buffer will be fill in zero
  */
-void
+int
 dir_get_current(char *buff, uint32_t bufflen) {
     pcb_t *cur_pcb = get_current_pcb();
     char *cur_dir = null;
@@ -266,25 +270,17 @@ dir_get_current(char *buff, uint32_t bufflen) {
         if (cur_dir[0] == 0)    break;
 
         uint32_t len = strlen(cur_dir);
-        if (acc + len > bufflen)    panic("dir_get_current(): buffer overflow");
-        else {
+        if (acc + len > bufflen) {
+            bzero(buff, bufflen);
+            return -1;
+        } else {
             memmove(buff + acc, cur_dir, len);
             acc += len;
         }
     }
 
     buff[acc] = 0;
-}
-
-/**
- * @brief print working directory
- */
-void
-print_working_dir(void) {
-    char *wd = dyn_alloc(PGSIZE);
-    dir_get_current(wd, PGSIZE);
-    kprintf("%s\n", wd);
-    dyn_free(wd);
+    return 0;
 }
 
 /**

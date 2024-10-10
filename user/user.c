@@ -182,6 +182,7 @@ sys_workingdir(char *wd, unsigned int len) {
  * @retval 0: change succeed
  * @retval -1: change failed, no such directory
  * @retval -2: change failed, the given path is a file
+ * @retval -3: change failed, the directory tree is too long
  */
 int
 sys_cd(const char *dir) {

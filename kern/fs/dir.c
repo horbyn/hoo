@@ -265,7 +265,7 @@ dir_get_current(char *buff, uint32_t bufflen) {
     char *cur_dir = null;
     uint32_t acc = 0;
 
-    for (idx_t i = 0; i < MAX_OEPN_DIR; ++i) {
+    for (idx_t i = 0; i < MAX_OPEN_DIR; ++i) {
         cur_dir = cur_pcb->dir_ + i * DIRITEM_NAME_LEN;
         if (cur_dir[0] == 0)    break;
 
@@ -291,79 +291,105 @@ dir_get_current(char *buff, uint32_t bufflen) {
  * @retval 0: change succeed
  * @retval -1: change failed, no such directory
  * @retval -2: change failed, the given path is a file
+ * @retval -3: change failed, the directory tree is too long
  */
 int
 dir_change(const char *dir) {
-    pcb_t *cur_pcb = get_current_pcb();
+
+    // get the absolute path
+    char *abs = dyn_alloc(PGSIZE);
+    bzero(abs, PGSIZE);
+
+    // some special cases
     if (dir == null) {
         // change to root directory when the given dir is null
-        char *cur_dir = cur_pcb->dir_;
-        bzero(cur_dir, cur_pcb->dirlen_);
-        cur_dir[0] = DIRNAME_ROOT_ASCII;
-        cur_dir[1] = 0;
+        abs[0] = DIRNAME_ROOT_ASCII;
+    } else if (strcmp(dir, DIR_CUR) == true) {
+        // cd .
+        dyn_free(abs);
         return 0;
+    } else if (dir[0] == DIRNAME_ROOT_ASCII) {
+        // cd <an absolute dir>
+        memmove(abs, dir, strlen(dir));
+        uint32_t len = strlen(abs);
+        if (abs[len - 1] != DIR_SEPARATOR)    abs[len] = DIR_SEPARATOR;
+    } else {
+        // cd ..
+        // cd <a relative dir>
+        if (dir_get_current(abs, PGSIZE) == -1) {
+            dyn_free(abs);
+            return -3;
+        }
+
+        if (strcmp(dir, DIR_PRE) == true) {
+            int len = strlen(abs) - 1, second_to_last = 0;
+            int border = abs[len] == DIR_SEPARATOR ? 2 : 1;
+            for (int i = len; i >= 0; --i) {
+                if (abs[i] == DIR_SEPARATOR)    ++second_to_last;
+                if (second_to_last == border)    break;
+                abs[i] = 0;
+            } // end for(i)
+
+            if (abs[0] == 0) {
+                // the case that the original directory is root
+                // and execute `cd ..`
+                dyn_free(abs);
+                return -1;
+            }
+        } else if (dir[0] != DIRNAME_ROOT_ASCII) {
+            memmove(abs + strlen(abs), dir, strlen(dir));
+            uint32_t len = strlen(abs);
+            if (abs[len - 1] != DIR_SEPARATOR)    abs[len] = DIR_SEPARATOR;
+        }
     }
 
+    // search the corresponding directory item
     diritem_t *cur_diritem = dyn_alloc(sizeof(diritem_t));
     bzero(cur_diritem, sizeof(diritem_t));
-    char *dir_buff = dyn_alloc(PGSIZE);
-    bzero(dir_buff, PGSIZE);
-    if (dir[0] != DIRNAME_ROOT_ASCII) {
-        dir_get_current(dir_buff, PGSIZE);
-        memmove(dir_buff + strlen(dir_buff), dir, strlen(dir));
-    } else    memmove(dir_buff, dir, strlen(dir));
-    if (diritem_find(dir_buff, cur_diritem) == false) {
-        dyn_free(dir_buff);
+    if (diritem_find(abs, cur_diritem) == false) {
         dyn_free(cur_diritem);
+        dyn_free(abs);
         return -1;
     }
-    dyn_free(dir_buff);
 
     if (cur_diritem->type_ == INODE_TYPE_FILE) {
-        dyn_free(dir_buff);
         dyn_free(cur_diritem);
+        dyn_free(abs);
         return -2;
     }
 
+    dyn_free(cur_diritem);
+
+    // sweep all the data whenever the current directory is changed
+    pcb_t *cur_pcb = get_current_pcb();
+    bzero(cur_pcb->dir_, cur_pcb->dirlen_);
+
     char *cur_dir = cur_pcb->dir_;
-    if (dir[0] == DIRNAME_ROOT_ASCII) {
-        char name_storage[DIRITEM_NAME_LEN] = { 0 };
+    char name_storage[DIRITEM_NAME_LEN] = { 0 };
 
-        // something not good is that `strsep()` must begins at index 1
-        //   so we MUST invidially handle index 0, the root directory
-        cur_dir[0] = DIRNAME_ROOT_ASCII;
-        cur_dir[1] = 0;
+    // something not good is that `strsep()` must begins at index 1
+    //   so we MUST invidially handle index 0, the root directory
+    cur_dir[0] = DIRNAME_ROOT_ASCII;
+    cur_dir[1] = 0;
 
-        idx_t i = 1;
-        for (; i < MAX_OEPN_DIR; ++i) {
-            cur_dir += i * DIRITEM_NAME_LEN;
+    idx_t i = 1;
+    for (; i < MAX_OPEN_DIR; ++i) {
+        cur_dir += i * DIRITEM_NAME_LEN;
 
-            bzero(name_storage, sizeof(name_storage));
-            strsep(dir, DIRNAME_ROOT_ASCII, i, name_storage);
-            if (name_storage[0] == 0)    break;
+        bzero(name_storage, sizeof(name_storage));
+        strsep(abs, DIRNAME_ROOT_ASCII, i, name_storage);
+        if (name_storage[0] == 0)    break;
 
-            uint32_t len = strlen(name_storage);
-            name_storage[len] = DIRNAME_ROOT_ASCII;
-            name_storage[len + 1] = 0;
-            memmove(cur_dir, name_storage, sizeof(name_storage));
-        } // end for()
-        if (i == MAX_OEPN_DIR)    panic("dir_change(): working dir overflow");
-
-    } else {
-        idx_t i = 1;
-        for (; i < MAX_OEPN_DIR; ++i) {
-            cur_dir += i * DIRITEM_NAME_LEN;
-            if (cur_dir[0] == 0) {
-                uint32_t len = strlen(dir);
-                memmove(cur_dir, dir, len);
-                cur_dir[len] = DIRNAME_ROOT_ASCII;
-                cur_dir[len + 1] = 0;
-                break;
-            }
-        } // end for()
-        if (i == MAX_OEPN_DIR)    panic("dir_change(): bug");
+        uint32_t len = strlen(name_storage);
+        name_storage[len] = DIRNAME_ROOT_ASCII;
+        name_storage[len + 1] = 0;
+        memmove(cur_dir, name_storage, sizeof(name_storage));
+    } // end for()
+    if (i == MAX_OPEN_DIR) {
+        dyn_free(abs);
+        return -3;
     }
 
-    dyn_free(cur_diritem);
+    dyn_free(abs);
     return 0;
 }

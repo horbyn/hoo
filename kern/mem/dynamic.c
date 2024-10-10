@@ -6,31 +6,6 @@
  **************************************************************************/
 #include "dynamic.h"
 
-#ifdef DEBUG
-void
-debug_print_dyn(void) {
-    buckx_mngr_t *hmngr = get_current_pcb()->hmngr_;
-    kprintf("[DEBUG] heap: ");
-    while (hmngr) {
-        arrlist_t *chain = hmngr->chain_;
-        bool fnext =false;
-        if (chain) {
-            fnext = true;
-            kprintf("(%d, %d/%d) 0x%x", hmngr->size_, chain->size_,
-                chain->capacity_, chain);
-            chain = chain->next_;
-            while (chain) {
-                kprintf(", 0x%x", chain);
-                chain = chain->next_;
-            }
-        }
-        hmngr = hmngr->next_;
-        if (hmngr && fnext)    kprintf(" -> ");
-    }
-    kprintf("\n");
-}
-#endif
-
 /**
  * @brief array list formatting
  * 

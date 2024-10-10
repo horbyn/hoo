@@ -76,7 +76,7 @@ page_fault(void) {
     // +4: ebp + 4 reaches the return address
     // +(4 * 12): cross the intrupt frame
     // +4: vector code which the CPU automatically pushes
-    // +4: error code we want to
+    // +4: error code we want
     __asm__ ("movl 60(%%ebp), %0": "=a"(err) ::);
 
     // C.O.W
@@ -93,8 +93,6 @@ page_fault(void) {
         pgelem_t *pte = (pgelem_t *)GET_PTE(linear_addr);
         (*pte) = (pgelem_t)new_page_pa | flags;
     }
-
-    panic(null);
 
     return;
 }

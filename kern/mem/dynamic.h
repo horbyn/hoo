@@ -14,9 +14,6 @@
 #include "kern/mem/vm.h"
 #include "kern/sched/tasks.h"
 
-#ifdef DEBUG
-    void debug_print_dyn(void);
-#endif
 void *dyn_alloc(uint32_t size);
 void dyn_free(void *ptr);
 

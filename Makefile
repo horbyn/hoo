@@ -41,11 +41,8 @@ LDFLAGS := -m elf_i386 -Map kernel.map
 #    execute all the command by default
 nop: boot_image $(OBJS) $(OBJC) $(BOOT_IMG) run
 
-debug: CFLAGS += -g -DDEBUG
+debug: CFLAGS += -g
 debug: boot_image $(OBJS) $(OBJC) $(BOOT_IMG) run
-
-test: CFLAGS += -DTEST
-test: debug
 
 run:
 	bochs -q

@@ -8,9 +8,6 @@
 #ifndef __KERN_SCHED_PCB_H__
 #define __KERN_SCHED_PCB_H__
 
-#ifdef DEBUG
-    #include "kern/driver/io.h"
-#endif
 #include "kern/x86.h"
 #include "kern/conf/page.h"
 #include "kern/mem/bucket_mngr.h"
@@ -57,8 +54,5 @@ void pcb_set(pcb_t *pcb, uint32_t *s0, uint32_t *s3, uint32_t tid,
     vspace_t *vspace, uint32_t ticks, sleeplock_t *sleeplock,
     buckx_mngr_t *bucket, fmngr_t *fmngr, uint32_t brk, tid_t parent,
     char *dir, uint32_t dirlen);
-#ifdef DEBUG
-    void debug_print_pcb(pcb_t *pcb);
-#endif
 
 #endif

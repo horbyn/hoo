@@ -17,9 +17,6 @@
 #include "module/mem.h"
 #include "module/sched.h"
 #include "driver/io.h"
-#ifdef TEST
-    #include "test/test.h"
-#endif
 
 extern uint8_t __kern_base[], __kern_end[];
 

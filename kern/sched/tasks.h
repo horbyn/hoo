@@ -21,11 +21,6 @@
 extern void switch_to(node_t *, node_t *);
 extern void mode_ring3(uint32_t *user_stack, void *user_entry);
 
-#ifdef DEBUG
-    void debug_print_tasks(void);
-    void debug_print_vspace(void);
-    void debug_print_pgdir(void);
-#endif
 pcb_t *get_current_pcb(void);
 void  init_tasks_system(void);
 void  scheduler(void);

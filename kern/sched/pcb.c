@@ -52,25 +52,3 @@ tid_t parent, char *dir, uint32_t dirlen) {
     pcb->dir_ = dir;
     pcb->dirlen_ = dirlen;
 }
-
-#ifdef DEBUG
-void
-debug_print_pcb(pcb_t *pcb) {
-    kprintf("[DEBUG] .stack0(%dB)=%p, .stack3(%dB)=%p, .tid(%dB)=%d, "
-        ".pgdir pa(%dB)=%p, .vmngr.vspace=%p, .vmngr.node=%p, .vmngr.vaddr=%p, "
-        ".vmngr.head=%p, ",
-        sizeof(uint32_t *), pcb->stack0_, sizeof(uint32_t *), pcb->stack3_,
-        sizeof(tid_t), pcb->tid_, sizeof(pgelem_t *), pcb->pgdir_pa_,
-        pcb->vmngr_.vspace_, pcb->vmngr_.node_, pcb->vmngr_.vaddr_, pcb->vmngr_.head_);
-    kprintf(".ticks(%dB)=%d, .sleeplock(%dB)=%p, .hmngr(%dB)=%p, "
-        ".fmngr(%dB)=(bitmap_len_inbit=0x%x, bitmap_buff=0x%x, bitmap_prev=0x%x,"
-        "files=0x%x), .break(%dB)=%d, ",
-        sizeof(uint32_t), pcb->ticks_, sizeof(sleeplock_t *), pcb->sleeplock_,
-        sizeof(buckx_mngr_t *), pcb->hmngr_, sizeof(fmngr_t *),
-        pcb->fmngr_.fd_set_.len_inbits_, pcb->fmngr_.fd_set_.buff_,
-        pcb->fmngr_.fd_set_.prev_free_, pcb->fmngr_.files_,
-        sizeof(uint32_t), pcb->break_);
-    kprintf(".parent(%dB)=%d, .dir(%dB)=0x%x, .dirlen(%dB)=%d\n", sizeof(tid_t),
-        pcb->parent_, sizeof(char *), pcb->dir_, sizeof(uint32_t), pcb->dirlen_);
-}
-#endif

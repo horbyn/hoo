@@ -8,29 +8,6 @@
 
 static spinlock_t __spinlock_virmm;
 
-#ifdef DEBUG
-/**
- * @brief debug mode: print virtual space of current pcb
- */
-void
-debug_print_vspace_pcb(pcb_t *pcb) {
-    vspace_t *vspace = pcb->vmngr_.head_.next_;
-    while (vspace) {
-        kprintf("[DEBUG] .begin=0x%x, .end=0x%x, .next=0x%x\n[DEBUG] .list: \n",
-            vspace->begin_, vspace->end_, vspace->next_);
-        list_t *list = &(vspace->list_);
-        for (idx_t i = 1; i <= list->size_; ++i) {
-            node_t *n = list_find(list, i);
-            vaddr_t *va = n->data_;
-            kprintf("[0x%x, 0x%x]", va->va_, va->length_);
-            if (n->next_)    kprintf(", ");
-        }
-        kprintf("\n");
-        vspace = vspace->next_;
-    }
-}
-#endif
-
 /**
  * @brief initialize virtual memory system
  */

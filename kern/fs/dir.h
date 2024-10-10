@@ -14,9 +14,10 @@
 #define DIRITEM_NAME_LEN    16
 #define DIRNAME_ROOT_ASCII  47 // ascii code for '/'
 #define DIRNAME_ROOT_STR    "/"
+#define DIR_SEPARATOR       DIRNAME_ROOT_ASCII
 #define DIR_CUR             "."
 #define DIR_PRE             ".."
-#define MAX_OEPN_DIR        (PGSIZE / (DIRITEM_NAME_LEN))
+#define MAX_OPEN_DIR        (PGSIZE / (DIRITEM_NAME_LEN))
 
 /**
  * @brief directory item

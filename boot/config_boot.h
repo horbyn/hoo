@@ -5,8 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __BOOT_KERN_WILL_USE_H__
-#define __BOOT_KERN_WILL_USE_H__
+#ifndef __BOOT_CONFIG_BOOT_H__
+#define __BOOT_CONFIG_BOOT_H__
 
 /*
  * ****************************************************************************************

@@ -4,7 +4,6 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "kern.h"
 
 void
 entry(void) {
@@ -30,9 +29,7 @@ entry(void) {
              "ret\r\n"
              "go:\r\n");
 
-    kernel_init();
-    kernel_exec();
-    kernel_loop();
+    while (1);
 
     /**********************************************************************
      * NEED NOT TO RETURN NORMALLY                                        *

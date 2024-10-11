@@ -11,11 +11,3 @@ kernel
 *.map
 *.elf
 *.json
-
-user/cd
-user/ls
-user/pwd
-user/sh
-user/mkdir
-user/touch
-user/rm

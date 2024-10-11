@@ -1,13 +1,9 @@
-#       Copyright (C)    horbyn, 2024
-#             (hoRbyn4zZ@outlook.com)
-#
-# The features of bootsect are as follow:
-# 1. Move to high address itself
-# 2. Detect memory
-# 3. Load disk
-# 4. Move died instruction
-# 5. Setup temporary gdt and jump into protected mode
-# 6. Paging
+/**************************************************************************
+ *                                                                        *
+ *                     Copyright (C)    horbyn, 2024                      *
+ *                              (horbyn@outlook.com)                      *
+ *                                                                        *
+ **************************************************************************/
 
 #include "config_boot.h"
 
@@ -213,10 +209,10 @@ pgtable:
     movl %eax,          (%ebx)
 
     movl $SEG_PDTABLE<<4, %eax
-    movl %eax,         %cr3
-    movl %cr0,         %eax
-    orl  $0x80000000,  %eax
-    movl %eax,         %cr0
+    movl %eax,          %cr3
+    movl %cr0,          %eax
+    orl  $0x80000000,   %eax
+    movl %eax,          %cr0
 
     # #### JUMP INTO KERNEL ####
     ljmp $0x08,         $0

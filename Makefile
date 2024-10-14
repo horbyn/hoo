@@ -39,13 +39,17 @@ LDFLAGS := -m elf_i386 -Map kernel.map
 
 # keep the depencement `.img` in the first command pleaze, that `make` will
 #    execute all the command by default
-nop: boot_image $(OBJS) $(OBJC) $(BOOT_IMG) run
+nop: boot_image $(OBJS) $(OBJC) $(BOOT_IMG)
 
 debug: CFLAGS += -g
-debug: boot_image $(OBJS) $(OBJC) $(BOOT_IMG) run
+debug: boot_image $(OBJS) $(OBJC) $(BOOT_IMG)
 
-run:
+bochs:
 	bochs -q
+
+qemu:
+	qemu-system-i386 -smp 1 -m 32M -boot a -fda $(BOOT_IMG) \
+		-drive file=$(DISK),media=disk,index=1,format=raw -S -gdb tcp::12345
 
 # -f: dont generate the file if exists
 # 1.44M floppy: 80(C) * 2(H) * 18(S) * 512 =   1,474,560

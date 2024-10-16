@@ -4,13 +4,6 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#include "x86.h"
 
-#include "module/conf.h"
-#include "module/do_intr.h"
-
-void kern_init();
-
-#endif
+void *null = __kern_end + KERN_HIGH_MAPPING;

@@ -5,12 +5,12 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_INTR_ROUTINE_H__
+#define __KERN_INTR_ROUTINE_H__
 
-#include "module/conf.h"
-#include "module/do_intr.h"
+#include "kern/types.h"
+#include "kern/driver/io.h"
 
-void kern_init();
+void isr_default(void);
 
 #endif

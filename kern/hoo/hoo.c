@@ -4,13 +4,15 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#include "hoo.h"
 
-#include "module/conf.h"
-#include "module/do_intr.h"
-
-void kern_init();
-
-#endif
+/**
+ * @brief get the tss object of hoo thread
+ * @note this tss object is only one
+ * @return tss object
+ */
+tss_t *
+get_hoo_tss(void) {
+    static tss_t tss;
+    return &tss;
+}

@@ -11,5 +11,7 @@
  */
 void
 kern_init() {
-    cga_putc('A', 0xf);
+    kinit_io();
+    kinit_config();
+    kinit_isr_idt();
 }

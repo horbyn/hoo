@@ -13,7 +13,6 @@ CSRC := $(shell find . -name "*.c")
 OBJS := $(filter-out ./boot/bootsect.o, $(SSRC:.S=.o))
 OBJC := $(CSRC:.c=.o)
 
-AS := as
 LD := ld
 CC := gcc
 

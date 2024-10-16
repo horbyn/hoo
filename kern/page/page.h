@@ -5,12 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_PAGE_PAGE_H__
+#define __KERN_PAGE_PAGE_H__
 
-#include "module/conf.h"
-#include "module/do_intr.h"
+#include "kern/hoo/hoo.h"
 
-void kern_init();
+void paging(void);
 
 #endif

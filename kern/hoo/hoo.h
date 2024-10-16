@@ -5,12 +5,14 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_HOO_HOO_H__
+#define __KERN_HOO_HOO_H__
 
-#include "module/conf.h"
-#include "module/do_intr.h"
+#include "kern/desc/desc.h"
+#include "kern/page/page_stuff.h"
 
-void kern_init();
+#define PGDIR_HOO   ((SEG_PDTABLE) * 16 + (KERN_HIGH_MAPPING))
+
+tss_t *get_hoo_tss(void);
 
 #endif

@@ -21,7 +21,5 @@ SECTIONS {
         *(.bss)
     }
 
-    PROVIDE(null = . - 0x80000000);
-
     PROVIDE(__kern_end = . - 0x80000000);
 }

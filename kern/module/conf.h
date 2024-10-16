@@ -5,12 +5,14 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_MODULE_CONF_H__
+#define __KERN_MODULE_CONF_H__
 
-#include "module/conf.h"
-#include "module/do_intr.h"
+#include "kern/desc/gdt.h"
+#include "kern/page/page.h"
 
-void kern_init();
+#define SIZE_GDT    8
+
+void kinit_config(void);
 
 #endif

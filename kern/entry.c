@@ -31,7 +31,6 @@ entry(void) {
              "go:\r\n");
 
     kern_init();
-    while (1);
 
     /**********************************************************************
      * NEED NOT TO RETURN NORMALLY                                        *

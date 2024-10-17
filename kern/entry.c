@@ -31,6 +31,7 @@ entry(void) {
              "go:\r\n");
 
     kern_init();
+    kern_exec();
 
     /**********************************************************************
      * NEED NOT TO RETURN NORMALLY                                        *

@@ -15,6 +15,28 @@ extern uint8_t __kern_end[];
 // the null pointer is not zero but a special address 
 extern void *null;
 
+// the ARDS amount addr
+#define ADDR_ARDS_NUM   \
+    (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS_CR))
+// the ARDS itself addr
+#define ADDR_ARDS_BASE  \
+    (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS))
+#define ARDS_TYPE_OS    1
+#define ARDS_TYPE_ARCH  2
+#define BITS_PER_BYTE   8
+#define INVALID_INDEX   (-1)
+
+/**
+ * @brief ards structure
+ */
+typedef struct {
+    uint32_t base_low_;
+    uint32_t base_hig_;
+    uint32_t length_low_;
+    uint32_t length_hig_;
+    uint32_t type_;
+} ards_t;
+
 /* This header may be included by assembly which cannot recognize C codes,
    so the following functions MUST define to macros */
 

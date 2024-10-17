@@ -5,15 +5,20 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_INTR_ROUTINE_H__
-#define __KERN_INTR_ROUTINE_H__
+#ifndef __KERN_UTILITIES_NODE_H__
+#define __KERN_UTILITIES_NODE_H__
 
-#include "kern/types.h"
+#include "kern/x86.h"
 #include "kern/driver/io.h"
 
-#define ISR32_TIMER             32
+/**
+ * @brief definition of node
+ */
+typedef struct node {
+    void        *data_;
+    struct node *next_;
+} node_t;
 
-void isr_default(void);
-void timer(void);
+void node_set(node_t *node, void *data, node_t *next);
 
 #endif

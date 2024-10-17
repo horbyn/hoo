@@ -10,7 +10,10 @@
 
 #include "module/conf.h"
 #include "module/do_intr.h"
+#include "module/driver.h"
+#include "module/mem.h"
 
 void kern_init();
+void kern_exec();
 
 #endif

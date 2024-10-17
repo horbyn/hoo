@@ -4,16 +4,20 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_INTR_ROUTINE_H__
-#define __KERN_INTR_ROUTINE_H__
+#include "node.h"
 
-#include "kern/types.h"
-#include "kern/driver/io.h"
-
-#define ISR32_TIMER             32
-
-void isr_default(void);
-void timer(void);
-
-#endif
+/**
+ * @brief setup the node object
+ * 
+ * @param node the node object
+ * @param data the data wrapped by the node
+ * @param next next node
+ */
+void
+node_set(node_t *node, void *data, node_t *next) {
+    if (node == null)    panic("node_set(): null pointer");
+    if (data == null)    node->data_ = null;
+    else    node->data_ = data;
+    if (next == null)    node->next_ = null;
+    else    node->next_ = next;
+}

@@ -5,15 +5,13 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_INTR_ROUTINE_H__
-#define __KERN_INTR_ROUTINE_H__
+#ifndef __KERN_MEM_VM_H__
+#define __KERN_MEM_VM_H__
 
-#include "kern/types.h"
-#include "kern/driver/io.h"
+#include "vmngr.h"
 
-#define ISR32_TIMER             32
-
-void isr_default(void);
-void timer(void);
+void *vir_alloc_pages(vsmngr_t *vmngr, uint32_t amount, uint32_t begin,
+    uint32_t end);
+void vir_release_pages(vsmngr_t *vmngr, void *va, bool rel);
 
 #endif

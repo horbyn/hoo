@@ -62,3 +62,10 @@ isr_default(void) {
 
     panic(__exception_names[arr_idx]);
 }
+
+/**
+ * @brief handling system timer
+ */
+void
+timer(void) {
+}

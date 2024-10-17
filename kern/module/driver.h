@@ -5,15 +5,14 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_INTR_ROUTINE_H__
-#define __KERN_INTR_ROUTINE_H__
+#ifndef __KERN_MODULE_DRIVER_H__
+#define __KERN_MODULE_DRIVER_H__
 
-#include "kern/types.h"
-#include "kern/driver/io.h"
+#include "kern/driver/8259a/8259a.h"
+#include "kern/driver/8253/8253.h"
 
-#define ISR32_TIMER             32
+#define TICKS_PER_SEC   1000
 
-void isr_default(void);
-void timer(void);
+void kinit_driver(void);
 
 #endif

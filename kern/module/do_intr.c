@@ -19,6 +19,9 @@ kinit_isr_idt(void) {
     for (uint32_t i = 0; i < IDT_ENTRIES_NUM; ++i)
         set_isr_entry(&__isr[i], (isr_t)isr_default);
 
+    // specific isr routines
+     set_isr_entry(&__isr[ISR32_TIMER], (isr_t)timer);
+
     for (uint32_t i = 0; i < IDT_ENTRIES_NUM; ++i)
         set_idt_entry(&__idt[i], PL_KERN, INTER_GATE, (uint32_t)isr_part1[i]);
 

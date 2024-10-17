@@ -101,7 +101,10 @@ cga_putc(char ch, uint8_t attr) {
 
     } else {
         *(vm + pos++) = (ch_attr | ch);
-        if (pos == LASTLINE_END)    cga_scroll_back();
+        if (pos == LASTLINE_END) {
+            pos = LASTLINE_BEG;
+            cga_scroll_back();
+        }
     }
 
     if (0 > pos || pos > LASTLINE_END)   HLT();

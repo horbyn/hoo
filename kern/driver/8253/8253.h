@@ -5,15 +5,13 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_INTR_ROUTINE_H__
-#define __KERN_INTR_ROUTINE_H__
+#ifndef __KERN_DRIVER_8253_8253_H__
+#define __KERN_DRIVER_8253_8253_H__
 
-#include "kern/types.h"
-#include "kern/driver/io.h"
+#include "8253_stuff.h"
+#include "kern/x86.h"
 
-#define ISR32_TIMER             32
-
-void isr_default(void);
-void timer(void);
+void set_command(sc_t sc, am_t am, om_t om, bm_t bm);
+void set_counter(uint32_t frequency);
 
 #endif

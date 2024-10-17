@@ -5,15 +5,20 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_INTR_ROUTINE_H__
-#define __KERN_INTR_ROUTINE_H__
+#ifndef __KERN_MODULE_MEM_H__
+#define __KERN_MODULE_MEM_H__
 
-#include "kern/types.h"
 #include "kern/driver/io.h"
+#include "kern/mem/pm.h"
 
-#define ISR32_TIMER             32
+/**
+ * @brief physical memory information
+ */
+typedef struct mem_info {
+    uint32_t base_;
+    uint32_t length_;
+} mminfo_t;
 
-void isr_default(void);
-void timer(void);
+void kinit_memory();
 
 #endif

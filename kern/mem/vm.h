@@ -8,10 +8,10 @@
 #ifndef __KERN_MEM_VM_H__
 #define __KERN_MEM_VM_H__
 
-#include "vmngr.h"
+#include "metadata.h"
 
-void *vir_alloc_pages(vsmngr_t *vmngr, uint32_t amount, uint32_t begin,
-    uint32_t end);
-void vir_release_pages(vsmngr_t *vmngr, void *va, bool rel);
+void init_virmm_system(void);
+void *vir_alloc_pages(vspace_t *vspace, uint32_t amount, uint32_t begin);
+void vir_release_pages(vspace_t *vspace, void *va, bool rel);
 
 #endif

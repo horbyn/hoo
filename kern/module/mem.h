@@ -9,7 +9,7 @@
 #define __KERN_MODULE_MEM_H__
 
 #include "kern/driver/io.h"
-#include "kern/mem/pm.h"
+#include "kern/mem/vm.h"
 
 /**
  * @brief physical memory information

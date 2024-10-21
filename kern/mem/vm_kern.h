@@ -5,21 +5,18 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_MEM_PM_H__
-#define __KERN_MEM_PM_H__
+#ifndef __KERN_MEM_VM_KERN_H__
+#define __KERN_MEM_VM_KERN_H__
 
-#include "kern/x86.h"
-#include "kern/page/page_stuff.h"
 #include "kern/utilities/bitmap.h"
 
-// how many bit to map 4GB if one bit maps one page
-#define SIZE_BITMAP_PHYMM4G \
-    ((0xffffffff / (PGSIZE) + 1) / BITS_PER_BYTE)
+// the maximum value of hoo virtual space -- the cause that subtracted from
+// 4-MB is the last entry of its page directory table is not allowed to use
+#define SIZE_BITMAP_VIRMM \
+    ((PG_MASK - MB4 + PGSIZE - MB4) / PGSIZE / BITS_PER_BYTE)
 
-void init_phymm_system(uint32_t mem_size);
-void *phy_alloc_page(void);
-void phy_release_page(void *phy_addr);
-void phy_release_vpage(void *vir_addr);
-void set_mapping(void *va, void *pa, pgelem_t flags);
+void init_kern_virmm_bitmap(void);
+void *vir_alloc_kern(void);
+void vir_release_kern(void *va);
 
 #endif

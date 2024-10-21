@@ -75,7 +75,7 @@ trace() {
     __asm__ __volatile__ ("mov %%ebp, %0" : "=r"(ebp));
     uint32_t border = PGUP(ebp, PGSIZE);
 
-    for (uint32_t i = 0; ebp <= border; ++i) {
+    for (uint32_t i = 0; ebp != 0 && ebp <= border; ++i) {
         ret = *(uint32_t *)(ebp + sizeof(uint32_t));
 
         for (uint32_t space = 0; space < i; ++space) {

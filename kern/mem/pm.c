@@ -35,16 +35,28 @@ void *phy_alloc_page() {
 /**
  * @brief release a physical page
  * 
- * @param page_phy_addr a physical address
+ * @param phy_addr a physical address
  */
 void
-phy_release_page(void *page_phy_addr) {
-    if (page_phy_addr == null)    return;
-    if ((uint32_t)page_phy_addr < MM_BASE)
+phy_release_page(void *phy_addr) {
+    if (phy_addr == null)    return;
+    if ((uint32_t)phy_addr < MM_BASE)
         panic("phy_release_page(): cannot release kernel physical memory");
 
-    int i = ((uint32_t)page_phy_addr - MM_BASE) >> 12;
+    int i = ((uint32_t)phy_addr - MM_BASE) >> 12;
     bitmap_clear(&__bm_phymm, i);
+}
+
+/**
+ * @brief release a physical page
+ * 
+ * @param vir_addr the corresponding virtual address
+ */
+void
+phy_release_vpage(void *vir_addr) {
+    bzero(vir_addr, PGSIZE);
+    pgelem_t *pte = (pgelem_t *)GET_PTE(vir_addr);
+    phy_release_page((void *)PG(*pte));
 }
 
 /**

@@ -24,10 +24,12 @@
 // used to calculate pg entry size
 typedef uint32_t            pgelem_t;
 
+#define MB4                 0x400000
 #define PGSIZE              4096
 // pg dir entry(pg table entry) amount
 #define PG_STRUCT_SIZE      ((PGSIZE) / sizeof(pgelem_t))
 #define PG_MASK             0xfffff000
+#define PG(x)               (((uint32_t)(x)) & (PG_MASK))
 #define PG_DIR_VA           PG_MASK
 #define GET_PDE(va)         \
     (PG_DIR_VA | (PD_INDEX(PGDOWN((va), PGSIZE)) * sizeof(uint32_t)))

@@ -5,22 +5,29 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_UTILITIES_FORMAT_LIST_H__
-#define __KERN_UTILITIES_FORMAT_LIST_H__
+#ifndef __KERN_MEM_FORMAT_LIST_H__
+#define __KERN_MEM_FORMAT_LIST_H__
 
-#include "list.h"
+#include "pm.h"
+#include "vm_kern.h"
+#include "kern/utilities/list.h"
 
 /**
  * @brief formatting list definition
  */
 typedef struct format_list {
-    // different type has different size
-    uint32_t type_size_;
-    list_t   list_;
+    // the size of the specific type
+    uint32_t           type_size_;
+    // list
+    list_t             list_;
+    // first element offset
+    uint32_t           first_off_;
+    // capacity
+    uint32_t           capacity_;
+    struct format_list *next_;
 } fmtlist_t;
 
-void fmtlist_init(fmtlist_t *fmtlist, uint32_t type_size, bool is_cycle);
-void *fmtlist_alloc(fmtlist_t *fmtlist);
-void fmtlist_release(fmtlist_t *fmtlist, void *elem, uint32_t elem_size);
+void *fmtlist_alloc(fmtlist_t **fmtlist, uint32_t size);
+bool fmtlist_release(fmtlist_t **fmtlist, void *elem, uint32_t elem_size);
 
 #endif

@@ -8,7 +8,7 @@
 #ifndef __KERN_MEM_VADDR_H__
 #define __KERN_MEM_VADDR_H__
 
-#include "kern/utilities/format_list.h"
+#include "format_list.h"
 
 /**
  * @brief virtual address
@@ -29,18 +29,8 @@ typedef struct vaddr_space {
     struct vaddr_space *next_;
 } vspace_t;
 
-/**
- * @brief virtual space manager
- */
-typedef struct vspace_manager {
-    // the metadata
-    fmtlist_t *vspace_, *node_, *vaddr_;
-    // the real data
-    vspace_t  head_;
-} vsmngr_t;
-
 void vaddr_set(vaddr_t *vaddr, uint32_t addr, uint32_t length);
 void vspace_set(vspace_t *vs, list_t *ls, uint32_t begin, uint32_t end, vspace_t *next);
-void vsmngr_set(vsmngr_t *mngr, void *va_vs, void *va_node, void *va_vaddr);
+void debug_print_vsmngr(vspace_t *vs);
 
 #endif

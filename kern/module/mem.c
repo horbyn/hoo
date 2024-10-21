@@ -40,4 +40,5 @@ kinit_memory() {
     printf("[DEBUG] available memory: [0x%x, 0x%x)\n",
         __mminfo.base_, __mminfo.base_ + __mminfo.length_);
     init_phymm_system(__mminfo.length_);
+    init_virmm_system();
 }

@@ -4,7 +4,7 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "vmngr.h"
+#include "vspace.h"
 
 /**
  * @brief Set the vaddr object
@@ -36,7 +36,10 @@ vspace_t *next) {
     if (vs == null)    panic("vspace_set(): null pointer");
     if (ls != null && &vs->list_ != ls)
         memmove(&vs->list_, ls, sizeof(list_t));
-    else    bzero(&vs->list_, sizeof(list_t));
+    else {
+        vs->list_.null_.data_ = vs->list_.null_.next_ = null;
+        vs->list_.size_ = 0;
+    }
     vs->begin_ = begin;
     vs->end_ = end;
     if (next == null)    vs->next_ = null;
@@ -44,20 +47,25 @@ vspace_t *next) {
 }
 
 /**
- * @brief `vsmngr` object initialization
+ * @brief print the vsmngr object
  * 
- * @param mngr `vsmngr` object
- * @param va_vs metadata vspace virtual address
- * @param va_node metadata node virtual address
- * @param va_vaddr metadata vaddr virtual address
+ * @param vs virtual space object
  */
 void
-vsmngr_set(vsmngr_t *mngr, void *va_vs, void *va_node, void *va_vaddr) {
-    if (mngr == null)    panic("vsmngr_set(): null pointer");
-    if (va_vs == null)    mngr->vspace_ = null;
-    else    mngr->vspace_ = va_vs;
-    if (va_node == null)    mngr->node_ = null;
-    else    mngr->node_ = va_node;
-    if (va_vaddr == null)    mngr->vaddr_ = null;
-    else    mngr->vaddr_ = va_vaddr;
+debug_print_vsmngr(vspace_t *vs) {
+    if (vs == null)    return;
+    vspace_t *vspace = vs->next_;
+    while (vspace != null) {
+        printf("\t.begin=0x%x, .end=0x%x, .next=0x%x\n\t.list: \n",
+            vspace->begin_, vspace->end_, vspace->next_);
+        list_t *list = &(vspace->list_);
+        for (int i = 1; i <= list->size_; ++i) {
+            node_t *n = list_find(list, i);
+            vaddr_t *va = n->data_;
+            printf("[0x%x, 0x%x]", va->va_, va->length_);
+            if (n->next_)    printf(", ");
+        }
+        printf("\n");
+        vspace = vspace->next_;
+    }
 }

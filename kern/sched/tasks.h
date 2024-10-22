@@ -5,16 +5,17 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_SCHED_TASKS_H__
+#define __KERN_SCHED_TASKS_H__
 
-#include "module/conf.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/mem.h"
-#include "module/sched.h"
+#include "kern/hoo/hoo.h"
+#include "kern/mem/vm.h"
+#include "kern/utilities/queue.h"
 
-void kern_init();
-void kern_exec();
+extern void switch_to(node_t *, node_t *);
+
+pcb_t *get_current_pcb(void);
+void  init_tasks_system(void);
+void  scheduler(void);
 
 #endif

@@ -68,4 +68,5 @@ isr_default(void) {
  */
 void
 timer(void) {
+    scheduler();
 }

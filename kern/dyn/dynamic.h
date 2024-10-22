@@ -5,16 +5,12 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_MEM_DYNAMIC_H__
+#define __KERN_MEM_DYNAMIC_H__
 
-#include "module/conf.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/mem.h"
-#include "module/sched.h"
+#include "kern/sched/tasks.h"
 
-void kern_init();
-void kern_exec();
+void *dyn_alloc(uint32_t size);
+void dyn_free(void *ptr);
 
 #endif

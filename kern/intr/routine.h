@@ -10,6 +10,7 @@
 
 #include "kern/types.h"
 #include "kern/driver/io.h"
+#include "kern/sched/tasks.h"
 
 #define ISR32_TIMER             32
 

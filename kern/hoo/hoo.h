@@ -10,9 +10,12 @@
 
 #include "kern/desc/desc.h"
 #include "kern/page/page_stuff.h"
+#include "kern/sched/pcb.h"
 
 #define PGDIR_HOO   ((SEG_PDTABLE) * 16 + (KERN_HIGH_MAPPING))
 
-tss_t *get_hoo_tss(void);
+pgelem_t *get_hoo_pgdir(void);
+tss_t    *get_hoo_tss(void);
+pcb_t    *get_hoo_pcb(void);
 
 #endif

@@ -21,10 +21,16 @@ extern void *null;
 // the ARDS itself addr
 #define ADDR_ARDS_BASE  \
     (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS))
-#define ARDS_TYPE_OS    1
-#define ARDS_TYPE_ARCH  2
-#define BITS_PER_BYTE   8
-#define INVALID_INDEX   (-1)
+#define ARDS_TYPE_OS        1
+#define ARDS_TYPE_ARCH      2
+#define BITS_PER_BYTE       8
+#define INVALID_INDEX       (-1)
+#define STACK_BOOT_TOP      ((SEG_PGTABLE)*16 + PGSIZE)
+#define STACK_HOO_RING3     (STACK_BOOT_TOP + PGSIZE + KERN_HIGH_MAPPING)
+#define STACK_HOO_RING0     (0x80000 + KERN_HIGH_MAPPING)
+
+// the task maxinum amount
+#define MAX_TASKS_AMOUNT    1024
 
 /**
  * @brief ards structure

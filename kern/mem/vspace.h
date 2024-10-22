@@ -8,7 +8,7 @@
 #ifndef __KERN_MEM_VADDR_H__
 #define __KERN_MEM_VADDR_H__
 
-#include "format_list.h"
+#include "kern/utilities/list.h"
 
 /**
  * @brief virtual address

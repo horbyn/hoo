@@ -16,6 +16,8 @@ kern_init() {
     kinit_isr_idt();
     kinit_driver();
     kinit_memory();
+    kinit_tasks_system();
+    // after that we could use dynamic memory allocation
 }
 
 /**

@@ -5,16 +5,21 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#ifndef __KERN_MEM_BUCKET_H__
+#define __KERN_MEM_BUCKET_H__
 
-#include "module/conf.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/mem.h"
-#include "module/sched.h"
+#include "format_list.h"
 
-void kern_init();
-void kern_exec();
+/**
+ * @brief memory bucket manager
+ */
+typedef struct buckX_manager {
+    uint32_t             size_;
+    fmtlist_t            *chain_;
+    struct buckX_manager *next_;
+} buckx_mngr_t;
+
+void buckmngr_init(buckx_mngr_t *mngr, uint32_t size, fmtlist_t *chain,
+    buckx_mngr_t *next);
 
 #endif

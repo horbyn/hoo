@@ -4,17 +4,12 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_KERN_H__
-#define __KERN_KERN_H__
+#include "sched.h"
 
-#include "module/conf.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/mem.h"
-#include "module/sched.h"
-
-void kern_init();
-void kern_exec();
-
-#endif
+/**
+ * @brief kernel initializes the tasks system
+ */
+void
+kinit_tasks_system(void) {
+    init_tasks_system();
+}

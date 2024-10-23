@@ -4,27 +4,22 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "kern.h"
+#pragma once
+#ifndef __KERN_DRIVER_ATA_ATA_H__
+#define __KERN_DRIVER_ATA_ATA_H__
+
+#include "ata_polling.h"
 
 /**
- * @brief kernel initialization
+ * @brief ata method like IRQs or polling
  */
-void
-kern_init() {
-    kinit_io();
-    kinit_config();
-    kinit_isr_idt();
-    kinit_driver();
-    kinit_memory();
-    kinit_tasks_system();
-    // after that we could use dynamic memory allocation
-    kinit_fs();
-}
+typedef uint32_t atamth_t;
 
-/**
- * @brief kernel run
- */
-void
-kern_exec(void) {
-    enable_intr();
-}
+#define ATA_METHOD_POLLING  0
+#define ATA_METHOD_IRQ      1
+
+void init_ata(void);
+void ata_driver_change_mode(atamth_t method);
+void ata_driver_rw(void *buff, uint32_t bufflen, int lba, atacmd_t cmd);
+
+#endif

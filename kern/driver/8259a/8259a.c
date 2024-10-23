@@ -20,8 +20,8 @@ set_icw1(uint8_t cmd) {
     // └─┼─┼─┼─┼────┼─┼────┼───┘
 
     cmd |= 0x10;
-    OUTB(cmd, MAS_EVEN);
-    OUTB(cmd, SLA_EVEN);
+    outb(cmd, MAS_EVEN);
+    outb(cmd, SLA_EVEN);
 }
 
 /**
@@ -40,8 +40,8 @@ set_icw2(uint8_t master, uint8_t slave) {
 
     master &= 0xf8;
     slave &= 0xf8;
-    OUTB(master, MAS_EVEN + 1);
-    OUTB(slave, SLA_EVEN + 1);
+    outb(master, MAS_EVEN + 1);
+    outb(slave, SLA_EVEN + 1);
 }
 
 /**
@@ -63,8 +63,8 @@ set_icw3(uint8_t irq_pin) {
     // │0│0│0│0│0│ID2│ID1│ID0│
     // └─┼─┼─┼─┼─┼───┼───┼───┘
 
-    OUTB(1<<irq_pin, MAS_EVEN + 1);
-    OUTB(irq_pin, SLA_EVEN + 1);
+    outb(1<<irq_pin, MAS_EVEN + 1);
+    outb(irq_pin, SLA_EVEN + 1);
 }
 
 /**
@@ -81,8 +81,8 @@ set_icw4(uint8_t cmd) {
     // └─┼─┼─┼────┼───┼───┼────┼─┘
 
     cmd |= 0x01;
-    OUTB(cmd, MAS_EVEN + 1);
-    OUTB(cmd, SLA_EVEN + 1);
+    outb(cmd, MAS_EVEN + 1);
+    outb(cmd, SLA_EVEN + 1);
 }
 
 /**
@@ -101,8 +101,8 @@ disable_mask_ocw1(uint8_t irq_pin) {
         port = SLA_EVEN + 1;
         irq_pin -= 8;
     }
-    value = INB(port) | (1 << irq_pin);
-    OUTB(value, port);
+    value = inb(port) | (1 << irq_pin);
+    outb(value, port);
 }
 
 /**
@@ -121,6 +121,6 @@ enable_mask_ocw1(uint8_t irq_pin) {
         port = SLA_EVEN + 1;
         irq_pin -= 8;
     }
-    value = INB(port) & ~(1 << irq_pin);
-    OUTB(port, value);
+    value = inb(port) & ~(1 << irq_pin);
+    outb(port, value);
 }

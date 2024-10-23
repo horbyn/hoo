@@ -43,6 +43,8 @@ vir_alloc_pages(vspace_t *vspace, uint32_t amount, uint32_t begin) {
     if (amount == 0)    panic("vir_alloc_pages(): cannot request 0 page");
 
     // traversal the virtual space
+    const uint32_t MAX_END =
+        begin < KERN_HIGH_MAPPING ? KERN_HIGH_MAPPING : (PG_MASK - MB4 + PGSIZE);
     uint32_t last_end = begin, ret = 0;
     vspace_t *worker = vspace;
 
@@ -57,7 +59,7 @@ vir_alloc_pages(vspace_t *vspace, uint32_t amount, uint32_t begin) {
         } else {
             // there is enough space; or there is no next interval
             if (worker->next_ == null
-                && last_end + amount * PGSIZE >= KERN_HIGH_MAPPING)
+                && last_end + amount * PGSIZE >= MAX_END)
                 panic("vir_alloc_pages(): no enough space");
 
             vspace_t *temp = worker;

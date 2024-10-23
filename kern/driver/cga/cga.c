@@ -29,10 +29,10 @@ static uint16_t
 cga_cursor_get(void) {
     uint8_t low = 0;
     uint16_t hig = 0;
-    OUTB(CGA_CURSOR_LOW, CGA_REG_INDEX);
-    low = INB(CGA_REG_DATA);
-    OUTB(CGA_CURSOR_HIGH, CGA_REG_INDEX);
-    hig = INB(CGA_REG_DATA);
+    outb(CGA_CURSOR_LOW, CGA_REG_INDEX);
+    low = inb(CGA_REG_DATA);
+    outb(CGA_CURSOR_HIGH, CGA_REG_INDEX);
+    hig = inb(CGA_REG_DATA);
 
     return ((hig <<= 8) | low);
 }
@@ -45,12 +45,12 @@ cga_cursor_get(void) {
 static void
 cga_cursor_set(uint16_t pos) {
     // set low 8-bit
-    OUTB(CGA_CURSOR_LOW, CGA_REG_INDEX);
-    OUTB((uint8_t)(pos & 0xff), CGA_REG_DATA);
+    outb(CGA_CURSOR_LOW, CGA_REG_INDEX);
+    outb((uint8_t)(pos & 0xff), CGA_REG_DATA);
 
     // set high 8-bit
-    OUTB(CGA_CURSOR_HIGH, CGA_REG_INDEX);
-    OUTB((uint8_t)((pos & 0xff00) >> 8), CGA_REG_DATA);
+    outb(CGA_CURSOR_HIGH, CGA_REG_INDEX);
+    outb((uint8_t)((pos & 0xff00) >> 8), CGA_REG_DATA);
 }
 
 /**
@@ -107,7 +107,7 @@ cga_putc(char ch, uint8_t attr) {
         }
     }
 
-    if (0 > pos || pos > LASTLINE_END)   HLT();
+    if (0 > pos || pos > LASTLINE_END)   hlt();
     cga_cursor_set(pos);
 }
 

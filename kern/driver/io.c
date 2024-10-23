@@ -107,6 +107,6 @@ panic(const char *extra) {
     if (extra != null)
         printf("%s\n\n", extra);
     trace();
-    DISABLE_INTR();
-    HLT();
+    disable_intr();
+    hlt();
 }

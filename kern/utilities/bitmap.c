@@ -31,7 +31,8 @@ bitmap_init(bitmap_t *map, uint32_t len_inbits, void *buff) {
  * @retval true:  this bit is set
  * @retval false: this bit is clear
  */
-bool bitmap_test(bitmap_t *map, int idx) {
+bool
+bitmap_test(bitmap_t *map, int idx) {
     if (map == null)    panic("bitmap_test(): null pointer");
     if (idx == INVALID_INDEX || idx >= map->len_inbits_)
         panic("bitmap_test(): invalid index");

@@ -47,8 +47,8 @@ bochs:
 	bochs -q
 
 qemu:
-	qemu-system-i386 -smp 1 -m 32M -boot a -fda $(BOOT_IMG) \
-		-drive file=$(DISK),media=disk,index=1,format=raw -S -gdb tcp::12345
+	qemu-system-i386 -smp 2 -m 32M -boot a -fda $(BOOT_IMG) \
+		-drive file=$(DISK),media=disk,index=0,format=raw -S -gdb tcp::12345
 
 # -f: dont generate the file if exists
 # 1.44M floppy: 80(C) * 2(H) * 18(S) * 512 =   1,474,560

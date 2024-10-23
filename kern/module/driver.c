@@ -69,4 +69,5 @@ void
 kinit_driver(void) {
     init_pic();
     init_pit();
+    init_ata();
 }

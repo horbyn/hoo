@@ -17,7 +17,7 @@
 void
 set_command(sc_t sc, am_t am, om_t om, bm_t bm) {
     uint8_t cmd = sc | am | om | bm;
-    OUTB(cmd, COMMAND_8253);
+    outb(cmd, COMMAND_8253);
 }
 
 /**
@@ -28,6 +28,6 @@ set_command(sc_t sc, am_t am, om_t om, bm_t bm) {
 void
 set_counter(uint32_t frequency) {
     uint16_t init = FREQUENCY_DEF / frequency;
-    OUTB((uint8_t)init, CHANNEL0);
-    OUTB((uint8_t)(init >> 8), CHANNEL0);
+    outb((uint8_t)init, CHANNEL0);
+    outb((uint8_t)(init >> 8), CHANNEL0);
 }

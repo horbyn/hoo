@@ -4,27 +4,18 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "kern.h"
+#pragma once
+#ifndef __KERN_FS_FREE_H__
+#define __KERN_FS_FREE_H__
 
-/**
- * @brief kernel initialization
- */
-void
-kern_init() {
-    kinit_io();
-    kinit_config();
-    kinit_isr_idt();
-    kinit_driver();
-    kinit_memory();
-    kinit_tasks_system();
-    // after that we could use dynamic memory allocation
-    kinit_fs();
-}
+#include "super_block.h"
+#include "kern/dyn/dynamic.h"
+#include "kern/utilities/bitmap.h"
 
-/**
- * @brief kernel run
- */
-void
-kern_exec(void) {
-    enable_intr();
-}
+void     setup_free_map(bool is_new);
+uint32_t free_allocate(void);
+void     free_map_setup(uint32_t index, bool is_set);
+void     free_map_update(void);
+void     free_rw_disk(void *buff, uint32_t base_lba, atacmd_t cmd);
+
+#endif

@@ -20,6 +20,25 @@ strlen(const char *str) {
 }
 
 /**
+ * @brief compare two strings
+ * 
+ * @param a string a
+ * @param b string b
+ * @retval true: same strings
+ * @retval false: different strings
+ */
+bool
+strcmp(const char *a, const char *b) {
+    uint32_t alen = strlen(a), blen = strlen(b);
+    if (alen != blen)     return false;
+    for (uint32_t i = 0; i < alen; i++) {
+        if (a[i] != b[i])
+            return false;
+    }
+    return true;
+}
+
+/**
  * @brief setup the `fill` to the `buff` up to `bufflen` size
  * 
  * @param buff    the buff to be reseted

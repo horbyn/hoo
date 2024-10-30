@@ -6,49 +6,20 @@
  **************************************************************************/
 #include "tasks.h"
 
-/**
- * @brief bucket size array
- */
-static uint32_t __bucket_size[] = { 8, 16, 32, 64, 128, 256, 512, 1024 };
-#define MAX_BUCKET_SIZE     (NELEMS(__bucket_size))
-
-/**
- * @brief the bucket manager one thread owned
- */
-typedef struct arr_buckmngr {
-    buckx_mngr_t head_[MAX_BUCKET_SIZE];
-} thread_buckmngr_t;
-
 static queue_t __queue_ready, __queue_running;
-static thread_buckmngr_t *__mdata_buckmngr;
 
 /**
- * @brief get the bucket manager metadata
- * 
- * @param tid thread id
- * @return bucket manager metadata
+ * @brief initialize the tasks system
  */
-static buckx_mngr_t *
-thread_buckmngr_get(tid_t tid) {
-    if (tid >= MAX_TASKS_AMOUNT)
-        panic("thread_buckmngr_get(): thread id out of range");
-    return __mdata_buckmngr[tid].head_;
-}
+void
+init_tasks_system() {
+    queue_init(&__queue_ready);
+    queue_init(&__queue_running);
 
-/**
- * @brief bucket manager initialization of single thread
- * 
- * @param tb thread bucket manager
- */
-static void
-thread_buckmngr_set(thread_buckmngr_t *tb) {
-    if (tb == null)    panic("thread_buckmngr_set(): null pointer");
-
-    buckx_mngr_t *worker = tb->head_;
-    for (int i = 0; i < MAX_BUCKET_SIZE; ++i) {
-        buckx_mngr_t *next = (i == MAX_BUCKET_SIZE - 1) ? null : worker + i + 1;
-        buckmngr_init(worker + i, __bucket_size[i], null, next);
-    }
+    // pcb node append to queue
+    node_t *hoo_node = node_alloc();
+    node_set(hoo_node, get_hoo_pcb(), null);
+    queue_push(&__queue_running, hoo_node, TAIL);
 }
 
 /**
@@ -65,46 +36,6 @@ get_current_pcb() {
     if (cur_pcb == null)    panic("get_current_pcb(): current task is null");
 
     return cur_pcb;
-}
-
-/**
- * @brief initialize the tasks system
- */
-void
-init_tasks_system() {
-    queue_init(&__queue_ready);
-    queue_init(&__queue_running);
-    __mdata_buckmngr = null;
-
-    // The executable flow as far from boot to there,
-    // uses the boot stack. Now we call this flow to
-    // hoo thread, and the stack it used is hoo stack
-    pcb_t *hoo_pcb = get_hoo_pcb();
-    pgelem_t flags = PGFLAG_US | PGFLAG_RW | PGFLAG_PS;
-    uint32_t hoo_break = PGUP(null, PGSIZE);
-
-    // allocate metadata
-    uint32_t metadata_bucket_pages =
-        (sizeof(thread_buckmngr_t) * MAX_TASKS_AMOUNT + PGSIZE - 1) / PGSIZE;
-    __mdata_buckmngr =
-        vir_alloc_pages(&hoo_pcb->vmngr_, metadata_bucket_pages, hoo_break);
-    for (uint32_t i = 0; i < metadata_bucket_pages; ++i) {
-        void *va = (void *)((uint32_t)__mdata_buckmngr + i * PGSIZE);
-        void *pa = phy_alloc_page();
-        set_mapping(va, pa, flags);
-    }
-    for (uint32_t i = 0; i < MAX_TASKS_AMOUNT; ++i)
-        thread_buckmngr_set(__mdata_buckmngr + i);
-
-    // setup hoo pcb
-    pcb_set(hoo_pcb, (uint32_t *)STACK_HOO_RING0, (uint32_t *)STACK_HOO_RING3,
-        TID_HOO, (pgelem_t *)(V2P(get_hoo_pgdir())), null, TIMETICKS,
-        thread_buckmngr_get(TID_HOO), hoo_break);
-
-    // pcb node append to queue
-    static node_t hoo_node;
-    node_set(&hoo_node, hoo_pcb, null);
-    queue_push(&__queue_running, &hoo_node, TAIL);
 }
 
 /**

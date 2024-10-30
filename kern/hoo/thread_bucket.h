@@ -5,17 +5,24 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_SCHED_TASKS_H__
-#define __KERN_SCHED_TASKS_H__
+#ifndef __KERN_HOO_THREAD_BUCKET_H__
+#define __KERN_HOO_THREAD_BUCKET_H__
 
-#include "kern/hoo/hoo.h"
+#include "kern/mem/bucket.h"
 #include "kern/mem/vm.h"
-#include "kern/utilities/queue.h"
+#include "kern/sched/pcb.h"
 
-extern void switch_to(node_t *, node_t *);
+// bucket size array: 8, 16, 32, 64, 128, 256, 512, 1024
+#define MAX_BUCKET_SIZE     8
 
-void  init_tasks_system(void);
-pcb_t *get_current_pcb(void);
-void  scheduler(void);
+/**
+ * @brief the bucket manager one thread owned
+ */
+typedef struct arr_buckmngr {
+    buckx_mngr_t head_[MAX_BUCKET_SIZE];
+} thread_buckmngr_t;
+
+void         init_thread_buckmngr(pcb_t *pcb);
+buckx_mngr_t *thread_buckmngr_get(tid_t tid);
 
 #endif

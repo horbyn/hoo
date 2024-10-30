@@ -4,12 +4,16 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#pragma once
-#ifndef __KERN_MODULE_FS_H__
-#define __KERN_MODULE_FS_H__
+#include "syscall.h"
 
-#include "kern/fs/files.h"
+/**
+ * @brief system call stub array
+ */
+syscall_t __stub[MAX_SYSCALL];
 
-void kinit_fs(void);
-
-#endif
+/**
+ * @brief system calls initialization
+ */
+void syscall_init(void) {
+    __stub[MAX_SYSCALL - 1] = null;
+}

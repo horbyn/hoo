@@ -28,7 +28,7 @@ vir_alloc_kern(void) {
 
     i = bitmap_scan_empty(&__bm_virmm);
     bitmap_set(&__bm_virmm, i);
-    return (void *)(KERN_HIGH_MAPPING + MB4 + i * PGSIZE);
+    return (void *)(KERN_METADATA + i * PGSIZE);
 }
 
 /**
@@ -38,8 +38,7 @@ vir_alloc_kern(void) {
  */
 void
 vir_release_kern(void *va) {
-    if (KERN_HIGH_MAPPING + MB4 > (uint32_t)va
-        || (uint32_t)va >= PG_MASK - MB4 + PGSIZE)
+    if (KERN_METADATA > (uint32_t)va || (uint32_t)va >= PG_MASK - MB4 + PGSIZE)
         panic("vir_release_kern(): not the kernel metadata");
-    bitmap_clear(&__bm_virmm, ((uint32_t)va - (KERN_HIGH_MAPPING + MB4)) / PGSIZE);
+    bitmap_clear(&__bm_virmm, ((uint32_t)va - KERN_METADATA) / PGSIZE);
 }

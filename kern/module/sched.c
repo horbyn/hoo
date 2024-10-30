@@ -11,5 +11,6 @@
  */
 void
 kinit_tasks_system(void) {
+    init_hoo();
     init_tasks_system();
 }

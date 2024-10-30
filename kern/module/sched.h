@@ -9,7 +9,6 @@
 #define __KERN_MODULE_SCHED_H__
 
 #include "kern/sched/tasks.h"
-#include "kern/dyn/dynamic.h"///
 
 void kinit_tasks_system(void);
 

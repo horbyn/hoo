@@ -15,8 +15,9 @@
  */
 typedef uint32_t inode_type_t;
 
-#define INODE_TYPE_FILE 0
-#define INODE_TYPE_DIR  1
+#define INODE_TYPE_INVALID  0
+#define INODE_TYPE_FILE     1
+#define INODE_TYPE_DIR      2
 
 /**
  * @brief definition of inode

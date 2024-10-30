@@ -105,7 +105,7 @@ inodes_rw_disk(int inode_idx, atacmd_t cmd) {
     if (cmd == ATA_CMD_IO_READ && bitmap_test(&__bmfs, inode_idx) == false)
         panic("inodes_read_from_disk(): not allow to read from an empty inode");
 
-    uint8_t *sect[BYTES_SECTOR];
+    uint8_t sect[BYTES_SECTOR];
     bzero(sect, sizeof(sect));
     if (cmd == ATA_CMD_IO_WRITE)
         memmove(sect, __fs_inodes + inode_idx, sizeof(inode_t));

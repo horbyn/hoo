@@ -6,7 +6,155 @@
  **************************************************************************/
 #include "dir.h"
 
-static diritem_t __fs_root_dir;
+/**
+ * @brief get a new dirblock
+ * 
+ * @param result new dirblock
+ * @param self   inode index itself
+ * @param parent parent inode index
+ */
+static void
+dirblock_get_new(dirblock_t *result, int self, int parent) {
+    if (result == null)    panic("dirblock_get_new(): null pointer");
+
+    // [0] .
+    // [1] ..
+    diritem_t *cur = result->dir_, *pre = result->dir_ + 1;
+    cur->type_ = pre->type_ = INODE_TYPE_DIR;
+    cur->inode_idx_ = self;
+    pre->inode_idx_ = parent;
+    bzero(cur->name_, DIRITEM_NAME_LEN);
+    bzero(pre->name_, DIRITEM_NAME_LEN);
+    memmove(cur->name_, ".", sizeof(1));
+    memmove(pre->name_, "..", sizeof(2));
+}
+
+/**
+ * @brief set diritem from the dirblock
+ * 
+ * @param db          the specific dirblock
+ * @param block_index the index of the dirblock array
+ * @param item        the item to be set
+ */
+static void
+dirblock_set(dirblock_t *db, uint32_t block_index, const diritem_t *item) {
+    if (db == null)    panic("dirblock_set(): null pointer");
+    if (block_index >= MAX_DIRITEM_PER_BLOCK)
+        panic("dirblock_set(): index of dirblock overflow");
+
+    diritem_t *di = db->dir_ + block_index;
+    if (item == null)    bzero(di, sizeof(diritem_t));
+    else    memmove(di, item, sizeof(diritem_t));
+}
+
+/**
+ * @brief get diritem from the dirblock
+ * 
+ * @param db          the specific dirblock
+ * @param block_index the index of the dirblock array
+ * @param result      the result
+ */
+static void
+dirblock_get(const dirblock_t *db, uint32_t block_index, diritem_t *result) {
+    if (db == null || result == null)    panic("dirblock_get(): null pointer");
+    memmove(result, db->dir_ + block_index, sizeof(diritem_t));
+}
+
+/**
+ * @brief find the specific diritem subroutine
+ * 
+ * @param di     diritem object
+ * @param search the absolute path to be searched
+ * @retval -1: not founded
+ * @retval the rests: the index of the dirblock array
+ */
+static int
+diritem_find_sub(diritem_t *di, const char *search) {
+
+    dirblock_t db;
+    int ret = -1;
+
+    uint32_t iblock_index =
+        __fs_inodes[di->inode_idx_].size_ / MAX_DIRITEM_PER_BLOCK;
+    for (uint32_t i = 0; i <= iblock_index; ++i) {
+        uint32_t lba = iblock_get(di->inode_idx_, i);
+        if (lba == 0)    break;
+
+        free_rw_disk(&db, lba, ATA_CMD_IO_READ);
+        uint32_t max_diritem_number = i == iblock_index ?
+            __fs_inodes[di->inode_idx_].size_ % MAX_DIRITEM_PER_BLOCK
+            : MAX_DIRITEM_PER_BLOCK;
+        for (uint32_t j = 0; j < max_diritem_number; ++j) {
+            if (strcmp(search, db.dir_[j].name_) == true) {
+                memmove(&di, &db.dir_[j], sizeof(diritem_t));
+                /*
+                 * inode
+                 * +--------------------------------+
+                 * |size: 23                        |
+                 * |         +--------------------+ |
+                 * |iblocks: | 326 | 327 | 0 | .. | |
+                 * |         +--------------------+ |
+                 * +--------------------------------+
+                 *              ^
+                 *              |
+                 *             `i`
+                 * 
+                 *            dirblock-326          dirblock-327
+                 *            +--------------+      +----------------+
+                 *            |0|1|2|3| .. |x|      |0   |1   |2| .. |
+                 *            +--------------+      +----------------+
+                 * logically:  0 1 2 3      x       x+1, x+2, x+3, ..
+                 *               ^
+                 *               |
+                 *              `j`
+                 */
+                ret = i * MAX_DIRITEM_PER_BLOCK + j;
+                break;
+            }
+
+        } // end for(diritem)
+        if (ret != -1)    break;
+
+    } // end for(dirblock)
+
+    return ret;
+}
+
+/**
+ * @brief remove directory item recursively (only for index, not involves disk rw)
+ * 
+ * @param di diritem object to be removed
+ */
+static void
+diritem_remove_sub(diritem_t *di) {
+    dirblock_t *db = dyn_alloc(sizeof(dirblock_t));
+
+    if (di->type_ == INODE_TYPE_FILE) {
+        for (uint32_t i = 0; i < __super_block.inode_block_index_max_; ++i) {
+            uint32_t lba = iblock_get(di->inode_idx_, i);
+            if (lba != 0)    free_map_setup(lba, false);
+            else    break;
+        }
+
+    } else if (di->type_ == INODE_TYPE_DIR) {
+        for (uint32_t i = 0; i < __fs_inodes[di->inode_idx_].size_; ++i) {
+            uint32_t dirblock_lba = iblock_get(di->inode_idx_, i);
+            if (dirblock_lba == 0)    break;
+
+            free_rw_disk(db, dirblock_lba, ATA_CMD_IO_READ);
+            // skip . and ..
+            for (uint32_t j = 0; j < MAX_DIRITEM_PER_BLOCK; ++j) {
+                if ((i == 0 && j == 0 )|| (i == 0 && j == 1))    continue;
+                if (db->dir_[j].type_ == INODE_TYPE_INVALID)    break;
+                else    diritem_remove_sub(db->dir_ + j);
+            } // end for(j)
+            free_map_setup(dirblock_lba, false);
+        } // end for(i)
+    } else    panic("diritem_remove_sub(): bug");
+    inode_map_setup(di->inode_idx_, false);
+
+    dyn_free(db);
+}
 
 /**
  * @brief fill in the `diritem_t` structure
@@ -17,9 +165,7 @@ static diritem_t __fs_root_dir;
  * @param name  name corresponding to this dir
  */
 void
-diritem_set(diritem_t *dir, inode_type_t type, int inode_idx,
-const char *name) {
-
+diritem_set(diritem_t *dir, inode_type_t type, int inode_idx, const char *name) {
     if (dir == null || name == 0)    panic("diritem_set(): null pointer");
 
     dir->type_      = type;
@@ -49,105 +195,6 @@ is_root_dir(const char *dir) {
 }
 
 /**
- * @brief put the diritem object to dirblock
- * 
- * @param block dirblock
- * @param item  diritem
- * @retval 0:  succeeded
- * @retval -1: failed
- */
-int
-diritem_write(dirblock_t *block, const diritem_t *item) {
-    if (block == null)    panic("diritem_write(): null pointer");
-    if (item == null)    return 0;
-
-    // -1, not available space
-    if (block->amount_ >= MAX_DIRITEM_PER_BLOCK)    return -1;
-    else {
-        memmove(&block->dir_[block->amount_], item, sizeof(diritem_t));
-        ++block->amount_;
-    }
-    return 0;
-}
-
-/**
- * @brief diritem comparasion
- * 
- * @param d1 diritem 1
- * @param d2 diritem 2
- * @retval true:  same
- * @retval false: not same
- */
-static bool
-diritem_compare(const diritem_t *d1, const diritem_t *d2) {
-    if (d1 == null || d2 == null)    panic("diritem_compare(): null pointer");
-    if (strlen(d1->name_) != strlen(d2->name_))    return false;
-    return (d1->type_ == d2->type_ && strcmp(d1->name_, d2->name_));
-}
-
-/**
- * @brief retrieve the diritem object from dirblock
- * 
- * @param block dirblock
- * @param item  diritem
- * @return diritem object
- */
-diritem_t *
-diritem_read(dirblock_t *block, const diritem_t *item) {
-    diritem_t *ret = null;
-    if (block == null)    panic("diritem_read(): null pointer");
-    if (item == null)    return ret;
-
-    for (uint32_t i = 0; i < block->amount_; ++i) {
-        if (diritem_compare(&block->dir_[i], item)) {
-            ret = &block->dir_[i];
-            break;
-        }
-    }
-
-    return ret;
-}
-
-/**
- * @brief seperate strings according specific character
- * 
- * @param str the string to be seperated
- * @param sep the character
- * @param cr  counts expected to meet the character (begin at 0)
- * (-1 means the last one)
- * @param result the result
- * @note e.g.
- * ("/dir1/dir2/dir3", '/', 0, {}) -> {""}
- * @note e.g.
- * ("/dir1/dir2/dir3", '/', 1, {}) -> {"dir1"}
- * @note e.g.
- * ("/dir1/dir2/dir3", '/', 2, {}) -> {"dir2"}
- * @note e.g.
- * ("/dir1/dir2/dir3", '/', 3, {}) -> {"dir3"}
- * @note e.g.
- * ("/dir1/dir2/dir3", '/', 4..., {}) -> {""}
- */
-static void
-strsep(const char *str, char sep, int cr, char *result) {
-    if (str == 0 || result == 0)    return;
-
-    uint32_t sz = strlen(str), j = 0;
-    int count = 0;
-    for (uint32_t i = 0; i < sz; ++i) {
-        if (str[i] == sep) {
-            result[j] = 0;
-            if (count == cr)    return;
-            else {
-                ++count;
-                j = 0;
-            }
-        } else    result[j++] = str[i];
-    }
-    if (cr != -1 && count < cr)    result[0] = 0;
-    else    result[j] = 0;
-}
-
-/**
  * @brief find the specific diritem
  * 
  * @param dir   the absolute path to be searched
@@ -155,131 +202,168 @@ strsep(const char *str, char sep, int cr, char *result) {
  */
 bool
 diritem_find(const char *dir, diritem_t *found) {
-    if (found == null)    panic("diritem_find(): null pointer");
-    bzero(found, sizeof(diritem_t));
-
     if (dir && dir[0] != DIRNAME_ROOT_ASCII)
         panic("diritem_find(): not absolute path");
-
-    diritem_t cur;
-    memmove(&cur, &__fs_root_dir, sizeof(diritem_t));
-
-    char name_storage[DIRITEM_NAME_LEN] = { 0 };
-    uint32_t count = 0;
-    for (uint32_t i = 0; i < strlen(dir); ++i)
-        if (dir[i] == DIRNAME_ROOT_ASCII)    ++count;
-
-    bool fexit_in_advance = false;
-    if (is_root_dir(dir) == false) {
-        dirblock_t *dirblock = dyn_alloc(sizeof(dirblock_t));
-        for (uint32_t i = 1; i <= count; ++i) {
-            // get the current directory name
-            //   e.g. "/dir1/dir2/dir3" -> "dir3"
-            //                    ^
-            //                    |
-            //                    dir pointer
-            bzero(name_storage, sizeof(name_storage));
-            strsep(dir, DIRNAME_ROOT_ASCII, i, name_storage);
-            if (name_storage[0] == 0) {
-                fexit_in_advance = false;
-                break;
-            }
-
-            // traversal inode blocks
-            diritem_t *temp = null;
-            uint32_t j = 0;
-            bool ffound = false;
-            for (; j < __super_block.inode_block_index_max_; ++j) {
-                // the block filled with directory items
-                uint32_t lba = iblock_get(cur.inode_idx_, j);
-
-                // assume that the later blocks all invalid
-                // if meet the first invalid block
-                if (lba < __super_block.lba_free_)    break;
-
-                free_rw_disk(dirblock, lba, ATA_CMD_IO_READ);
-                for (uint32_t k = 0; k < dirblock->amount_; ++k) {
-                    temp = dirblock->dir_ + k;
-                    if (strcmp(temp->name_, name_storage)) {
-                        memmove(&cur, temp, sizeof(diritem_t));
-                        ffound = true;
-                        break;
-                    }
-                } // end for(k)
-
-                if (ffound)    break;
-            } // end for(j)
-
-            if (ffound == false) {
-                fexit_in_advance = true;
-                break;
-            }
-
-        } // end for(i)
-
-        dyn_free(dirblock);
-    }
-
-    if (fexit_in_advance) {
-        bzero(found, sizeof(diritem_t));
-        return false;
-    } else {
-        memmove(found, &cur, sizeof(diritem_t));
+    if (found == null)    panic("diritem_find(): null pointer");
+    else    bzero(found, sizeof(diritem_t));
+    if (is_root_dir(dir)) {
+        memmove(found, *(get_root_dir()), sizeof(diritem_t));
         return true;
     }
+
+    diritem_t cur;
+    memmove(&cur, *(get_root_dir()), sizeof(diritem_t));
+    char name_storage[DIRITEM_NAME_LEN] = { 0 };
+    uint32_t dir_sz = strlen(dir), i = 1;
+    dirblock_t *db = dyn_alloc(sizeof(dirblock_t));
+
+    while (i < dir_sz) {
+        uint32_t j = 0;
+        while (i < dir_sz && dir[i] != DIRNAME_ROOT_ASCII) {
+            name_storage[j++] = dir[i++];
+        }
+        name_storage[j] = 0;
+        ++i;
+
+        int result = diritem_find_sub(&cur, name_storage);
+        if (result == -1)    break;
+        else  {
+            uint32_t lba =
+                iblock_get(cur.inode_idx_, result / MAX_DIRITEM_PER_BLOCK);
+            if (lba < __super_block.lba_free_)    panic("diritem_find(): bug");
+            else    free_rw_disk(db, lba, ATA_CMD_IO_READ);
+
+            diritem_t *temp = i >= dir_sz ? found : &cur;
+            dirblock_get(db, result % MAX_DIRITEM_PER_BLOCK, temp);
+        }
+
+    } // end while()
+    dyn_free(db);
+
+    return found->name_[0] == 0 ? false : true;
 }
 
 /**
- * @brief get a new dirblock
+ * @brief create current directory item
  * 
- * @param result new dirblock
- * @param self   inode index itself
- * @param parent parent inode index
+ * @param type         file type
+ * @param item_name    item name
+ * @param parent_inode parent inode index
+ * 
+ * @return diritem object pointer, NEED to release
  */
-void
-dirblock_get_new(dirblock_t *result, int self, int parent) {
-    if (result == null)    panic("dirblock_get_new(): null pointer");
+diritem_t *
+diritem_create(inode_type_t type, const char *item_name, int parent_inode) {
+    diritem_t *di = dyn_alloc(sizeof(diritem_t));
+    bzero(di, sizeof(diritem_t));
+    int inode_cur = inode_allocate();
+    inode_map_setup(inode_cur, true);
+    diritem_set(di, type, inode_cur, item_name);
 
-    // [0] .
-    // [1] ..
-    diritem_t *cur = result->dir_, *pre = result->dir_ + 1;
-    cur->type_ = pre->type_ = INODE_TYPE_DIR;
-    cur->inode_idx_ = self;
-    pre->inode_idx_ = parent;
-    bzero(cur->name_, DIRITEM_NAME_LEN);
-    bzero(pre->name_, DIRITEM_NAME_LEN);
-    memmove(cur->name_, ".", sizeof(1));
-    memmove(pre->name_, "..", sizeof(2));
-    result->amount_ = 2;
+    // use to initialize inode
+    int free = free_allocate();
+    free_map_setup(free, true);
+
+    if (type == INODE_TYPE_FILE) {
+        inode_set(inode_cur, 0, free);
+    } else if (type == INODE_TYPE_DIR) {
+        inode_set(inode_cur, 2, free);
+
+        // new diritem push to disk
+        dirblock_t *db_new = dyn_alloc(sizeof(dirblock_t));
+        bzero(db_new, sizeof(dirblock_t));
+        dirblock_get_new(db_new, inode_cur, parent_inode);
+        free_rw_disk(db_new, free, ATA_CMD_IO_WRITE);
+        dyn_free(db_new);
+    } else    panic("diritem_create(): bug");
+
+    inodes_rw_disk(inode_cur, ATA_CMD_IO_WRITE);
+    inode_map_update();
+    free_map_update();
+    return di;
 }
 
 /**
- * @brief Set up the root dir
+ * @brief current diritem push to parent's
  * 
- * @param is_new new disk
+ * @param parent parent diritem
+ * @param cur    current diritem
  */
 void
-setup_root_dir(bool is_new) {
+diritem_push(diritem_t *parent, diritem_t *cur) {
+    if (parent == null || cur == null)    panic("diritem_push(): null pointer");
 
-    // setup dir item
-    diritem_set(&__fs_root_dir, INODE_TYPE_DIR, INODE_INDEX_ROOT, DIRNAME_ROOT_STR);
-
-    if (is_new) {
-
-        dirblock_t dirblock;
-        bzero(&dirblock, sizeof(dirblock_t));
-        dirblock_get_new(&dirblock, INODE_INDEX_ROOT, INVALID_INDEX);
-
-        // setup inode
-        uint32_t free_block = free_allocate();
-        inode_set(INODE_INDEX_ROOT, 1, free_block);
-        inodes_rw_disk(INODE_INDEX_ROOT, ATA_CMD_IO_WRITE);
-        inode_map_setup(INODE_INDEX_ROOT, true);
-
-        free_map_setup(free_block, true);
-        free_rw_disk(&dirblock, free_block, ATA_CMD_IO_WRITE);
-
-        inode_map_update();
+    // get parent dirblock
+    uint32_t index_iblock =
+        __fs_inodes[parent->inode_idx_].size_ / MAX_DIRITEM_PER_BLOCK;
+    uint32_t block_lba = iblock_get(parent->inode_idx_, index_iblock);
+    dirblock_t *db = dyn_alloc(sizeof(dirblock_t));
+    if (block_lba >= __super_block.lba_free_)
+        free_rw_disk(db, block_lba, ATA_CMD_IO_READ);
+    else if (block_lba == 0) {
+        bzero(db, sizeof(dirblock_t));
+        block_lba = free_allocate();
+        free_map_setup(block_lba, true);
         free_map_update();
-    }
+
+        iblock_set(parent->inode_idx_, index_iblock, block_lba);
+        inodes_rw_disk(parent->inode_idx_, ATA_CMD_IO_WRITE);
+    } else    panic("diritem_push(): bug");
+
+    // push to parent
+    uint32_t db_index =
+        __fs_inodes[parent->inode_idx_].size_ % MAX_DIRITEM_PER_BLOCK;
+    memmove(&db->dir_[db_index], cur, sizeof(diritem_t));
+    ++__fs_inodes[parent->inode_idx_].size_;
+    free_rw_disk(db, block_lba, ATA_CMD_IO_WRITE);
+    inodes_rw_disk(parent->inode_idx_, ATA_CMD_IO_WRITE);
+
+    dyn_free(db);
+}
+
+/**
+ * @brief remove current diritem from parent's
+ * 
+ * @param parent parent diritem
+ * @param cur    current diritem
+ * 
+ * @retval 0: succeed
+ * @retval -1: failed, not such filename
+ */
+int
+diritem_remove(diritem_t *parent, diritem_t *cur) {
+    if (parent == null || cur == null)    panic("diritem_remove(): null pointer");
+
+    int result = diritem_find_sub(parent, cur->name_);
+    if (result == -1)    return -1;
+
+    uint32_t lba = iblock_get(parent->inode_idx_, result / MAX_DIRITEM_PER_BLOCK);
+    if (lba < __super_block.lba_free_)    panic("diritem_remove(): bug");
+
+    // remove from parent
+    dirblock_t *db = dyn_alloc(sizeof(dirblock_t));
+    free_rw_disk(db, lba, ATA_CMD_IO_READ);
+    dirblock_set(db, result % MAX_DIRITEM_PER_BLOCK, null);
+    free_rw_disk(db, lba, ATA_CMD_IO_WRITE);
+    --__fs_inodes[parent->inode_idx_].size_;
+    inodes_rw_disk(parent->inode_idx_, ATA_CMD_IO_WRITE);
+
+    // remove from child
+    diritem_remove_sub(cur);
+    free_map_update();
+    inode_map_update();
+
+    dyn_free(db);
+    return 0;
+}
+
+/**
+ * @brief get the root directory item object
+ * 
+ * @return root directory
+ */
+diritem_t **
+get_root_dir(void) {
+    static diritem_t *__fs_root_dir;
+    return &__fs_root_dir;
 }

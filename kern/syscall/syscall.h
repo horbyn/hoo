@@ -5,11 +5,16 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_MODULE_FS_H__
-#define __KERN_MODULE_FS_H__
+#ifndef __KERN_SYSCALL_SYSCALL_H__
+#define __KERN_SYSCALL_SYSCALL_H__
 
-#include "kern/fs/files.h"
+#include "kern/driver/io.h"
+#include "user/syscall_num.h"
 
-void kinit_fs(void);
+#define MAX_SYSCALL 32
+typedef void (*syscall_t)(void);
+extern syscall_t __stub[MAX_SYSCALL];
+
+void syscall_init(void);
 
 #endif

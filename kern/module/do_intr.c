@@ -20,10 +20,17 @@ kinit_isr_idt(void) {
         set_isr_entry(&__isr[i], (isr_t)isr_default);
 
     // specific isr routines
-     set_isr_entry(&__isr[ISR32_TIMER], (isr_t)timer);
+    set_isr_entry(&__isr[ISR32_TIMER], (isr_t)timer);
+    set_isr_entry(&__isr[ISR128_SYSCALL], (isr_t)syscall);
 
+    // set __idt[]
+    // all the idts point to the default handling;
+    // after that, idt #128 that corresponding to isr #34 points to system call
+    // which need dpl 3
     for (uint32_t i = 0; i < IDT_ENTRIES_NUM; ++i)
         set_idt_entry(&__idt[i], PL_KERN, INTER_GATE, (uint32_t)isr_part1[i]);
+    set_idt_entry(&__idt[ISR128_SYSCALL], PL_USER, TRAP_GATE,
+        (uint32_t)isr_part1[ISR128_SYSCALL]);
 
     // load idtr
     __idtr.limit_ = sizeof(__idt) - 1;
@@ -32,4 +39,6 @@ kinit_isr_idt(void) {
     __asm__  volatile ("lidt %k1\n\t"
         "sidt %0" : "=m"(idtr_value) : "m"(__idtr));
     printf("[DEBUG] idt: 0x%x, idtr: 0x%x\n", __idt, idtr_value.base_);
+
+    syscall_init();
 }

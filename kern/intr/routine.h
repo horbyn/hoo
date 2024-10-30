@@ -13,6 +13,7 @@
 #include "kern/sched/tasks.h"
 
 #define ISR32_TIMER             32
+#define ISR128_SYSCALL          128
 
 void isr_default(void);
 void timer(void);

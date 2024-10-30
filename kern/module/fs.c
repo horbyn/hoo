@@ -29,9 +29,19 @@ kinit_fs(void) {
     bool is_new = setup_super_block();
     setup_inode(is_new);
     setup_free_map(is_new);
-    setup_root_dir(is_new);
+    diritem_t **root = get_root_dir();
+    if (is_new)
+        (*root) = diritem_create(INODE_TYPE_DIR, DIRNAME_ROOT_STR, INVALID_INDEX);
+    else {
+        (*root) = dyn_alloc(sizeof(diritem_t));
+        (*root)->inode_idx_ = 0;
+        (*root)->type_ = INODE_TYPE_DIR;
+        (*root)->name_[0] = DIRNAME_ROOT_ASCII;
+        (*root)->name_[1] = 0;
+    }
+    filesystem_init();
 
     // take effect after interrupt enabling
-    ata_driver_change_mode(ATA_METHOD_IRQ);
+    // ata_driver_change_mode(ATA_METHOD_IRQ);
 
 }

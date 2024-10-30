@@ -48,6 +48,10 @@ bochs:
 
 qemu:
 	qemu-system-i386 -smp 2 -m 32M -boot a -fda $(BOOT_IMG) \
+		-drive file=$(DISK),media=disk,index=0,format=raw
+
+qemu-debug:
+	qemu-system-i386 -smp 2 -m 32M -boot a -fda $(BOOT_IMG) \
 		-drive file=$(DISK),media=disk,index=0,format=raw -S -gdb tcp::12345
 
 # -f: dont generate the file if exists

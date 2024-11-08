@@ -5,6 +5,9 @@
  *                                                                        *
  **************************************************************************/
 #include "thread_bucket.h"
+#include "kern/panic.h"
+#include "kern/mem/pm.h"
+#include "kern/mem/vm.h"
 
 static thread_buckmngr_t *__mdata_buckmngr;
 

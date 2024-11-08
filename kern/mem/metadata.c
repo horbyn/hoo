@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "metadata.h"
+#include "format_list.h"
 
 static fmtlist_t *__vs = 0;
 static fmtlist_t *__node = 0;

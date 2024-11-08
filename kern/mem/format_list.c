@@ -5,6 +5,10 @@
  *                                                                        *
  **************************************************************************/
 #include "format_list.h"
+#include "pm.h"
+#include "vm_kern.h"
+#include "kern/panic.h"
+#include "user/lib.h"
 
 /**
  * @brief convert a page into multiple specific elements

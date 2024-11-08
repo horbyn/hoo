@@ -5,6 +5,10 @@
  *                                                                        *
  **************************************************************************/
 #include "tasks.h"
+#include "kern/panic.h"
+#include "kern/mem/metadata.h"
+#include "kern/mem/vm.h"
+#include "kern/utilities/queue.h"
 
 static queue_t __queue_ready, __queue_running;
 

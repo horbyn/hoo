@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "pcb.h"
+#include "kern/panic.h"
+#include "user/lib.h"
 
 /**
  * @brief setup pcb object

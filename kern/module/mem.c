@@ -5,6 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #include "mem.h"
+#include "kern/x86.h"
+#include "kern/panic.h"
+#include "kern/mem/pm.h"
+#include "kern/mem/vm.h"
+#include "kern/module/log.h"
 
 static mminfo_t __mminfo = { MM_BASE, 0 };
 
@@ -37,7 +42,7 @@ get_mminfo() {
 void
 kinit_memory() {
     get_mminfo();
-    printf("[DEBUG] available memory: [0x%x, 0x%x)\n",
+    klog_write("[DEBUG] available memory: [0x%x, 0x%x)\n",
         __mminfo.base_, __mminfo.base_ + __mminfo.length_);
     init_phymm_system(__mminfo.length_);
     init_virmm_system();

@@ -8,13 +8,6 @@
 #ifndef __KERN_KERN_H__
 #define __KERN_KERN_H__
 
-#include "module/conf.h"
-#include "module/do_intr.h"
-#include "module/driver.h"
-#include "module/fs.h"
-#include "module/mem.h"
-#include "module/sched.h"
-
 void kern_init();
 void kern_exec();
 

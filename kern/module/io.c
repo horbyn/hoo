@@ -4,21 +4,29 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "node.h"
-#include "kern/panic.h"
+#include "io.h"
+#include "kern/utilities/format.h"
+#include "kern/driver/cga/cga.h"
 
 /**
- * @brief setup the node object
- * 
- * @param node the node object
- * @param data the data wrapped by the node
- * @param next next node
+ * @brief i/o system initialization
  */
 void
-node_set(node_t *node, void *data, node_t *next) {
-    if (node == null)    panic("node_set(): null pointer");
-    if (data == null)    node->data_ = null;
-    else    node->data_ = data;
-    if (next == null)    node->next_ = null;
-    else    node->next_ = next;
+kinit_io(void) {
+    cga_clear();
+    cga_set_attribute(SCBUFF_COLOR_WHITE, SCBUFF_STYLE_LIGHT);
+}
+
+/**
+ * @brief formatting printing
+ * 
+ * @param fmt formatting string
+ * @param ... variadic parameters
+ */
+void
+printf(const char *fmt, ...) {
+    va_list va;
+    VA_START(va, fmt);
+    format(fmt, va, (void *)FD_STDOUT);
+    VA_END(va);
 }

@@ -5,6 +5,9 @@
  *                                                                        *
  **************************************************************************/
 #include "thread_fmngr.h"
+#include "kern/panic.h"
+#include "kern/mem/pm.h"
+#include "kern/mem/vm.h"
 
 static uint8_t *__bitmap_buff;
 static fd_t    *__files_array;
@@ -53,6 +56,11 @@ init_thread_fmngr(pcb_t *pcb) {
         bitmap_init(&((__mdata_fmngr + i)->fd_set_), MAX_FILES_PER_TASK,
             __bitmap_buff + (i * (MAX_FILES_PER_TASK / BITS_PER_BYTE)));
         (__mdata_fmngr + i)->files_ = __files_array + (i * MAX_FILES_PER_TASK);
+
+        // for stdin, stdout, stderr
+        bitmap_set(&(__mdata_fmngr + i)->fd_set_, FD_STDIN);
+        bitmap_set(&(__mdata_fmngr + i)->fd_set_, FD_STDOUT);
+        bitmap_set(&(__mdata_fmngr + i)->fd_set_, FD_STDERR);
     }
 }
 

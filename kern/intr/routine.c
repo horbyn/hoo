@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "routine.h"
+#include "kern/panic.h"
+#include "kern/sched/tasks.h"
 
 /**
  * @brief intel reserved exception names

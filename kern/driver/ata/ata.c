@@ -5,6 +5,9 @@
  *                                                                        *
  **************************************************************************/
 #include "ata.h"
+#include "ata_polling.h"
+#include "kern/panic.h"
+#include "kern/module/log.h"
 
 static atamth_t __ata_driver_method;
 
@@ -17,7 +20,7 @@ init_ata(void) {
 
     ataspc_t *ata_space = get_ataspace();
     for (uint32_t i = 0; i < ata_space->device_amount_; ++i) {
-        printf("================ DEVICE  INFO ================"
+        klog_write("================ DEVICE  INFO ================"
             "\nbus:           %s"
             "\nbus wire:      %s"
             "\ntype:          %s"

@@ -9,8 +9,6 @@
 #define __KERN_INTR_INTR_H__
 
 #include "intr_stuff.h"
-#include "kern/desc/desc.h"
-#include "kern/driver/io.h"
 
 void set_idt_entry(idt_t *idt, privilege_t pvl, gatedesc_t gate, uint32_t addr);
 void set_isr_entry(isr_t *isr, isr_t addr);

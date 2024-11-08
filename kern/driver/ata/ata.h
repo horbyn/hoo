@@ -8,7 +8,7 @@
 #ifndef __KERN_DRIVER_ATA_ATA_H__
 #define __KERN_DRIVER_ATA_ATA_H__
 
-#include "ata_polling.h"
+#include "ata_cmd.h"
 
 /**
  * @brief ata method like IRQs or polling

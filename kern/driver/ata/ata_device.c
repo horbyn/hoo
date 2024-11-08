@@ -5,6 +5,9 @@
  *                                                                        *
  **************************************************************************/
 #include "ata_device.h"
+#include "kern/panic.h"
+#include "kern/module/io.h"
+#include "user/lib.h"
 
 /**
  * @brief wait 400 ns

@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "conf.h"
+#include "kern/module/log.h"
 
 static Desc_t __gdt[SIZE_GDT];
 static Gdtr_t __gdtr;
@@ -44,7 +45,7 @@ config_tss(void) {
     __asm__ ("movw $((5 * 8) | 3), %%ax\n\t"
         "ltr %%ax\n\t"
         "str %0" : "=a"(tr_value) :);
-    printf("[DEBUG] tr: 0x%x\n", tr_value);
+    klog_write("[DEBUG] tr: 0x%x\n", tr_value);
 }
 
 /**
@@ -52,7 +53,7 @@ config_tss(void) {
  */
 void
 kinit_config(void) {
-    printf("[DEBUG] null pointer: 0x%x\n", null);
+    klog_write("[DEBUG] null pointer: 0x%x\n", null);
     paging();
     config_gdt();
     config_tss();

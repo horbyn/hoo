@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "hoo.h"
+#include "kern/fs/files.h"
+#include "kern/module/log.h"
 
 /**
  * @brief get the page directory table of hoo thread
@@ -38,6 +40,22 @@ get_hoo_pcb(void) {
     //   while the rest by dynamically allocation
     static pcb_t hoo_pcb;
     return &hoo_pcb;
+}
+
+/**
+ * @brief get the cache buffer of hoo thread
+ * 
+ * @return cache buffer
+ */
+cachebuff_t *
+get_hoo_cache_buff(void) {
+    static cachebuff_t hoo_log_cache;
+    static bool is_init = false;
+    if (is_init == false) {
+        cachebuff_set(&hoo_log_cache, (char *)STACK_HOO_RING0, PGSIZE * 2);
+        is_init = true;
+    }
+    return &hoo_log_cache;
 }
 
 /**

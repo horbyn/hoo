@@ -5,6 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #include "inodes.h"
+#include "free.h"
+#include "kern/panic.h"
+#include "kern/driver/ata/ata.h"
+#include "kern/utilities/bitmap.h"
+#include "user/lib.h"
 
 // inodes map in-memory cache (set means caching on disk;
 //     clear means caching in memory)
@@ -131,7 +136,7 @@ iblock_handle(int inode_idx, int iblock_idx, uint32_t write, uint32_t *read) {
         panic("iblock_handle(): invalid iblock index");
     if (write < __super_block.lba_free_ && read == null)
         panic("iblock_handle(): invalid lba");
-    if (write >= __super_block.lba_free_ && read)
+    if (write >= __super_block.lba_free_ && read != null)
         panic("iblock_handle(): illegal operation");
 
     static const int DIRECT_INDEX = MAX_INODE_BLOCKS - 2 - 1,

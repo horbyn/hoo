@@ -8,8 +8,7 @@
 #ifndef __KERN_UTILITIES_BITMAP_H__
 #define __KERN_UTILITIES_BITMAP_H__
 
-#include "kern/types.h"
-#include "kern/driver/io.h"
+#include "kern/x86.h"
 
 /**
  * @brief bitmap structure definition

@@ -8,8 +8,7 @@
 #ifndef __KERN_MEM_VM_H__
 #define __KERN_MEM_VM_H__
 
-#include "metadata.h"
-#include "vm_kern.h"
+#include "vspace.h"
 
 void init_virmm_system(void);
 void *vir_alloc_pages(vspace_t *vspace, uint32_t amount, uint32_t begin);

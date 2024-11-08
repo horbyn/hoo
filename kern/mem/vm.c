@@ -5,6 +5,10 @@
  *                                                                        *
  **************************************************************************/
 #include "vm.h"
+#include "metadata.h"
+#include "pm.h"
+#include "vm_kern.h"
+#include "kern/panic.h"
 
 /**
  * @brief initialize virtual memory system

@@ -9,8 +9,7 @@
 #define __KERN_SCHED_TASKS_H__
 
 #include "kern/hoo/hoo.h"
-#include "kern/mem/vm.h"
-#include "kern/utilities/queue.h"
+#include "kern/utilities/node.h"
 
 extern void switch_to(node_t *, node_t *);
 

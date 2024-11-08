@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "queue.h"
+#include "kern/panic.h"
 
 /**
  * @brief initialize the queue

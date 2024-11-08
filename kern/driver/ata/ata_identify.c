@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "ata_identify.h"
+#include "kern/panic.h"
+#include "user/lib.h"
 
 /**
  * @brief parse ata string

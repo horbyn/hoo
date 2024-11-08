@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "pm.h"
+#include "kern/panic.h"
+#include "user/lib.h"
 
 static uint8_t __bmbuff_phymm[SIZE_BITMAP_PHYMM4G] __attribute__((aligned(16)));
 static bitmap_t __bm_phymm;

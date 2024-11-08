@@ -8,7 +8,7 @@
 #ifndef __KERN_DRIVER_ATA_ATA_STUFF_H__
 #define __KERN_DRIVER_ATA_ATA_STUFF_H__
 
-#include "kern/types.h"
+#include "kern/x86.h"
 
 #define BYTES_SECTOR    512
 

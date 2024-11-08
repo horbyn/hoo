@@ -5,13 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_SYSCALL_SYSCALL_H__
-#define __KERN_SYSCALL_SYSCALL_H__
+#ifndef __KERN_PANIC_H__
+#define __KERN_PANIC_H__
 
-#define MAX_SYSCALL 32
-typedef void (*syscall_t)(void);
-extern syscall_t __stub[MAX_SYSCALL];
+extern void isr_part3(void);
 
-void syscall_init(void);
+void panic(const char *extra);
 
 #endif

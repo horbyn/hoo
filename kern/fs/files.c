@@ -5,6 +5,14 @@
  *                                                                        *
  **************************************************************************/
 #include "files.h"
+#include "dir.h"
+#include "free.h"
+#include "kern/panic.h"
+#include "kern/dyn/dynamic.h"
+#include "kern/driver/ata/ata_cmd.h"
+#include "kern/driver/ata/ata.h"
+#include "kern/driver/cga/cga.h"
+#include "user/lib.h"
 
 files_t *__fs_files;
 typedef fd_t global_fd_t;
@@ -253,6 +261,12 @@ void
 files_write(fd_t fd, const char *buf, uint32_t size) {
     if (fd > MAX_FILES_PER_TASK)    panic("files_write(): invalid fd");
     if (buf == 0 || size == 0)    return;
+    if (fd == FD_STDIN)    panic("files_write(): not allowd to write to stdin");
+
+    if (fd == FD_STDOUT || fd == FD_STDERR) {
+        cga_putstr(buf, size);
+        return;
+    }
 
     pcb_t *cur_pcb = get_current_pcb();
     global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);

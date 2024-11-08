@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "ata_polling.h"
+#include "kern/panic.h"
 
 /**
  * @brief ata initialization with polling method

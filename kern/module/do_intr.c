@@ -5,6 +5,9 @@
  *                                                                        *
  **************************************************************************/
 #include "do_intr.h"
+#include "kern/intr/routine.h"
+#include "kern/module/log.h"
+#include "kern/syscall/syscall.h"
 
 static idtr_t __idtr;
 __attribute__((aligned(0x4))) isr_t __isr[IDT_ENTRIES_NUM];
@@ -38,7 +41,7 @@ kinit_isr_idt(void) {
     idtr_t idtr_value;
     __asm__  volatile ("lidt %k1\n\t"
         "sidt %0" : "=m"(idtr_value) : "m"(__idtr));
-    printf("[DEBUG] idt: 0x%x, idtr: 0x%x\n", __idt, idtr_value.base_);
+    klog_write("[DEBUG] idt: 0x%x, idtr: 0x%x\n", __idt, idtr_value.base_);
 
     syscall_init();
 }

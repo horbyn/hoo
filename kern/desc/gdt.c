@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "gdt.h"
+#include "kern/panic.h"
+#include "kern/module/log.h"
 
 /**
  * @brief Set the gdt descriptor
@@ -75,5 +77,5 @@ void set_gdtr(Gdtr_t *gdtr, Desc_t *gdt, uint32_t gdt_size) {
     __asm__ ("lgdt (%1)\n\t"
         "sgdt %0" : "=m"(gdtr_value) :"r"(gdtr));
 
-    printf("[DEBUG] gdt: 0x%x, gdtr: 0x%x\n", gdt, gdtr_value.linear_);
+    klog_write("[DEBUG] gdt: 0x%x, gdtr: 0x%x\n", gdt, gdtr_value.linear_);
 }

@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "dynamic.h"
+#include "kern/mem/pm.h"
+#include "kern/mem/vm.h"
 
 /**
  * @brief heap memory allocation

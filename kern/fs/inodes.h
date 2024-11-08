@@ -8,7 +8,8 @@
 #ifndef __KERN_FS_INODES_H__
 #define __KERN_FS_INODES_H__
 
-#include "free.h"
+#include "super_block.h"
+#include "kern/driver/ata/ata_cmd.h"
 
 /**
  * @brief inode type

@@ -4,65 +4,13 @@
  *                              (horbyn@outlook.com)                      *
  *                                                                        *
  **************************************************************************/
-#include "io.h"
-
-/**
- * @brief i/o system initialization
- */
-void
-kinit_io(void) {
-    cga_clear();
-}
-
-
-/**
- * @brief formatting printing
- * 
- * @param fmt formatting string
- * @param ... variadic parameters
- */
-void
-printf(const char *fmt, ...) {
-    va_list va;
-    VA_START(va, fmt);
-
-    for (; *fmt; ++fmt) {
-        if (*fmt != '%') {
-            cga_putc(*fmt, DEF_IOATTR);
-            continue;
-        }
-
-        // ignore if the last is '%'
-        if (*(fmt + 1) == 0)    return;
-        else    ++fmt;
-
-        // %% %c %s %d %x(%X) %p
-        switch(*fmt) {
-        case '%': cga_putc('%', DEF_IOATTR); break;
-        case 'c': VA_ARG(va, char); cga_putc(*((char *)va), DEF_IOATTR); break;
-        case 's':
-            VA_ARG(va, const char *);
-            uint32_t addr = *((uint32_t *)va);
-            cga_putstr((const char *)addr, DEF_IOATTR); break;
-        case 'd': VA_ARG(va, int); cga_putdig(*((int *)va), 10, DEF_IOATTR); break;
-        case 'p':
-        case 'X':
-        case 'x':
-            VA_ARG(va, uint32_t);
-            cga_putdig(*((uint32_t *)va), 16, DEF_IOATTR);
-            break;
-        default:
-            // something unsupported displays directly
-            // TODO: %f
-            VA_ARG(va, POINTER_SIZE);
-            cga_putc('%', DEF_IOATTR);
-            cga_putc(*fmt, DEF_IOATTR);
-            break;
-        }
-    }
-
-    VA_END(va);
-}
+#include "panic.h"
+#include "x86.h"
+#include "kern/driver/cga/cga.h"
+#include "kern/hoo/hoo.h"
+#include "kern/module/io.h"
+#include "kern/page/page_stuff.h"
+#include "kern/intr/intr_stack.h"
 
 /**
  * @brief print the stack frame so far

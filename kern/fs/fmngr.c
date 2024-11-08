@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "fmngr.h"
+#include "kern/panic.h"
 
 /**
  * @brief allocate the file descriptor

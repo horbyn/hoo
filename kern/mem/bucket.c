@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "bucket.h"
+#include "kern/panic.h"
 
 /**
  * @brief bucket manager initialization

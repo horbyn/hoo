@@ -9,8 +9,6 @@
 #define __KERN_UTILITIES_QUEUE_H__
 
 #include "node.h"
-#include "kern/x86.h"
-#include "kern/driver/io.h"
 
 /**
  * @brief definition of queue

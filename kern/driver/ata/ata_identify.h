@@ -9,9 +9,6 @@
 #define __KERN_DRIVER_ATA_ATA_IDENTIFY_H__
 
 #include "ata_stuff.h"
-#include "kern/types.h"
-#include "kern/driver/io.h"
-#include "kern/lib/lib.h"
 
 #define SIZE_ATA_STRING_BUFF 1024
 

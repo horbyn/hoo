@@ -11,7 +11,7 @@ SIZE_SEC := 512
 SSRC := $(shell find . -name "*.S")
 CSRC := $(shell find . -name "*.c")
 OBJS := $(filter-out ./boot/bootsect.o, $(SSRC:.S=.o))
-OBJC := $(CSRC:.c=.o)
+OBJC := $(filter-out ./user/null.o, $(CSRC:.c=.o))
 
 LD := ld
 CC := gcc

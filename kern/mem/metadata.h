@@ -9,7 +9,6 @@
 #define __KERN_MEM_METADATA_H__
 
 #include "vspace.h"
-#include "format_list.h"
 
 void     init_metadata();
 vspace_t *vspace_alloc();

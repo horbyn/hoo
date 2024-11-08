@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "intr.h"
+#include "kern/desc/desc.h"
+#include "kern/panic.h"
 
 /**
  * @brief setup the idt entry

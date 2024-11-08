@@ -5,6 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #include "free.h"
+#include "kern/panic.h"
+#include "kern/driver/ata/ata.h"
+#include "kern/dyn/dynamic.h"
+#include "kern/utilities/bitmap.h"
+#include "user/lib.h"
 
 static uint8_t *__bmbuff_fs_free;
 static uint32_t __bmbuff_fs_free_inbytes;

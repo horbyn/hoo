@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "list.h"
+#include "kern/panic.h"
+#include "kern/x86.h"
 
 /**
  * @brief list initialization

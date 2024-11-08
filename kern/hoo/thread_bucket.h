@@ -9,7 +9,6 @@
 #define __KERN_HOO_THREAD_BUCKET_H__
 
 #include "kern/mem/bucket.h"
-#include "kern/mem/vm.h"
 #include "kern/sched/pcb.h"
 
 // bucket size array: 8, 16, 32, 64, 128, 256, 512, 1024

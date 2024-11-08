@@ -5,6 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #include "dir.h"
+#include "free.h"
+#include "kern/panic.h"
+#include "kern/dyn/dynamic.h"
+#include "kern/driver/ata/ata_cmd.h"
+#include "user/lib.h"
 
 /**
  * @brief get a new dirblock

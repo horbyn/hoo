@@ -5,19 +5,24 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_MODULE_MEM_H__
-#define __KERN_MODULE_MEM_H__
+#ifndef __KERN_UTILITIES_CACHE_BUFF_H__
+#define __KERN_UTILITIES_CACHE_BUFF_H__
 
 #include "kern/types.h"
+#include "kern/fs/fs_stuff.h"
 
 /**
- * @brief physical memory information
+ * @brief cache buffer
  */
-typedef struct mem_info {
-    uint32_t base_;
-    uint32_t length_;
-} mminfo_t;
+typedef struct cache_buff {
+    char       *buff_;
+    uint32_t   capacity_;
+    uint32_t   curlen_;
+    fd_t       redirect_;
+} cachebuff_t;
 
-void kinit_memory();
+void cachebuff_set(cachebuff_t *cbuff, char *buff, uint32_t capacity);
+void cachebuff_redirect(cachebuff_t *cbuff, fd_t redirect);
+void cachebuff_write(cachebuff_t *cbuff, const char *string, uint32_t len);
 
 #endif

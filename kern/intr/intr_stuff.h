@@ -8,7 +8,7 @@
 #ifndef __KERN_INTR_INTR_STUFF_H__
 #define __KERN_INTR_INTR_STUFF_H__
 
-#include "kern/x86.h"
+#include "kern/types.h"
 
 #define IDT_ENTRIES_NUM     256
 

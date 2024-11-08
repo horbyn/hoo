@@ -5,6 +5,18 @@
  *                                                                        *
  **************************************************************************/
 #include "cga.h"
+#include "user/lib.h"
+
+/**
+ * @brief get cga attribute
+ * 
+ * @return cga attribute
+ */
+static uint8_t *
+cga_get_attribute(void) {
+    static uint8_t cga_attr = 0;
+    return &cga_attr;
+}
 
 /**
  * @brief screen scroll back
@@ -65,11 +77,34 @@ cga_clear(void) {
 }
 
 /**
+ * @brief setup cga attribute
+ * 
+ * @param color  cga color
+ * @param bright cga brightness
+ */
+void
+cga_set_attribute(color_t color, bright_t bright) {
+
+    /*
+     * The CGA specification as following, only setup the foreground here
+     * 
+     * Bit 76543210
+     *     ||||||||
+     *     |||||^^^-fore colour
+     *     ||||^----fore colour bright bit
+     *     |^^^-----back colour
+     *     ^--------back colour bright bit OR enables blinking Text
+     */
+
+    *(cga_get_attribute()) = (uint8_t)0 | ((uint8_t)bright << 3) | (uint8_t)color;
+}
+
+/**
  * @brief print a character
  * @param ch   character to be printed
  * @param attr attribute
  */
-void
+static void
 cga_putc(char ch, uint8_t attr) {
     uint16_t *vm = (uint16_t*)VIDEO_MEM;
     uint16_t ch_attr = (uint16_t)attr << 8;
@@ -113,34 +148,10 @@ cga_putc(char ch, uint8_t attr) {
 
 /**
  * @brief print a string
- * @param str string
- * @param attr attribute
+ * @param str  string
+ * @param len  string length
  */
 void
-cga_putstr(const char *str, uint8_t attr) {
-    uint32_t len = strlen(str);
-    for (uint32_t i = 0; i < len; ++i)    cga_putc(str[i], attr);
-}
-
-/**
- * @brief kernel print digit
- * @param digit digit
- * @param base  base
- * @param attr  attribute
- */
-void
-cga_putdig(uint32_t digit, uint8_t base, uint8_t attr) {
-
-    static char __arr_dig[32];
-    int i = 0;
-
-    do {
-        int remaider = digit % base;
-        if (remaider < 10)    __arr_dig[i] = (char)('0' + remaider);
-        else    __arr_dig[i] = (char)('a' + (remaider - 10));
-        digit /= base;
-        ++i;
-    } while (digit);
-
-    while (i)    cga_putc(__arr_dig[--i], attr);
+cga_putstr(const char *str, uint32_t len) {
+    for (uint32_t i = 0; i < len; ++i)    cga_putc(str[i], *(cga_get_attribute()));
 }

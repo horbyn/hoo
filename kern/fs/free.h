@@ -9,8 +9,7 @@
 #define __KERN_FS_FREE_H__
 
 #include "super_block.h"
-#include "kern/dyn/dynamic.h"
-#include "kern/utilities/bitmap.h"
+#include "kern/driver/ata/ata_cmd.h"
 
 void     setup_free_map(bool is_new);
 uint32_t free_allocate(void);

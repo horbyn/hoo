@@ -5,6 +5,10 @@
  *                                                                        *
  **************************************************************************/
 #include "super_block.h"
+#include "kern/panic.h"
+#include "kern/driver/ata/ata.h"
+#include "kern/driver/ata/ata_polling.h"
+#include "user/lib.h"
 
 super_block_t __super_block;
 

@@ -5,6 +5,10 @@
  *                                                                        *
  **************************************************************************/
 #include "fs.h"
+#include "kern/dyn/dynamic.h"
+#include "kern/fs/dir.h"
+#include "kern/fs/free.h"
+#include "kern/driver/ata/ata.h"
 
 /**
  * @brief initialize the disk layout

@@ -5,6 +5,9 @@
  *                                                                        *
  **************************************************************************/
 #include "vspace.h"
+#include "kern/panic.h"
+#include "kern/module/io.h"
+#include "user/lib.h"
 
 /**
  * @brief Set the vaddr object

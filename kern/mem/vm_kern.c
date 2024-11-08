@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "vm_kern.h"
+#include "kern/panic.h"
 
 static uint8_t __bmbuff_virmm[SIZE_BITMAP_VIRMM] __attribute__((aligned(16)));
 static bitmap_t __bm_virmm;

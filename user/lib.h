@@ -5,13 +5,20 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_SYSCALL_SYSCALL_H__
-#define __KERN_SYSCALL_SYSCALL_H__
+#ifndef __USER_LIB_LIB_H__
+#define __USER_LIB_LIB_H__
 
-#define MAX_SYSCALL 32
-typedef void (*syscall_t)(void);
-extern syscall_t __stub[MAX_SYSCALL];
+#include "kern/types.h"
 
-void syscall_init(void);
+/* string & memory operations */
+
+uint32_t strlen(const char *str);
+bool     strcmp(const char *a, const char *b);
+void     memset(void *buff, uint8_t fill , uint32_t bufflen);
+void     bzero(void *buff, uint32_t bufflen);
+int      memmove(void *dst, const void *src, uint32_t size);
+
+/* display */
+
 
 #endif

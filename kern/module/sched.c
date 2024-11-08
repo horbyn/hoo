@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "sched.h"
+#include "kern/sched/tasks.h"
 
 /**
  * @brief kernel initializes the tasks system

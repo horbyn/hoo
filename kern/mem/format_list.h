@@ -8,8 +8,6 @@
 #ifndef __KERN_MEM_FORMAT_LIST_H__
 #define __KERN_MEM_FORMAT_LIST_H__
 
-#include "pm.h"
-#include "vm_kern.h"
 #include "kern/utilities/list.h"
 
 /**

@@ -9,7 +9,6 @@
 #define __KERN_UTILITIES_NODE_H__
 
 #include "kern/x86.h"
-#include "kern/driver/io.h"
 
 /**
  * @brief definition of node

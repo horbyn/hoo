@@ -12,8 +12,6 @@
 #include "boot/config_boot.h"
 
 extern uint8_t __kern_end[];
-// the null pointer is not zero but a special address 
-extern void *null;
 
 // the ARDS amount addr
 #define ADDR_ARDS_NUM   \

@@ -8,6 +8,8 @@
 #ifndef __KERN_MEM_VM_KERN_H__
 #define __KERN_MEM_VM_KERN_H__
 
+#include "kern/x86.h"
+#include "kern/page/page_stuff.h"
 #include "kern/utilities/bitmap.h"
 
 #define KERN_METADATA       0xf0000000

@@ -9,7 +9,6 @@
 #define __KERN_DESC_GDT_H__
 
 #include "desc.h"
-#include "kern/driver/io.h"
 
 void set_gdt(Desc_t *d, uint32_t limit, uint32_t base,uint8_t a, uint8_t rw,
     uint8_t dc, uint8_t exe, uint8_t sys, uint8_t dpl, uint8_t ps, uint8_t l,

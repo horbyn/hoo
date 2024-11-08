@@ -8,7 +8,7 @@
 #ifndef __KERN_DRIVER_ATA_ATA_CMD_H__
 #define __KERN_DRIVER_ATA_ATA_CMD_H__
 
-#include "kern/types.h"
+#include "kern/x86.h"
 
 // ata port base
 #define ATA_PRIMARY_PORT_IO_BASE        0x1f0

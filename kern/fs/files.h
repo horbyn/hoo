@@ -8,7 +8,7 @@
 #ifndef __KERN_FS_FILES_H__
 #define __KERN_FS_FILES_H__
 
-#include "dir.h"
+#include "fs_stuff.h"
 #include "kern/types.h"
 
 extern files_t *__fs_files;

@@ -11,6 +11,6 @@
 #include "ata_device.h"
 
 void ata_polling_init(void);
-void ata_polling_rw(atabuff_t *buff, bool is_irq);
+void ata_polling_rw(atabuff_t *buff);
 
 #endif

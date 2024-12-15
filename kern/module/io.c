@@ -14,6 +14,7 @@
 void
 kinit_io(void) {
     cga_clear();
+    cga_init();
     cga_set_attribute(SCBUFF_COLOR_WHITE, SCBUFF_STYLE_LIGHT);
 }
 
@@ -24,7 +25,7 @@ kinit_io(void) {
  * @param ... variadic parameters
  */
 void
-printf(const char *fmt, ...) {
+kprintf(const char *fmt, ...) {
     va_list va;
     VA_START(va, fmt);
     format(fmt, va, (void *)FD_STDOUT);

@@ -46,6 +46,6 @@ kinit_fs(void) {
     filesystem_init();
 
     // take effect after interrupt enabling
-    // ata_driver_change_mode(ATA_METHOD_IRQ);
+    ata_driver_change_mode(ATA_METHOD_IRQ);
 
 }

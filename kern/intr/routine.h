@@ -9,6 +9,8 @@
 #define __KERN_INTR_ROUTINE_H__
 
 #define ISR32_TIMER             32
+#define ISR33_KEYBOARD          33
+#define ISR46_HARD1             46
 #define ISR128_SYSCALL          128
 
 void isr_default(void);

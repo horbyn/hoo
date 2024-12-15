@@ -5,12 +5,13 @@
  *                                                                        *
  **************************************************************************/
 #include "format.h"
-#include "kern/types.h"
+#include "user/types.h"
 #include "kern/fs/files.h"
 #include "kern/hoo/hoo.h"
 #include "kern/driver/cga/cga.h"
 #include "kern/utilities/format.h"
 #include "kern/utilities/cache_buff.h"
+#include "kern/module/io.h"
 #include "user/lib.h"
 
 /**

@@ -5,8 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #pragma once
-#ifndef __KERN_TYPES_H__
-#define __KERN_TYPES_H__
+#ifndef __USER_TYPES_H__
+#define __USER_TYPES_H__
 
 #ifndef bool
 typedef enum { false = 0, true } bool;

@@ -5,6 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #include "hoo.h"
+#include "thread_bucket.h"
+#include "thread_curdir.h"
+#include "thread_fmngr.h"
+#include "thread_pcb.h"
+#include "thread_tid.h"
 #include "kern/fs/files.h"
 #include "kern/module/log.h"
 
@@ -82,17 +87,22 @@ init_hoo(void) {
     // the dynamic space begins at 0x0040_0000 (as same as 0x8040_0000)
     //   because our kernel is very small that smaller than 1 page
     //   directory table
-    hoo_pcb->break_ = MB4;
+    hoo_pcb->break_ = KERN_HIGH_MAPPING + MB4;
+    vspace_set(&hoo_pcb->vmngr_, null, 0, 0, null);
 
     // initialize some metadata
     init_thread_buckmngr(hoo_pcb);
+    init_thread_curdir(hoo_pcb);
     init_thread_fmngr(hoo_pcb);
+    init_thread_pcb(hoo_pcb);
+    init_thread_tid(hoo_pcb);
 
     // The executable flow as far from boot to there,
     // uses the boot stack. Now we call this flow to
     // hoo thread, and the stack it used is hoo stack
     pcb_set(hoo_pcb, (uint32_t *)STACK_HOO_RING0, (uint32_t *)STACK_HOO_RING3,
         TID_HOO, (pgelem_t *)(V2P(get_hoo_pgdir())), &hoo_pcb->vmngr_, TIMETICKS,
-        thread_buckmngr_get(TID_HOO), thread_fmngr_get(TID_HOO), hoo_pcb->break_);
+        null, thread_buckmngr_get(TID_HOO), thread_fmngr_get(TID_HOO),
+        hoo_pcb->break_, INVALID_INDEX, thread_curdir_get(TID_HOO));
 
 }

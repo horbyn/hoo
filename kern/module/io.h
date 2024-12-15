@@ -9,6 +9,6 @@
 #define __KERN_MODULE_IO_H__
 
 void kinit_io(void);
-void printf(const char *fmt, ...);
+void kprintf(const char *fmt, ...);
 
 #endif

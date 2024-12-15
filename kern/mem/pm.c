@@ -7,9 +7,21 @@
 #include "pm.h"
 #include "kern/panic.h"
 #include "user/lib.h"
+#include "kern/utilities/spinlock.h"
 
 static uint8_t __bmbuff_phymm[SIZE_BITMAP_PHYMM4G] __attribute__((aligned(16)));
 static bitmap_t __bm_phymm;
+
+/**
+ * @brief get physical memory spinlock
+ * 
+ * @return spinlock 
+ */
+static spinlock_t *
+pm_get_spinlock(void) {
+    static spinlock_t pm_spinlock;
+    return &pm_spinlock;
+}
 
 /**
  * @brief initialize physical memory system
@@ -18,6 +30,7 @@ static bitmap_t __bm_phymm;
  */
 void
 init_phymm_system(uint32_t mem_size) {
+    spinlock_init(pm_get_spinlock());
     bitmap_init(&__bm_phymm, mem_size >> 12, __bmbuff_phymm);
 }
 
@@ -28,9 +41,10 @@ init_phymm_system(uint32_t mem_size) {
  */
 void *phy_alloc_page() {
     int i = 0;
-
+    wait(pm_get_spinlock());
     i = bitmap_scan_empty(&__bm_phymm);
     bitmap_set(&__bm_phymm, i);
+    signal(pm_get_spinlock());
     return (void *)((i <<= 12) + MM_BASE);
 }
 
@@ -45,8 +59,10 @@ phy_release_page(void *phy_addr) {
     if ((uint32_t)phy_addr < MM_BASE)
         panic("phy_release_page(): cannot release kernel physical memory");
 
+    wait(pm_get_spinlock());
     int i = ((uint32_t)phy_addr - MM_BASE) >> 12;
     bitmap_clear(&__bm_phymm, i);
+    signal(pm_get_spinlock());
 }
 
 /**

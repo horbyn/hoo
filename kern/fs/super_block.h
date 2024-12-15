@@ -9,7 +9,7 @@
 #define __KERN_FS_SUPER_BLOCK_H__
 
 #include "fs_stuff.h"
-#include "kern/types.h"
+#include "user/types.h"
 
 /**
  * @brief super block

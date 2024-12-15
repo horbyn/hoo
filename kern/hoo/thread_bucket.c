@@ -12,6 +12,19 @@
 static thread_buckmngr_t *__mdata_buckmngr;
 
 /**
+ * @brief thread bucket manager initialization
+ * 
+ * @param buckx bucket manager
+ */
+static void
+thread_buckmngr_init(buckx_mngr_t *buckx) {
+    for (int i = 0; i < MAX_BUCKET_SIZE; ++i) {
+        buckx_mngr_t *next = (i == MAX_BUCKET_SIZE - 1) ? null : buckx + i + 1;
+        buckmngr_init(buckx + i, (1 << (i + 3)), null, next);
+    }
+}
+
+/**
  * @brief initialize the bucket manager of all threads
  * 
  * @param pcb the pcb needed to allocate buckets manager
@@ -31,13 +44,8 @@ init_thread_buckmngr(pcb_t *pcb) {
         set_mapping(va, pa, PGFLAG_US | PGFLAG_RW | PGFLAG_PS);
     }
 
-    for (uint32_t i = 0; i < MAX_TASKS_AMOUNT; ++i) {
-        buckx_mngr_t *worker = (__mdata_buckmngr + i)->head_;
-        for (int i = 0; i < MAX_BUCKET_SIZE; ++i) {
-            buckx_mngr_t *next = (i == MAX_BUCKET_SIZE - 1) ? null : worker + i + 1;
-            buckmngr_init(worker + i, (1 << (i + 3)), null, next);
-        }
-    }
+    for (uint32_t i = 0; i < MAX_TASKS_AMOUNT; ++i)
+        thread_buckmngr_init((__mdata_buckmngr + i)->head_);
 }
 
 /**
@@ -51,4 +59,14 @@ thread_buckmngr_get(tid_t tid) {
     if (tid >= MAX_TASKS_AMOUNT)
         panic("thread_buckmngr_get(): thread id out of range");
     return __mdata_buckmngr[tid].head_;
+}
+
+/**
+ * @brief clear the bucket manager
+ * 
+ * @param tid thread id
+ */
+void
+thread_buckmngr_clear(tid_t tid) {
+    thread_buckmngr_init(thread_buckmngr_get(tid));
 }

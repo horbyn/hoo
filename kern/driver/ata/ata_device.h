@@ -41,22 +41,21 @@ typedef struct ata_space {
  */
 typedef struct ata_buff {
     // buffer pointer
-    void *buff_;
+    void     *buff_;
     // buffer size
     uint32_t len_;
     // lba no.
     uint32_t lba_;
     // operation command
     atacmd_t cmd_;
+    bool     finish_;
 } atabuff_t;
 
 void     atabuff_set(atabuff_t *ibuff, void *buff, uint32_t len, int lba,
     atacmd_t cmd);
 ataspc_t *get_ataspace(void);
 atadev_t *get_atadevice(void);
-void     ata_disable_irqs(void);
-void     ata_set_cmd(uint32_t dev, uint32_t lba, uint8_t cr, atacmd_t cmd,
-    bool is_irq);
+void     ata_set_cmd(uint32_t dev, uint32_t lba, uint8_t cr, atacmd_t cmd);
 void     ata_detect(void);
 
 #endif

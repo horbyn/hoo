@@ -68,15 +68,22 @@ fmtlist_alloc(fmtlist_t **fmtlist, uint32_t size) {
         if (list_isempty(&list->list_) == false) {
             ret = list_remove(&list->list_, 1)->data_;
             break;
-        }
+        } else if (list->capacity_ == 0)    break;
+
         pre = list;
         list = list->next_;
     }
     if (ret == null) {
-        // request new page
-        void *pa = phy_alloc_page();
-        void *va = vir_alloc_kern();
-        set_mapping(va, pa, PGFLAG_US | PGFLAG_RW | PGFLAG_PS);
+        void *va = null;
+        if (list != null && list->capacity_ == 0) {
+            // common processes
+            va = list;
+        } else {
+            // kernel process
+            void *pa = phy_alloc_page();
+            va = vir_alloc_kern();
+            set_mapping(va, pa, PGFLAG_US | PGFLAG_RW | PGFLAG_PS);
+        }
         fmtlist_init(va, size);
 
         if (pre == null)    *fmtlist = va;
@@ -121,8 +128,10 @@ fmtlist_release(fmtlist_t **fmtlist, void *elem, uint32_t elem_size) {
 
         if (list->list_.size_ == list->capacity_) {
             if (pre != null)    pre->next_ = list->next_;
-            vir_release_kern(list);
-            *fmtlist = null;
+            if ((uint32_t)list >= KERN_METADATA) {
+                vir_release_kern(list);
+                *fmtlist = null;
+            }
         }
         release = true;
         break;

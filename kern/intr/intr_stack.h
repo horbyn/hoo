@@ -8,7 +8,7 @@
 #ifndef __KERN_INTR_INTR_STACK_H__
 #define __KERN_INTR_INTR_STACK_H__
 
-#include "kern/types.h"
+#include "user/types.h"
 
 /**
  * @brief definition of os interrupt stack corresponding

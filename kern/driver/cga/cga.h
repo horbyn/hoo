@@ -49,6 +49,7 @@ typedef uint32_t bright_t;
 #define SCBUFF_STYLE_NORMAL  0
 #define SCBUFF_STYLE_LIGHT   1
 
+void cga_init(void);
 void cga_clear(void);
 void cga_set_attribute(color_t color, bright_t bright);
 void cga_putstr(const char *str, uint32_t len);

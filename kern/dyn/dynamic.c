@@ -7,6 +7,7 @@
 #include "dynamic.h"
 #include "kern/mem/pm.h"
 #include "kern/mem/vm.h"
+#include "user/lib.h"
 
 /**
  * @brief heap memory allocation
@@ -20,9 +21,16 @@ dyn_alloc(uint32_t size) {
 
     pcb_t *cur_pcb = get_current_pcb();
     buckx_mngr_t *mngr = cur_pcb->hmngr_;
+    pgelem_t flags = PGFLAG_US | PGFLAG_RW | PGFLAG_PS;
 
     while (mngr != null) {
         if (mngr->size_ >= size) {
+            if (mngr->chain_ == null) {
+                void *pa = phy_alloc_page();
+                mngr->chain_ = vir_alloc_pages(&cur_pcb->vmngr_, 1, cur_pcb->break_);
+                set_mapping(mngr->chain_, pa, flags);
+                bzero(mngr->chain_, PGSIZE);
+            }
             break;
         }
         mngr = mngr->next_;
@@ -33,7 +41,7 @@ dyn_alloc(uint32_t size) {
         void *va = vir_alloc_pages(&cur_pcb->vmngr_, pages, cur_pcb->break_);
         for (uint32_t i = 0; i < pages; ++i) {
             void *pa = phy_alloc_page();
-            set_mapping(va + i * PGSIZE, pa, PGFLAG_US | PGFLAG_RW | PGFLAG_PS);
+            set_mapping(va + i * PGSIZE, pa, flags);
         }
         return va;
     }
@@ -54,7 +62,13 @@ dyn_free(void *ptr) {
     buckx_mngr_t *mngr = cur_pcb->hmngr_;
 
     while (mngr != null) {
-        if (fmtlist_release(&mngr->chain_, ptr, mngr->size_))    break;
+        if (fmtlist_release(&mngr->chain_, ptr, mngr->size_)) {
+            if (&mngr->chain_ != null) {
+                vir_release_pages(&cur_pcb->vmngr_, (void *)PGDOWN(ptr, PGSIZE), true);
+                mngr->chain_ = null;
+            }
+            break;
+        }
         mngr = mngr->next_;
     }
     if (mngr == null)    vir_release_pages(&cur_pcb->vmngr_, ptr, true);

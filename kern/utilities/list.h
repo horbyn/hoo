@@ -9,7 +9,7 @@
 #define __KERN_UTILITIES_LIST_H__
 
 #include "node.h"
-#include "kern/types.h"
+#include "user/types.h"
 
 /**
  * @brief linked list definition

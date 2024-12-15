@@ -122,5 +122,5 @@ enable_mask_ocw1(uint8_t irq_pin) {
         irq_pin -= 8;
     }
     value = inb(port) & ~(1 << irq_pin);
-    outb(port, value);
+    outb(value, port);
 }

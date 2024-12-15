@@ -14,5 +14,11 @@
 #define SYS_CLOSE       3
 #define SYS_READ        4
 #define SYS_WRITE       5
+#define SYS_PRINTF      6
+#define SYS_FORK        7
+#define SYS_WAIT        8
+#define SYS_EXIT        9
+#define SYS_CD          10
+#define SYS_EXEC        11
 
 #endif

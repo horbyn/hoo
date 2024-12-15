@@ -8,7 +8,7 @@
 #ifndef __KERN_MODULE_MEM_H__
 #define __KERN_MODULE_MEM_H__
 
-#include "kern/types.h"
+#include "user/types.h"
 
 /**
  * @brief physical memory information

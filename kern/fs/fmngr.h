@@ -19,6 +19,7 @@ typedef struct file_manager {
     fd_t     *files_;
 } fmngr_t;
 
+void fmngr_init(fmngr_t *fmngr);
 fd_t fmngr_alloc(fmngr_t *fmngr);
 void fmngr_free(fmngr_t *fmngr, fd_t fd);
 void fmngr_files_set(fmngr_t *fmngr, fd_t fd, fd_t val);

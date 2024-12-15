@@ -76,3 +76,13 @@ thread_fmngr_get(tid_t tid) {
         panic("thread_buckmngr_get(): thread id out of range");
     return __mdata_fmngr + tid;
 }
+
+/**
+ * @brief clear the file manager
+ * 
+ * @param tid thread id
+ */
+void
+thread_fmngr_clear(tid_t tid) {
+    fmngr_init(thread_fmngr_get(tid));
+}

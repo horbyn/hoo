@@ -5,7 +5,11 @@
  *                                                                        *
  **************************************************************************/
 #include "syscall.h"
+#include "kern/fs/dir.h"
+#include "kern/fs/exec.h"
 #include "kern/fs/files.h"
+#include "kern/module/io.h"
+#include "kern/sched/tasks.h"
 #include "user/syscall_num.h"
 
 /**
@@ -23,5 +27,11 @@ void syscall_init(void) {
     __stub[SYS_CLOSE]       = (syscall_t)files_close;
     __stub[SYS_READ]        = (syscall_t)files_read;
     __stub[SYS_WRITE]       = (syscall_t)files_write;
+    __stub[SYS_PRINTF]      = (syscall_t)kprintf;
+    __stub[SYS_FORK]        = (syscall_t)fork;
+    __stub[SYS_WAIT]        = (syscall_t)wait_child;
+    __stub[SYS_EXIT]        = (syscall_t)exit;
+    __stub[SYS_CD]          = (syscall_t)dir_change;
+    __stub[SYS_EXEC]        = (syscall_t)exec;
     __stub[MAX_SYSCALL - 1] = null;
 }

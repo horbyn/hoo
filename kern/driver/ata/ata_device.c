@@ -6,7 +6,6 @@
  **************************************************************************/
 #include "ata_device.h"
 #include "kern/panic.h"
-#include "kern/module/io.h"
 #include "user/lib.h"
 
 /**
@@ -20,18 +19,6 @@ ata_wait_register_400ns(uint16_t reg) {
     inb(reg);
     inb(reg);
     inb(reg);
-}
-
-/**
- * @brief enable all IRQs
- */
-static void
-ata_enable_irqs() {
-
-    uint8_t origin_ctrl_master = inb(ATA_PRIMARY_PORT_CTRL_BASE),
-        origin_ctrl_slave = inb(ATA_SECONDARY_PORT_CTRL_BASE);
-    outb((origin_ctrl_master & ~ATA_DEV_CTRL_NIEN), ATA_PRIMARY_PORT_CTRL_BASE);
-    outb((origin_ctrl_slave & ~ATA_DEV_CTRL_NIEN), ATA_SECONDARY_PORT_CTRL_BASE);
 }
 
 /**
@@ -50,13 +37,14 @@ ata_check_invalid(uint32_t dev_no) {
  * @brief wait the status to be not busy but ready
  */
 static void
-ata_wait_not_busy() {
+ata_wait() {
     ataspc_t *ata_space = get_ataspace();
     uint16_t io_port =
         ata_space->device_info_[ata_space->current_select_].io_port_;
 
     // wait not busy
-    while ((inb(io_port + ATA_IO_R_OFFSET_STATUS) & ATA_STATUS_BSY));
+    while ((inb(io_port + ATA_IO_R_OFFSET_STATUS)
+        & (ATA_STATUS_RDY | ATA_STATUS_BSY)) != ATA_STATUS_RDY);
 }
 
 /**
@@ -76,6 +64,7 @@ atabuff_set(atabuff_t *ibuff, void *buff, uint32_t len, int lba, atacmd_t cmd) {
     ibuff->len_ = len;
     ibuff->lba_ = lba;
     ibuff->cmd_ = cmd;
+    ibuff->finish_ = false;
 }
 
 /**
@@ -101,39 +90,21 @@ get_atadevice(void) {
 }
 
 /**
- * @brief disable all IRQs
- */
-void
-ata_disable_irqs() {
-
-    uint8_t origin_ctrl_master = inb(ATA_PRIMARY_PORT_CTRL_BASE),
-        origin_ctrl_slave = inb(ATA_SECONDARY_PORT_CTRL_BASE);
-    outb((origin_ctrl_master | ATA_DEV_CTRL_NIEN), ATA_PRIMARY_PORT_CTRL_BASE);
-    outb((origin_ctrl_slave | ATA_DEV_CTRL_NIEN), ATA_SECONDARY_PORT_CTRL_BASE);
-}
-
-/**
  * @brief write command to ide register
  * 
  * @param dev device no.
  * @param lba lba no.
  * @param cr  the sector amount
  * @param cmd commnd
- * @param is_irq true if method is IRQs
  */
 void
-ata_set_cmd(uint32_t dev, uint32_t lba, uint8_t cr, atacmd_t cmd, bool is_irq) {
+ata_set_cmd(uint32_t dev, uint32_t lba, uint8_t cr, atacmd_t cmd) {
 
     ataspc_t *ata_space = get_ataspace();
     atadev_t *ata_devices = get_atadevice();
+    uint16_t io_port = ata_space->device_info_[dev].io_port_;
 
     ata_check_invalid(dev);
-
-    uint16_t io_port =
-        ata_space->device_info_[dev].io_port_;
-
-    if (is_irq)    ata_enable_irqs();
-    else    ata_disable_irqs();
 
     // select device
     uint8_t master =
@@ -148,7 +119,8 @@ ata_set_cmd(uint32_t dev, uint32_t lba, uint8_t cr, atacmd_t cmd, bool is_irq) {
     outb((uint8_t)((lba >> 8) & 0xff), io_port + ATA_IO_RW_OFFSET_LBA_MID);
     outb((uint8_t)((lba >> 16) & 0xff), io_port + ATA_IO_RW_OFFSET_LBA_HIGH);
     outb((uint8_t)cmd, io_port + ATA_IO_W_OFFSET_COMMAND);
-    ata_wait_not_busy();
+
+    ata_wait();
 }
 
 /**
@@ -162,9 +134,6 @@ ata_detect(void) {
     atadev_t *dev = get_atadevice();
     bzero(dev, sizeof(atadev_t) * ATA_MAX_SUPPORTED_DEVICES);
     space->device_info_ = dev;
-
-    // disable IRQs during initialization
-    ata_disable_irqs();
 
     uint16_t port_io = 0, port_ctrl = 0;
     uint32_t device_no = 0;
@@ -228,5 +197,4 @@ ata_detect(void) {
         } // end for(j)
     } // end for(i)
 
-    ata_enable_irqs();
 }

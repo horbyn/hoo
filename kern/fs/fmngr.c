@@ -6,10 +6,23 @@
  **************************************************************************/
 #include "fmngr.h"
 #include "kern/panic.h"
+#include "user/lib.h"
+
+/**
+ * @brief file manager initialization
+ * 
+ * @param fmngr file manager
+ */
+void
+fmngr_init(fmngr_t *fmngr) {
+    bzero(fmngr->fd_set_.buff_, fmngr->fd_set_.len_inbits_ / BITS_PER_BYTE);
+    bitmap_init(&fmngr->fd_set_, 0, fmngr->fd_set_.buff_);
+    bzero(fmngr->files_, sizeof(fd_t) * MAX_FILES_PER_TASK);
+}
 
 /**
  * @brief allocate the file descriptor
- * 
+ *
  * @param fmngr file manager
  * @return file descriptor
  */

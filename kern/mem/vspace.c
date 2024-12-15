@@ -6,8 +6,9 @@
  **************************************************************************/
 #include "vspace.h"
 #include "kern/panic.h"
-#include "kern/module/io.h"
 #include "user/lib.h"
+#include "user/lib.h"
+#include "kern/module/io.h"
 
 /**
  * @brief Set the vaddr object
@@ -59,16 +60,16 @@ debug_print_vsmngr(vspace_t *vs) {
     if (vs == null)    return;
     vspace_t *vspace = vs->next_;
     while (vspace != null) {
-        printf("\t.begin=0x%x, .end=0x%x, .next=0x%x\n\t.list: \n",
+        kprintf("\t.begin=0x%x, .end=0x%x, .next=0x%x\n\t.list: \n",
             vspace->begin_, vspace->end_, vspace->next_);
         list_t *list = &(vspace->list_);
         for (int i = 1; i <= list->size_; ++i) {
             node_t *n = list_find(list, i);
             vaddr_t *va = n->data_;
-            printf("[0x%x, 0x%x]", va->va_, va->length_);
-            if (n->next_)    printf(", ");
+            kprintf("[0x%x, 0x%x]", va->va_, va->length_);
+            if (n->next_)    kprintf(", ");
         }
-        printf("\n");
+        kprintf("\n");
         vspace = vspace->next_;
     }
 }

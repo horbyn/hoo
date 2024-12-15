@@ -8,7 +8,7 @@
 #ifndef __KERN_UTILITIES_CACHE_BUFF_H__
 #define __KERN_UTILITIES_CACHE_BUFF_H__
 
-#include "kern/types.h"
+#include "user/types.h"
 #include "kern/fs/fs_stuff.h"
 
 /**

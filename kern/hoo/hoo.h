@@ -8,8 +8,6 @@
 #ifndef __KERN_HOO_HOO_H__
 #define __KERN_HOO_HOO_H__
 
-#include "thread_bucket.h"
-#include "thread_fmngr.h"
 #include "kern/desc/desc.h"
 #include "kern/fs/fs_stuff.h"
 #include "kern/page/page_stuff.h"

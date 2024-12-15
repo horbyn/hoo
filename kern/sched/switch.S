@@ -8,6 +8,7 @@
     .text
     .code32
     .globl switch_to
+    .globl mode_ring3
 
     # called as a function, `switch_to(node_t *cur_task, node_t *next_task)`
 switch_to:
@@ -47,3 +48,35 @@ next:
 return:
     popl %ebp
     ret
+
+    # CANNOT consider as a function, because iret instruction
+    #   would also use to restore the %eip
+mode_ring3:
+    pushl %ebp
+    movl %esp,           %ebp
+
+    movl $((4 * 8) | 3), %eax
+    movl %eax,           %ds
+    movl %eax,           %es
+    movl %eax,           %fs
+    movl %eax,           %gs
+
+    movl 0x4(%ebp),      %eax   # fetch user stack
+    pushl $((4 * 8) | 3)        # push ss
+    pushl %eax                  # push user stack(esp)
+    pushf                       # push eflags as same as ring0's
+    orl $0x200,          %ss:(%esp)
+    pushl $((3 * 8) | 3)
+    movl 0x8(%ebp),      %eax   # fetch user entry
+    pushl %eax
+
+    # reset the context except %esp
+    xorl %eax,           %eax
+    xorl %ebx,           %ebx
+    xorl %ecx,           %ecx
+    xorl %edx,           %edx
+    xorl %esi,           %esi
+    xorl %edi,           %edi
+    movl 0x4(%ebp),      %ebp   # user stack bottom
+
+    iret

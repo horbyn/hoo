@@ -30,8 +30,8 @@ dirblock_get_new(dirblock_t *result, int self, int parent) {
     pre->inode_idx_ = parent;
     bzero(cur->name_, DIRITEM_NAME_LEN);
     bzero(pre->name_, DIRITEM_NAME_LEN);
-    memmove(cur->name_, ".", sizeof(1));
-    memmove(pre->name_, "..", sizeof(2));
+    memmove(cur->name_, DIR_CUR, 1);
+    memmove(pre->name_, DIR_PRE, 2);
 }
 
 /**
@@ -70,11 +70,11 @@ dirblock_get(const dirblock_t *db, uint32_t block_index, diritem_t *result) {
  * 
  * @param di     diritem object
  * @param search the absolute path to be searched
- * @retval -1: not founded
+ * @retval -1: not found
  * @retval the rests: the index of the dirblock array
  */
 static int
-diritem_find_sub(diritem_t *di, const char *search) {
+diritem_find_sub(const diritem_t *di, const char *search) {
 
     dirblock_t db;
     int ret = -1;
@@ -91,7 +91,6 @@ diritem_find_sub(diritem_t *di, const char *search) {
             : MAX_DIRITEM_PER_BLOCK;
         for (uint32_t j = 0; j < max_diritem_number; ++j) {
             if (strcmp(search, db.dir_[j].name_) == true) {
-                memmove(&di, &db.dir_[j], sizeof(diritem_t));
                 /*
                  * inode
                  * +--------------------------------+
@@ -204,6 +203,9 @@ is_root_dir(const char *dir) {
  * 
  * @param dir   the absolute path to be searched
  * @param found diritem object found
+ * 
+ * @retval true: found
+ * @retval false: not found
  */
 bool
 diritem_find(const char *dir, diritem_t *found) {
@@ -279,12 +281,12 @@ diritem_create(inode_type_t type, const char *item_name, int parent_inode) {
         bzero(db_new, sizeof(dirblock_t));
         dirblock_get_new(db_new, inode_cur, parent_inode);
         free_rw_disk(db_new, free, ATA_CMD_IO_WRITE);
+        free_map_update();
         dyn_free(db_new);
     } else    panic("diritem_create(): bug");
 
     inodes_rw_disk(inode_cur, ATA_CMD_IO_WRITE);
     inode_map_update();
-    free_map_update();
     return di;
 }
 
@@ -371,4 +373,71 @@ diritem_t **
 get_root_dir(void) {
     static diritem_t *__fs_root_dir;
     return &__fs_root_dir;
+}
+
+/**
+ * @brief change the current directory
+ * 
+ * @param dir given a directory to change
+ * 
+ * @retval 0: change succeed
+ * @retval -1: change failed, no such directory
+ * @retval -2: change failed, the given path is a file
+ * @retval -3: change failed, the directory tree is too long
+ */
+int
+dir_change(const char *dir) {
+    pcb_t *cur_pcb = get_current_pcb();
+
+    // get the absolute path
+    char *abs = dyn_alloc(PGSIZE);
+    bzero(abs, PGSIZE);
+
+    // some special cases
+    if (dir == 0) {
+        // change to root directory when the given dir is null
+        abs[0] = DIRNAME_ROOT_ASCII;
+    } else if (strcmp(dir, DIR_CUR) == true) {
+        // cd .
+        dyn_free(abs);
+        return 0;
+    } else if (dir[0] == DIRNAME_ROOT_ASCII) {
+        // cd <an absolute dir>
+        memmove(abs, dir, strlen(dir));
+        uint32_t len = strlen(abs);
+        if (abs[len - 1] != DIR_SEPARATOR)    abs[len] = DIR_SEPARATOR;
+    } else {
+        // cd ..
+        // cd <a relative dir>
+        if (curdir_get(cur_pcb->curdir_, abs, PGSIZE) == -1) {
+            dyn_free(abs);
+            return -3;
+        } else    get_parent_child_filename(abs, 0);
+
+        if (strcmp(dir, DIR_PRE) == false) {
+            memmove(abs + strlen(abs), dir, strlen(dir));
+            uint32_t len = strlen(abs);
+            if (abs[len - 1] != DIR_SEPARATOR)    abs[len] = DIR_SEPARATOR;
+        }
+    }
+
+    // search the corresponding directory item
+    diritem_t *cur_diritem = dyn_alloc(sizeof(diritem_t));
+    bzero(cur_diritem, sizeof(diritem_t));
+    if (diritem_find(abs, cur_diritem) == false) {
+        dyn_free(cur_diritem);
+        dyn_free(abs);
+        return -1;
+    }
+
+    if (cur_diritem->type_ == INODE_TYPE_FILE) {
+        dyn_free(cur_diritem);
+        dyn_free(abs);
+        return -2;
+    }
+
+    dyn_free(cur_diritem);
+    curdir_set(cur_pcb->curdir_, abs);
+    dyn_free(abs);
+    return 0;
 }

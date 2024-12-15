@@ -5,6 +5,10 @@
  *                                                                        *
  **************************************************************************/
 #include "driver.h"
+#include "kern/driver/8042/8042.h"
+#include "kern/driver/8259a/8259a.h"
+#include "kern/driver/8253/8253.h"
+#include "kern/driver/ata/ata.h"
 
 /**
  * @brief pic initialization
@@ -21,9 +25,9 @@ init_pic(void) {
     // irq#0
     enable_mask_ocw1(IRQ_TIMER);
     // irq#1
-    disable_mask_ocw1(IRQ_KEYBOARD);
+    enable_mask_ocw1(IRQ_KEYBOARD);
     // irq#2
-    disable_mask_ocw1(IRQ_CASCADE);
+    enable_mask_ocw1(IRQ_CASCADE);
     // irq#3
     disable_mask_ocw1(IRQ_COM2);
     // irq#4
@@ -47,7 +51,7 @@ init_pic(void) {
     // irq#13
     disable_mask_ocw1(IRQ_MATH);
     // irq#14
-    disable_mask_ocw1(IRQ_ATA1);
+    enable_mask_ocw1(IRQ_ATA1);
     // irq#15
     disable_mask_ocw1(IRQ_ATA2);
 }
@@ -70,4 +74,5 @@ kinit_driver(void) {
     init_pic();
     init_pit();
     init_ata();
+    init_8042();
 }

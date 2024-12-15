@@ -9,15 +9,7 @@
 #include "pm.h"
 #include "vm_kern.h"
 #include "kern/panic.h"
-
-/**
- * @brief initialize virtual memory system
- */
-void
-init_virmm_system() {
-    init_kern_virmm_bitmap();
-    init_metadata();
-}
+#include "kern/sched/pcb.h"
 
 /**
  * @brief append `next` to `cur`
@@ -30,6 +22,17 @@ vspace_append(vspace_t *cur, vspace_t *next) {
     if (cur == null)    panic("vspace_append(): null pointer");
     if (next == null)    cur->next_ = null;
     else    cur->next_ = next;
+
+    cur->end_ = next->begin_;
+}
+
+/**
+ * @brief initialize virtual memory system
+ */
+void
+init_virmm_system() {
+    init_kern_virmm_bitmap();
+    init_metadata();
 }
 
 /**
@@ -48,7 +51,7 @@ vir_alloc_pages(vspace_t *vspace, uint32_t amount, uint32_t begin) {
 
     // traversal the virtual space
     const uint32_t MAX_END =
-        begin < KERN_HIGH_MAPPING ? KERN_HIGH_MAPPING : (PG_MASK - MB4 + PGSIZE);
+        begin < KERN_HIGH_MAPPING ? KERN_HIGH_MAPPING : KERN_METADATA;
     uint32_t last_end = begin, ret = 0;
     vspace_t *worker = vspace;
 
@@ -178,4 +181,45 @@ vir_release_pages(vspace_t *vspace, void *va, bool rel) {
     // reclaim the metadata
     node_release(worker_node);
     vaddr_release(worker_node->data_);
+}
+
+/**
+ * @brief release the virtual space
+ * 
+ * @param pcb the thread
+ */
+void
+release_vspace(pcb_t *pcb) {
+    if (pcb == null)    panic("release_vspace(): null pointer");
+
+    vspace_t *worker_vs = pcb->vmngr_.next_;
+    while (worker_vs) {
+        node_t *worker_node = worker_vs->list_.null_.next_;
+        while (worker_node) {
+            vaddr_t *worker_vaddr = (vaddr_t *)worker_node->data_;
+            if (worker_vaddr == null)
+                panic("release_vspace(): bug");
+
+            // release pages except metadata (va = 0)
+            uint32_t pages_amount = ((vaddr_t *)(worker_node->data_))->length_;
+            uint32_t va = ((vaddr_t *)(worker_node->data_))->va_;
+            node_t *worker_node_next = worker_node->next_;
+            if (va != 0) {
+                for (uint32_t i = 0; i < pages_amount; ++i)
+                    phy_release_vpage((void *)(va + i * PGSIZE));
+
+                // reclaim the metadata
+                vaddr_release(worker_node->data_);
+                node_release(worker_node);
+            }
+            worker_node = worker_node_next;
+        } // end while(node)
+
+        vspace_t *worker_vs_next = worker_vs->next_;
+        if (list_isempty(&worker_vs->list_))
+            vspace_release(worker_vs);
+        worker_vs = worker_vs_next;
+    } // end while(vspace)
+
+    node_set(&pcb->vmngr_.list_.null_, null, null);
 }

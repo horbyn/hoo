@@ -13,5 +13,6 @@
 
 void    init_thread_fmngr(pcb_t *pcb);
 fmngr_t *thread_fmngr_get(tid_t tid);
+void    thread_fmngr_clear(tid_t tid);
 
 #endif

@@ -16,5 +16,11 @@ int  sys_open(const char *filename);
 void sys_close(int fd);
 void sys_read(int fd, void *buf, unsigned int count);
 void sys_write(int fd, const void *buf, unsigned int count);
+void sys_printf(const char *format, ...);
+int  sys_fork(void);
+void sys_wait();
+void sys_exit();
+int  sys_cd(const char *dir);
+void sys_exec(const char *program);
 
 #endif

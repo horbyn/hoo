@@ -23,5 +23,6 @@ typedef struct arr_buckmngr {
 
 void         init_thread_buckmngr(pcb_t *pcb);
 buckx_mngr_t *thread_buckmngr_get(tid_t tid);
+void         thread_buckmngr_clear(tid_t tid);
 
 #endif

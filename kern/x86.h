@@ -8,8 +8,8 @@
 #ifndef __KERN_X86_H__
 #define __KERN_X86_H__
 
-#include "types.h"
 #include "boot/config_boot.h"
+#include "user/types.h"
 
 extern uint8_t __kern_end[];
 
@@ -21,11 +21,13 @@ extern uint8_t __kern_end[];
     (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS))
 #define ARDS_TYPE_OS        1
 #define ARDS_TYPE_ARCH      2
+
 #define BITS_PER_BYTE       8
 #define INVALID_INDEX       (-1)
 #define STACK_BOOT_TOP      ((SEG_PGTABLE)*16 + PGSIZE)
 #define STACK_HOO_RING3     (STACK_BOOT_TOP + PGSIZE + KERN_HIGH_MAPPING)
 #define STACK_HOO_RING0     (0x80000 + KERN_HIGH_MAPPING)
+#define DIED_INSTRUCTION    (((uint32_t)(SEG_DIED))*16 + (OFF_DIED))
 
 // the task maxinum amount
 #define MAX_TASKS_AMOUNT    1024

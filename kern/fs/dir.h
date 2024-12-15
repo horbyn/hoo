@@ -9,12 +9,12 @@
 #define __KERN_FS_DIR_H__
 
 #include "inodes.h"
+#include "kern/utilities/curdir.h"
 
 // inode index where the root dir is
 #define INODE_INDEX_ROOT    0
-#define DIRITEM_NAME_LEN    16
-#define DIRNAME_ROOT_ASCII  47 // ascii code for '/'
-#define DIRNAME_ROOT_STR    "/"
+#define DIR_CUR             "."
+#define DIR_PRE             ".."
 
 /**
  * @brief directory item
@@ -43,5 +43,6 @@ diritem_t *diritem_create(inode_type_t type, const char *item_name, int parent_i
 void      diritem_push(diritem_t *parent, diritem_t *cur);
 int       diritem_remove(diritem_t *parent, diritem_t *cur);
 diritem_t **get_root_dir(void);
+int       dir_change(const char *dir);
 
 #endif

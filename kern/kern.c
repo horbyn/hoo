@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "kern.h"
+#include "fs/builtins.h"
+#include "fs/exec.h"
 #include "module/conf.h"
 #include "module/do_intr.h"
 #include "module/driver.h"
@@ -13,6 +15,7 @@
 #include "module/log.h"
 #include "module/mem.h"
 #include "module/sched.h"
+#include "sched/tasks.h"
 #include "user/lib.h"
 #include "user/user.h"
 
@@ -30,18 +33,31 @@ kinit_log(void) {
 }
 
 /**
+ * @brief jump into the first ring3 thread
+ */
+static void
+the_first_ring3(void) {
+    sys_exec(BUILT_SHELL);
+}
+
+/**
  * @brief kernel initialization
  */
 void
 kern_init() {
     kinit_io();
+    kinit_memory();
     kinit_config();
+    kinit_tasks_system();
+
+    // after that we could use dynamic memory allocation
     kinit_isr_idt();
     kinit_driver();
-    kinit_memory();
-    kinit_tasks_system();
-    // after that we could use dynamic memory allocation
     kinit_fs();
+
+    // after that we could enable interrupt
+    enable_intr();
+    load_builtins();
     kinit_log();
 }
 
@@ -50,5 +66,10 @@ kern_init() {
  */
 void
 kern_exec(void) {
-    enable_intr();
+    tid_t result = fork(the_first_ring3);
+    if (result != 0) {
+        // the only thing for the ring0 kernel to do is to inspect
+        //   whether there are the expired threads and kill them
+        while (1)    kill();
+    }
 }

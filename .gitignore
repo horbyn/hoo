@@ -11,3 +11,5 @@ kernel
 *.map
 *.elf
 *.json
+
+user/sh

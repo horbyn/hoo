@@ -6,6 +6,18 @@
  **************************************************************************/
 #include "cga.h"
 #include "user/lib.h"
+#include "kern/utilities/spinlock.h"
+
+/**
+ * @brief get cga spinlock
+ * 
+ * @return spinlock 
+ */
+static spinlock_t *
+cga_get_spinlock(void) {
+    static spinlock_t cga_spinlock;
+    return &cga_spinlock;
+}
 
 /**
  * @brief get cga attribute
@@ -22,7 +34,7 @@ cga_get_attribute(void) {
  * @brief screen scroll back
  */
 static void
-cga_scroll_back() {
+cga_scroll_back(void) {
     uint16_t beg = TO_POS(1, 0);
     uint16_t *vm = (uint16_t *)VIDEO_MEM;
     memmove(vm, vm + beg, (LASTLINE_END - beg + 1) * sizeof(uint16_t));
@@ -66,14 +78,24 @@ cga_cursor_set(uint16_t pos) {
 }
 
 /**
+ * @brief initialize the cga
+ */
+void
+cga_init(void) {
+    spinlock_init(cga_get_spinlock());
+}
+
+/**
  * @brief clear screen
  */
 void
 cga_clear(void) {
+    wait(cga_get_spinlock());
     uint16_t *vm = (uint16_t *)VIDEO_MEM;
     for (uint32_t i = 0; i < (CGA_WIDTH * CGA_HIGH); ++i)
         vm[i] = WHITH_CHAR;
     cga_cursor_set(0);
+    signal(cga_get_spinlock());
 }
 
 /**
@@ -153,5 +175,7 @@ cga_putc(char ch, uint8_t attr) {
  */
 void
 cga_putstr(const char *str, uint32_t len) {
+    wait(cga_get_spinlock());
     for (uint32_t i = 0; i < len; ++i)    cga_putc(str[i], *(cga_get_attribute()));
+    signal(cga_get_spinlock());
 }

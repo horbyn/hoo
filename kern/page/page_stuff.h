@@ -9,7 +9,7 @@
 #define __KERN_PAGE_PAGE_STUFF_H__
 
 #include "boot/config_boot.h"
-#include "kern/types.h"
+#include "user/types.h"
 
 #define PGFLAG_PS           1
 #define PGFLAG_RW           2

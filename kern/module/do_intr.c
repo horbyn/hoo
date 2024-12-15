@@ -5,6 +5,8 @@
  *                                                                        *
  **************************************************************************/
 #include "do_intr.h"
+#include "kern/driver/8042/8042.h"
+#include "kern/driver/ata/ata_irq.h"
 #include "kern/intr/routine.h"
 #include "kern/module/log.h"
 #include "kern/syscall/syscall.h"
@@ -24,6 +26,8 @@ kinit_isr_idt(void) {
 
     // specific isr routines
     set_isr_entry(&__isr[ISR32_TIMER], (isr_t)timer);
+    set_isr_entry(&__isr[ISR33_KEYBOARD], (isr_t)ps2_intr);
+    set_isr_entry(&__isr[ISR46_HARD1], (isr_t)ata_irq_intr);
     set_isr_entry(&__isr[ISR128_SYSCALL], (isr_t)syscall);
 
     // set __idt[]

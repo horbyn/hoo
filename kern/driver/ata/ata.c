@@ -5,10 +5,14 @@
  *                                                                        *
  **************************************************************************/
 #include "ata.h"
+#include "ata_irq.h"
 #include "ata_polling.h"
 #include "kern/panic.h"
 #include "kern/module/log.h"
+#include "kern/sched/pcb.h"
+#include "kern/sched/tasks.h"
 
+static atabuff_t __mdata_atabuff[MAX_TASKS_AMOUNT];
 static atamth_t __ata_driver_method;
 
 /**
@@ -61,7 +65,7 @@ ata_driver_change_mode(atamth_t method) {
     __ata_driver_method = method;
 
     switch (__ata_driver_method) {
-    case ATA_METHOD_IRQ: break;
+    case ATA_METHOD_IRQ: ata_irq_init(); break;
     // polling default
     default: ata_polling_init(); break;
     }
@@ -81,13 +85,14 @@ ata_driver_rw(void *buff, uint32_t bufflen, int lba, atacmd_t cmd) {
         panic("ata_driver_rw(): invalid lba");
     if (buff == null)    panic("ata_driver_rw(): null pointer");
 
-    atabuff_t atabuff;
-    atabuff_set(&atabuff, buff, bufflen, lba, cmd);
+    pcb_t *cur_pcb = get_current_pcb();
+    atabuff_t *atabuff = __mdata_atabuff + cur_pcb->tid_;
+    atabuff_set(atabuff, buff, bufflen, lba, cmd);
 
     switch (__ata_driver_method) {
-    case ATA_METHOD_IRQ: break;
+    case ATA_METHOD_IRQ: ata_irq_rw(atabuff); break;
     // polling default
-    default: ata_polling_rw(&atabuff, false); break;
+    default: ata_polling_rw(atabuff); break;
     }
 
 }

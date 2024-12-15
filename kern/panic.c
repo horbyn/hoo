@@ -17,7 +17,7 @@
  */
 static void
 trace() {
-    printf("========== Stack trace ==========\n");
+    kprintf("========== Stack trace ==========\n");
 
     uint32_t ebp = 0, ret = 0;
     __asm__ __volatile__ ("mov %%ebp, %0" : "=r"(ebp));
@@ -27,19 +27,19 @@ trace() {
         ret = *(uint32_t *)(ebp + sizeof(uint32_t));
 
         for (uint32_t space = 0; space < i; ++space) {
-            printf("  ");
+            kprintf("  ");
         }
-        printf("- 0x%x", ret);
+        kprintf("- 0x%x", ret);
 
         // check whether it is interrupt stack
         if (ret == (uint32_t)isr_part3) {
-            printf(" *");
+            kprintf(" *");
             istackcpu_t *istack = 
                 (istackcpu_t *)(ebp + sizeof(uint32_t) * 2 + sizeof(istackos_t));
-            printf(" <- 0x%x", istack->oldeip_);
+            kprintf(" <- 0x%x", istack->oldeip_);
         }
 
-        printf("\n");
+        kprintf("\n");
         ebp = *(uint32_t *)(ebp);
     }
 }
@@ -53,7 +53,7 @@ void
 panic(const char *extra) {
     cga_clear();
     if (extra != null)
-        printf("%s\n\n", extra);
+        kprintf("%s\n\n", extra);
     trace();
     disable_intr();
     hlt();

@@ -47,59 +47,6 @@ fd_global_free(global_fd_t fd) {
 }
 
 /**
- * @brief get the parent filename
- * @note
- * for "/usr/bin/" would get parent "/usr" and child "bin"
- * @note
- * for "/usr/bin" would also get parent "/usr" and child "bin"
- * @note
- * for "/" would get parent "" (null pointer) and child "/"
- * @param path   the specific filename
- * @param parent the parent name buffer (if exists)
- * @param child  the child name buffer (if exists)
- */
-static void
-get_parent_child_filename(const char *path, char *parent, char *child) {
-    if (path == 0)    panic("get_parent_child_filename(): null pointer");
-
-    int separator = -1;
-    uint32_t path_sz = strlen(path);
-    for (uint32_t i = path_sz - 1; i >= 0; --i) {
-        if (path[i] == DIRNAME_ROOT_ASCII && i != path_sz - 1) {
-            separator = i;
-            break;
-        }
-    };
-
-    if (separator == -1) {
-        // corresponding to the case like "/"
-        if (parent != 0)    parent[0] = 0;
-        if (child != 0) {
-            child[0] = DIRNAME_ROOT_ASCII;
-            child[1] = 0;
-        }
-    } else {
-        if (parent != 0) {
-            if (separator > 0) {
-                memmove(parent, path, separator);
-                parent[separator] = 0;
-            } else {
-                parent[0] = DIRNAME_ROOT_ASCII;
-                parent[1] = 0;
-            }
-        }
-        if (child != 0) {
-            memmove(child, path + separator + 1, path_sz - separator - 1);
-            uint32_t child_sz = strlen(child);
-            if (child[child_sz - 1] == DIRNAME_ROOT_ASCII)
-                child[child_sz - 1] = 0;
-            else    child[child_sz] = 0;
-        }
-    }
-
-}
-
-/**
  * @brief files system initialization
  */
 void
@@ -112,8 +59,11 @@ filesystem_init(void) {
  * @brief create a new file or directory (terminated with '/')
  * 
  * @param name the name to be create
+ * 
+ * @retval 0: create successfully
+ * @retval -1: failed, the file or directory was already existed
  */
-void
+int
 files_create(const char *name) {
     inode_type_t type = (name[strlen(name) - 1] == DIRNAME_ROOT_ASCII) ?
         INODE_TYPE_DIR : INODE_TYPE_FILE;
@@ -122,7 +72,7 @@ files_create(const char *name) {
     diritem_t *self = dyn_alloc(sizeof(diritem_t));
     if (diritem_find(name, self)) {
         dyn_free(self);
-        return;
+        return -1;
     }
     dyn_free(self);
 
@@ -130,8 +80,9 @@ files_create(const char *name) {
     diritem_t *di_parent = dyn_alloc(sizeof(diritem_t));
     char parent[DIRITEM_NAME_LEN], cur[DIRITEM_NAME_LEN];
     bzero(parent, sizeof(parent));
+    memmove(parent, name, strlen(name));
     bzero(cur, sizeof(cur));
-    get_parent_child_filename(name, parent, cur);
+    get_parent_child_filename(parent, cur);
     if (parent == 0)    panic("files_create(): parent directory is not found");
     if (!diritem_find(parent, di_parent))
         panic("files_create(): parent directory is not found");
@@ -143,6 +94,7 @@ files_create(const char *name) {
     diritem_push(di_parent, di_cur);
     dyn_free(di_cur);
 
+    return 0;
 }
 
 /**
@@ -160,7 +112,9 @@ files_remove(const char *name) {
     if (name == 0)    panic("files_remove(): invalid filename");
 
     char parent[DIRITEM_NAME_LEN];
-    get_parent_child_filename(name, parent, null);
+    bzero(parent, sizeof(parent));
+    memmove(parent, name, strlen(name));
+    get_parent_child_filename(parent, 0);
     diritem_t di_parent, di_cur;
     if (!diritem_find(parent, &di_parent))    return -1;
     if (di_parent.inode_idx_ > MAX_INODES || di_parent.type_ != INODE_TYPE_DIR)
@@ -224,9 +178,9 @@ files_close(fd_t fd) {
  * @param size buffer size
  */
 void
-files_read(fd_t fd, char *buf, uint32_t size) {
+files_read(fd_t fd, void *buf, uint32_t size) {
     if (fd > MAX_FILES_PER_TASK)    panic("files_read(): invalid fd");
-    if (buf == 0)    panic("files_read(): null pointer");
+    if (buf == null)    panic("files_read(): null pointer");
 
     pcb_t *cur_pcb = get_current_pcb();
     global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
@@ -239,13 +193,13 @@ files_read(fd_t fd, char *buf, uint32_t size) {
 
     uint32_t total_size = (size > inode->size_) ? inode->size_ : size;
     uint32_t cr = (total_size + BYTES_SECTOR) / BYTES_SECTOR;
-    char *temp_buf = dyn_alloc(BYTES_SECTOR);
+    char *temp_buf = dyn_alloc(BYTES_SECTOR), *buff = buf;
     for (uint32_t i = 0; i < cr; ++i) {
         uint32_t cur_size = (i == cr - 1) ?
             (total_size - i * BYTES_SECTOR) : BYTES_SECTOR;
 
         free_rw_disk(temp_buf, iblock_get(inode_idx, i), ATA_CMD_IO_READ);
-        memmove(buf + i * BYTES_SECTOR, temp_buf, cur_size);
+        memmove(buff + i * BYTES_SECTOR, temp_buf, cur_size);
     }
     dyn_free(temp_buf);
 }

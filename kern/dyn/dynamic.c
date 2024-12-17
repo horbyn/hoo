@@ -63,7 +63,9 @@ dyn_free(void *ptr) {
 
     while (mngr != null) {
         if (fmtlist_release(&mngr->chain_, ptr, mngr->size_)) {
-            if (&mngr->chain_ != null) {
+            if (&mngr->chain_ != null &&
+                mngr->chain_->capacity_ == mngr->chain_->list_.size_) {
+
                 vir_release_pages(&cur_pcb->vmngr_, (void *)PGDOWN(ptr, PGSIZE), true);
                 mngr->chain_ = null;
             }

@@ -9,6 +9,7 @@
 #include "free.h"
 #include "kern/panic.h"
 #include "kern/dyn/dynamic.h"
+#include "kern/driver/8042/8042.h"
 #include "kern/driver/ata/ata_cmd.h"
 #include "kern/driver/ata/ata.h"
 #include "kern/driver/cga/cga.h"
@@ -182,6 +183,14 @@ files_read(fd_t fd, void *buf, uint32_t size) {
     if (fd > MAX_FILES_PER_TASK)    panic("files_read(): invalid fd");
     if (buf == null)    panic("files_read(): null pointer");
 
+    if (fd == FD_STDIN || fd == FD_STDOUT || fd == FD_STDERR) {
+        cclbuff_t *cclbuff = get_kb_buff();
+        for (uint32_t i = 0; i < size; ++i) {
+            *((char *)buf + i) = cclbuff_get(cclbuff);
+        }
+        return;
+    }
+
     pcb_t *cur_pcb = get_current_pcb();
     global_fd_t index = fmngr_files_get(cur_pcb->fmngr_, fd);
     if (__fs_files[index].ref_ == 0)
@@ -193,13 +202,13 @@ files_read(fd_t fd, void *buf, uint32_t size) {
 
     uint32_t total_size = (size > inode->size_) ? inode->size_ : size;
     uint32_t cr = (total_size + BYTES_SECTOR) / BYTES_SECTOR;
-    char *temp_buf = dyn_alloc(BYTES_SECTOR), *buff = buf;
+    char *temp_buf = dyn_alloc(BYTES_SECTOR);
     for (uint32_t i = 0; i < cr; ++i) {
         uint32_t cur_size = (i == cr - 1) ?
             (total_size - i * BYTES_SECTOR) : BYTES_SECTOR;
 
         free_rw_disk(temp_buf, iblock_get(inode_idx, i), ATA_CMD_IO_READ);
-        memmove(buff + i * BYTES_SECTOR, temp_buf, cur_size);
+        memmove(buf + i * BYTES_SECTOR, temp_buf, cur_size);
     }
     dyn_free(temp_buf);
 }

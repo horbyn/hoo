@@ -89,7 +89,7 @@ exec(const char *filename) {
     builtin_t program = (builtin_t)0;
     files_read(fd, program, file_size);
 
-    // change the control flows in ring3
+    // change the control flows
     // NOTE: a wholly new ring3 stack would be used after jump into `mode_ring3()`
     //   so we will setup something special stuff in it before jumping
     __asm__ ("movl %0, %%eax\n\t"

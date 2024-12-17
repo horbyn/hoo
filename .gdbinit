@@ -3,3 +3,4 @@ set solib-search-path .
 target remote localhost:12345
 symbol-file kernel.elf
 set print pretty on
+b panic.c:59

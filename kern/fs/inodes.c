@@ -148,7 +148,7 @@ iblock_handle(int inode_idx, int iblock_idx, uint32_t write, uint32_t *read) {
     inode_t *inode = __fs_inodes + inode_idx;
     char buf[BYTES_SECTOR];
     if (iblock_idx < DIRECT_BORDER) {
-        if (read)    *read = inode->iblocks_[iblock_idx];
+        if (read != null)    *read = inode->iblocks_[iblock_idx];
         else {
             inode->iblocks_[iblock_idx] = write;
             inodes_rw_disk(inode_idx, ATA_CMD_IO_WRITE);
@@ -165,7 +165,7 @@ iblock_handle(int inode_idx, int iblock_idx, uint32_t write, uint32_t *read) {
             bzero(buf, BYTES_SECTOR);
         } else    ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
 
-        if (read)    *read = ((uint32_t *)buf)[iblock_idx - DIRECT_BORDER];
+        if (read != null)    *read = ((uint32_t *)buf)[iblock_idx - DIRECT_BORDER];
         else {
             ((uint32_t *)buf)[iblock_idx - DIRECT_BORDER] = write;
             ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_WRITE);
@@ -194,7 +194,7 @@ iblock_handle(int inode_idx, int iblock_idx, uint32_t write, uint32_t *read) {
             bzero(buf, BYTES_SECTOR);
         } else    ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_READ);
 
-        if (read)    *read = ((uint32_t *)buf)[index % LBA_ITEMS_PER_SECTOR];
+        if (read != null)    *read = ((uint32_t *)buf)[index % LBA_ITEMS_PER_SECTOR];
         else {
             ((uint32_t *)buf)[index % LBA_ITEMS_PER_SECTOR] = write;
             ata_driver_rw(buf, BYTES_SECTOR, level1, ATA_CMD_IO_WRITE);

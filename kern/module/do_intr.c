@@ -25,6 +25,7 @@ kinit_isr_idt(void) {
         set_isr_entry(&__isr[i], (isr_t)isr_default);
 
     // specific isr routines
+    set_isr_entry(&__isr[ISR14_PAGEFAULT], (isr_t)page_fault);
     set_isr_entry(&__isr[ISR32_TIMER], (isr_t)timer);
     set_isr_entry(&__isr[ISR33_KEYBOARD], (isr_t)ps2_intr);
     set_isr_entry(&__isr[ISR46_HARD1], (isr_t)ata_irq_intr);

@@ -35,11 +35,9 @@ main_shell(int argc, char **argv) {
 
             if (ch != '\b')    sys_printf("%c", ch);
             else {
-                if (ch == '\b') {
-                    if (i > 0) {
-                        sys_printf("\b");
-                        --i;
-                    }
+                if (i > 0) {
+                    sys_printf("\b");
+                    --i;
                 }
             }
 

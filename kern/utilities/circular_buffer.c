@@ -76,7 +76,7 @@ cclbuff_put(cclbuff_t *cclbuff, char c) {
     if (cclbuff_isfull(cclbuff))    return false;
     cclbuff->buff_[cclbuff->head_] = c;
     cclbuff->head_ = (cclbuff->head_ + 1) % cclbuff->capacity_;
-    wakeup(&cclbuff);
+    wakeup(cclbuff);
     return true;
 }
 

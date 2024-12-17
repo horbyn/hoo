@@ -7,6 +7,9 @@
 #include "routine.h"
 #include "kern/panic.h"
 #include "kern/sched/tasks.h"
+#include "kern/mem/pm.h"
+#include "kern/mem/vm.h"
+#include "user/lib.h"
 
 /**
  * @brief intel reserved exception names
@@ -63,6 +66,40 @@ isr_default(void) {
         vec : (NELEMS(__exception_names) - 2);
 
     panic(__exception_names[arr_idx]);
+}
+
+/**
+ * @brief page fault handler
+ */
+void
+page_fault(void) {
+    void *linear_addr = 0;
+    __asm__ ("movl %%cr2, %0": "=a"(linear_addr) ::);
+
+    uint32_t err = 0;
+    // error code fetched at 60(%%ebp) is because
+    // +4: ebp + 4 reaches the return address
+    // +(4 * 12): cross the intrupt frame
+    // +4: vector code which the CPU automatically pushes
+    // +4: error code we want
+    __asm__ ("movl 60(%%ebp), %0": "=a"(err) ::);
+
+    // C.O.W
+    if ((err & PGFLAG_RW) == PGFLAG_RW) {
+        pcb_t *pcb = get_current_pcb();
+        pgelem_t flags = PGFLAG_US | PGFLAG_RW | PGFLAG_PS;
+
+        void *linear_addr_pa = phy_alloc_page();
+        void *temp_va = vir_alloc_pages(&pcb->vmngr_, 1, pcb->break_);
+        set_mapping(temp_va, linear_addr_pa, flags);
+        memmove(temp_va, linear_addr, PGSIZE);
+        vir_release_pages(&pcb->vmngr_, temp_va, false);
+
+        pgelem_t *pte = (pgelem_t *)GET_PTE(linear_addr);
+        (*pte) = (pgelem_t)linear_addr_pa | flags;
+    }
+
+    return;
 }
 
 /**

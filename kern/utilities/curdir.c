@@ -75,7 +75,7 @@ curdir_set(curdir_t *curdir, const char *path) {
     if (curdir == null)    panic("curdir_set(): null pointer");
 
     char *worker = 0;
-    int i = 1, j = 0;
+    int i = 0, j = 0;
 
     if (path != 0 && (path[0] != DIRNAME_ROOT_ASCII)) {
         memmove(curdir->dir_ + curdir->ptr_cur_, path, strlen(path));

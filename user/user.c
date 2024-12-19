@@ -174,3 +174,58 @@ void
 sys_exec(const char *program) {
     syscall_entry(SYS_EXEC, 0);
 }
+
+/**
+ * @brief list all the files of current directory (if it is directory)
+ * or the absolute name of the file
+ * 
+ * @param dir_or_file specify a directory or a file
+ * 
+ * @retval 0: normal
+ * @retval -1: no such directory or file
+ */
+int
+sys_ls(const char *dir_or_file) {
+    int ret = -1;
+    syscall_entry(SYS_LIST, &ret);
+    return ret;
+}
+
+/**
+ * @brief memory dynamic allocation
+ * 
+ * @param size the size to allocate
+ * @return pointer pointed to the memory
+ */
+void *
+sys_alloc(unsigned int size) {
+    void *ret = 0;
+    syscall_entry(SYS_ALLOC, &ret);
+    return ret;
+}
+
+/**
+ * @brief release memory
+ * 
+ * @param ptr specify the memory
+ */
+void
+sys_free(void *ptr) {
+    syscall_entry(SYS_FREE, 0);
+}
+
+/**
+ * @brief get working directory
+ * 
+ * @param wd  buffer to store the working directory
+ * @param len buffer length
+ * 
+ * @retval 0: succeed
+ * @retval -1: failed, and the buffer will be fill in zero
+ */
+int
+sys_workingdir(char *wd, unsigned int len) {
+    int ret = 0;
+    syscall_entry(SYS_WORKINGDIR, &ret);
+    return ret;
+}

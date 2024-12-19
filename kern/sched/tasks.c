@@ -310,10 +310,11 @@ fork(void *entry) {
     uint32_t *cur_stack = setup_ring0_stack(new_ring0_va + PGSIZE,
         new_ring3_va + PGSIZE, entry);
     pcb_t *cur_pcb = get_current_pcb();
+    curdir_t *new_curdir = thread_curdir_get(new_tid);
+    curdir_copy(new_curdir, cur_pcb->curdir_);
     pcb_set(new_pcb, cur_stack, new_ring3_va + PGSIZE, new_tid, new_pgdir_pa,
         &cur_pcb->vmngr_, TIMETICKS, null, thread_buckmngr_get(new_tid),
-        thread_fmngr_get(new_tid), cur_pcb->break_, cur_pcb->tid_,
-        thread_curdir_get(new_tid));
+        thread_fmngr_get(new_tid), cur_pcb->break_, cur_pcb->tid_, new_curdir);
 
     // add to ready queue
     node_t *n = node_alloc();

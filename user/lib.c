@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "lib.h"
+#include "user.h"
 
 /**
  * @brief calculate the strings size
@@ -83,4 +84,39 @@ memmove(void *dst, const void *src, uint32_t size) {
     while (size--)    *pdst++ = *psrc++;
 
     return 0;
+}
+
+/**
+ * @brief memory dynamic allocation
+ * 
+ * @param size the size to allocate
+ * @return pointer pointed to the memory
+ */
+void *
+alloc(uint32_t size) {
+    return sys_alloc(size);
+}
+
+/**
+ * @brief release memory
+ * 
+ * @param ptr specify the memory
+ */
+void
+free(void *ptr) {
+    sys_free(ptr);
+}
+
+/**
+ * @brief get working directory
+ * 
+ * @param wd  buffer to store the working directory
+ * @param len buffer length
+ * 
+ * @retval 0: succeed
+ * @retval -1: failed, and the buffer will be fill in zero
+ */
+int
+workingdir(char *wd, uint32_t len) {
+    return sys_workingdir(wd, len);
 }

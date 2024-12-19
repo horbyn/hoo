@@ -21,5 +21,6 @@ void     files_close(fd_t fd);
 void     files_read(fd_t fd, void *buf, uint32_t size);
 void     files_write(fd_t fd, const char *buf, uint32_t size);
 uint32_t files_get_size(fd_t fd);
+int      files_list(const char *dir_or_file);
 
 #endif

@@ -13,3 +13,9 @@ kernel
 *.json
 
 user/sh
+user/cd
+user/ls
+user/pwd
+user/mkdir
+user/touch
+user/rm

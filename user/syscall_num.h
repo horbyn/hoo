@@ -20,5 +20,9 @@
 #define SYS_EXIT        9
 #define SYS_CD          10
 #define SYS_EXEC        11
+#define SYS_LIST        12
+#define SYS_ALLOC       13
+#define SYS_FREE        14
+#define SYS_WORKINGDIR  15
 
 #endif

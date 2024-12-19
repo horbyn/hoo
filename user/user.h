@@ -22,5 +22,9 @@ void sys_wait();
 void sys_exit();
 int  sys_cd(const char *dir);
 void sys_exec(const char *program);
+int  sys_ls(const char *dir_or_file);
+void *sys_alloc(unsigned int size);
+void sys_free(void *ptr);
+int  sys_workingdir(char *wd, unsigned int len);
 
 #endif

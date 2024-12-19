@@ -18,4 +18,13 @@ void     memset(void *buff, uint8_t fill , uint32_t bufflen);
 void     bzero(void *buff, uint32_t bufflen);
 int      memmove(void *dst, const void *src, uint32_t size);
 
+/* allocation & free */
+
+void *alloc(uint32_t size);
+void free(void *ptr);
+
+/* system metadata */
+
+int workingdir(char *wd, uint32_t len);
+
 #endif

@@ -13,6 +13,7 @@
 #include "kern/driver/ata/ata_cmd.h"
 #include "kern/driver/ata/ata.h"
 #include "kern/driver/cga/cga.h"
+#include "kern/module/io.h"
 #include "user/lib.h"
 
 files_t *__fs_files;
@@ -84,7 +85,6 @@ files_create(const char *name) {
     memmove(parent, name, strlen(name));
     bzero(cur, sizeof(cur));
     get_parent_child_filename(parent, cur);
-    if (parent == 0)    panic("files_create(): parent directory is not found");
     if (!diritem_find(parent, di_parent))
         panic("files_create(): parent directory is not found");
 
@@ -111,6 +111,7 @@ files_create(const char *name) {
 int
 files_remove(const char *name) {
     if (name == 0)    panic("files_remove(): invalid filename");
+    if (is_root_dir(name))    return -2;
 
     char parent[DIRITEM_NAME_LEN];
     bzero(parent, sizeof(parent));
@@ -278,4 +279,48 @@ files_get_size(fd_t fd) {
         panic("files_get_size(): the file was in non-opening");
 
     return (__fs_inodes + __fs_files[index].inode_idx_)->size_;
+}
+
+/**
+ * @brief show all the files of current directory or
+ * the absolute name of current file
+ * 
+ * @param dir_or_file specify a directory or a file
+ * @retval 0: normal
+ * @retval -1: no such directory or file
+ */
+int
+files_list(const char *dir_or_file) {
+    char *absolute = dyn_alloc(PGSIZE);
+    bzero(absolute, PGSIZE);
+
+    if (dir_or_file == 0 || (dir_or_file != 0 && dir_or_file[0] != DIRNAME_ROOT_ASCII)) {
+        if (curdir_get(get_current_pcb()->curdir_, absolute, PGSIZE) == -1) {
+            dyn_free(absolute);
+            return -1;
+        }
+
+        if (dir_or_file != 0 && dir_or_file[0] != DIRNAME_ROOT_ASCII)
+            memmove(absolute + strlen(absolute), dir_or_file, strlen(dir_or_file));
+    } else    memmove(absolute, dir_or_file, strlen(dir_or_file));
+
+    diritem_t *found = dyn_alloc(sizeof(diritem_t));
+    if (diritem_find(absolute, found) == false)    return -1;
+
+    if (found->type_ == INODE_TYPE_FILE) {
+        kprintf("%dB\t\t%s\n", (__fs_inodes + found->inode_idx_)->size_, absolute);
+    } else if (found->type_ == INODE_TYPE_DIR) {
+        char *dir = diritem_traversal(found);
+        for (uint32_t i = 0; i < __fs_inodes[found->inode_idx_].size_; ++i) {
+            kprintf("%s\t", dir);
+            dir += DIRITEM_NAME_LEN;
+        }
+        kprintf("\n");
+        dyn_free(dir);
+    } else    return -1;
+
+    dyn_free(found);
+    if (dir_or_file == null || absolute[0] != DIRNAME_ROOT_ASCII)
+        dyn_free(absolute);
+    return 0;
 }

@@ -5,6 +5,7 @@
  *                                                                        *
  **************************************************************************/
 #include "syscall.h"
+#include "kern/dyn/dynamic.h"
 #include "kern/fs/dir.h"
 #include "kern/fs/exec.h"
 #include "kern/fs/files.h"
@@ -33,5 +34,9 @@ void syscall_init(void) {
     __stub[SYS_EXIT]        = (syscall_t)exit;
     __stub[SYS_CD]          = (syscall_t)dir_change;
     __stub[SYS_EXEC]        = (syscall_t)exec;
+    __stub[SYS_LIST]        = (syscall_t)files_list;
+    __stub[SYS_ALLOC]       = (syscall_t)dyn_alloc;
+    __stub[SYS_FREE]        = (syscall_t)dyn_free;
+    __stub[SYS_WORKINGDIR]  = (syscall_t)dir_get_current;
     __stub[MAX_SYSCALL - 1] = null;
 }

@@ -24,13 +24,12 @@
 typedef struct current_directory {
     char     *dir_;
     uint32_t dirlen_;
-    // point to current directory
-    uint32_t ptr_cur_;
 } curdir_t;
 
 void curdir_init(curdir_t *curdir, char *dir, uint32_t dirlen);
 int  curdir_get(const curdir_t *curdir, char *path, uint32_t pathlen);
 int  curdir_set(curdir_t *curdir, const char *path);
+void curdir_copy(curdir_t *dst, const curdir_t *src);
 void get_parent_child_filename(char *path_to_parent, char *cur);
 
 #endif

@@ -20,11 +20,10 @@ curdir_init(curdir_t *curdir, char *dir, uint32_t dirlen) {
     if (curdir == null)    panic("curdir_init(): null pointer");
     if (dir != 0) {
         curdir->dir_ = dir;
-        bzero(curdir->dir_, MAX_CURDIR_BUFF);
+        bzero(curdir->dir_, dirlen);
     } else    curdir->dir_ = 0;
     if (dirlen != 0)    curdir->dirlen_ = dirlen;
     else    curdir->dirlen_ = 0;
-    curdir->ptr_cur_ = 0;
 }
 
 /**
@@ -76,15 +75,10 @@ curdir_set(curdir_t *curdir, const char *path) {
 
     char *worker = 0;
     int i = 0, j = 0;
-
-    if (path != 0 && (path[0] != DIRNAME_ROOT_ASCII)) {
-        memmove(curdir->dir_ + curdir->ptr_cur_, path, strlen(path));
-        return 0;
-    }
+    bzero(curdir->dir_, curdir->dirlen_);
 
     for (; i < MAX_OPEN_DIR; ++i) {
         if (path[j] == 0)    break;
-        curdir->ptr_cur_ = i * DIRITEM_NAME_LEN;
         worker = curdir->dir_ + i * DIRITEM_NAME_LEN;
 
         for (;; ++j) {
@@ -102,6 +96,22 @@ curdir_set(curdir_t *curdir, const char *path) {
 }
 
 /**
+ * @brief copy current directory
+ * 
+ * @param dst destination
+ * @param src source
+ */
+void
+curdir_copy(curdir_t *dst, const curdir_t *src) {
+    if (dst == null || src == null)    panic("curdir_copy(): null pointer");
+
+    if (dst->dir_ != 0) {
+        if (src->dir_ != 0)    memmove(dst->dir_, src->dir_, src->dirlen_);
+        else    dst->dir_[0] = 0;
+    }
+}
+
+/**
  * @brief get the parent filename
  * 
  * @note
@@ -109,7 +119,7 @@ curdir_set(curdir_t *curdir, const char *path) {
  * @note
  * for "/usr/bin" would also get parent "/usr/" and child "bin"
  * @note
- * for "/" would get parent "" (null pointer) and child "/"
+ * for "/" would get parent "/" and child "" (null pointer)
  * 
  * @param path_to_parent the specific filename (will change to parent at the end)
  * @param child          the child name buffer (if exists)
@@ -117,6 +127,8 @@ curdir_set(curdir_t *curdir, const char *path) {
 void
 get_parent_child_filename(char *path_to_parent, char *cur) {
     if (path_to_parent == 0)    panic("get_parent_child_filename(): null pointer");
+    if (path_to_parent[0] != DIRNAME_ROOT_ASCII)
+        panic("get_parent_child_filename(): not a absolute directory");
 
     int separator = -1;
     uint32_t path_sz = strlen(path_to_parent);
@@ -125,14 +137,15 @@ get_parent_child_filename(char *path_to_parent, char *cur) {
             separator = i;
             break;
         }
+        if (i == 0)    break;
     }
 
     if (separator == -1) {
         // corresponding to the case like "/"
-        path_to_parent[0] = 0;
+        path_to_parent[0] = DIRNAME_ROOT_ASCII;
+        path_to_parent[1] = 0;
         if (cur != 0) {
-            cur[0] = DIRNAME_ROOT_ASCII;
-            cur[1] = 0;
+            cur[0] = 0;
         }
     } else {
         if (cur != 0) {

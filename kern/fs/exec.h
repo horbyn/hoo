@@ -12,6 +12,12 @@
 
 #define DIR_LOADER      "/bin/"
 #define BUILT_SHELL     "shell"
+#define BUILT_CD        "cd"
+#define BUILT_LS        "ls"
+#define BUILT_PWD       "pwd"
+#define BUILT_MKDIR     "mkdir"
+#define BUILT_TOUCH     "touch"
+#define BUILT_RM        "rm"
 #define MAXSIZE_PATH    128
 #define MAX_ARGV        16
 

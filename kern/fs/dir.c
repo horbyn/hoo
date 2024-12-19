@@ -9,6 +9,7 @@
 #include "kern/panic.h"
 #include "kern/dyn/dynamic.h"
 #include "kern/driver/ata/ata_cmd.h"
+#include "kern/hoo/thread_curdir.h"
 #include "user/lib.h"
 
 /**
@@ -209,7 +210,7 @@ is_root_dir(const char *dir) {
  */
 bool
 diritem_find(const char *dir, diritem_t *found) {
-    if (dir && dir[0] != DIRNAME_ROOT_ASCII)
+    if (dir == 0 || (dir != 0 && dir[0] != DIRNAME_ROOT_ASCII))
         panic("diritem_find(): not absolute path");
     if (found == null)    panic("diritem_find(): null pointer");
     else    bzero(found, sizeof(diritem_t));
@@ -248,6 +249,44 @@ diritem_find(const char *dir, diritem_t *found) {
     dyn_free(db);
 
     return found->name_[0] == 0 ? false : true;
+}
+
+/**
+ * @brief diritem traversal
+ * 
+ * @param dir diritem
+ * @return memory by dynamic allocating (NEED TO RELEASE)
+ */
+char *
+diritem_traversal(diritem_t *dir) {
+
+    uint32_t iblock_index =
+        __fs_inodes[dir->inode_idx_].size_ / MAX_DIRITEM_PER_BLOCK;
+    const uint32_t ret_sz = DIRITEM_NAME_LEN * __fs_inodes[dir->inode_idx_].size_;
+    char *buff = dyn_alloc(ret_sz), *ret = buff;
+    dirblock_t *db = dyn_alloc(sizeof(dirblock_t));
+
+    bzero(buff, ret_sz);
+    for (uint32_t i = 0; i <= iblock_index; ++i) {
+        uint32_t lba = iblock_get(dir->inode_idx_, i);
+        if (lba == 0)    break;
+
+        free_rw_disk(db, lba, ATA_CMD_IO_READ);
+        uint32_t max_diritem_number = i == iblock_index ?
+            __fs_inodes[dir->inode_idx_].size_ % MAX_DIRITEM_PER_BLOCK
+            : MAX_DIRITEM_PER_BLOCK;
+        for (uint32_t j = 0; j < max_diritem_number; ++j) {
+            memmove(buff, db->dir_[j].name_, DIRITEM_NAME_LEN);
+            if (db->dir_[j].type_ == INODE_TYPE_DIR)
+                buff[strlen(buff)] = DIRNAME_ROOT_ASCII;
+            buff += DIRITEM_NAME_LEN;
+
+        } // end for(diritem)
+
+    } // end for(dirblock)
+
+    dyn_free(db);
+    return ret;
 }
 
 /**
@@ -412,8 +451,9 @@ dir_change(const char *dir) {
         if (curdir_get(cur_pcb->curdir_, abs, PGSIZE) == -1) {
             dyn_free(abs);
             return -3;
-        } else    get_parent_child_filename(abs, 0);
+        }
 
+        get_parent_child_filename(abs, 0);
         if (strcmp(dir, DIR_PRE) == false) {
             memmove(abs + strlen(abs), dir, strlen(dir));
             uint32_t len = strlen(abs);
@@ -438,6 +478,22 @@ dir_change(const char *dir) {
 
     dyn_free(cur_diritem);
     curdir_set(cur_pcb->curdir_, abs);
+    // also influence the parent directory
+    curdir_set(thread_curdir_get(cur_pcb->parent_), abs);
     dyn_free(abs);
     return 0;
+}
+
+/**
+ * @brief get current directory
+ * 
+ * @param buff    buffer of the current directory
+ * @param bufflen size of the buffer
+ * 
+ * @retval 0: succeed
+ * @retval -1: failed, and the buffer will be fill in zero
+ */
+int
+dir_get_current(char *buff, uint32_t bufflen) {
+    return curdir_get(get_current_pcb()->curdir_, buff, bufflen);
 }

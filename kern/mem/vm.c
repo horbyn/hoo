@@ -193,20 +193,20 @@ release_vspace(pcb_t *pcb) {
     if (pcb == null)    panic("release_vspace(): null pointer");
 
     vspace_t *worker_vs = pcb->vmngr_.next_;
-    while (worker_vs) {
+    while (worker_vs != null) {
         node_t *worker_node = worker_vs->list_.null_.next_;
-        while (worker_node) {
+        while (worker_node != null) {
             vaddr_t *worker_vaddr = (vaddr_t *)worker_node->data_;
             if (worker_vaddr == null)
                 panic("release_vspace(): bug");
 
             // release pages except metadata (va = 0)
             uint32_t pages_amount = ((vaddr_t *)(worker_node->data_))->length_;
-            uint32_t va = ((vaddr_t *)(worker_node->data_))->va_;
+            void  *va = (void *)((vaddr_t *)(worker_node->data_))->va_;
             node_t *worker_node_next = worker_node->next_;
-            if (va != 0) {
+            if (va != null) {
                 for (uint32_t i = 0; i < pages_amount; ++i)
-                    phy_release_vpage((void *)(va + i * PGSIZE));
+                    phy_release_vpage(va + i * PGSIZE);
 
                 // reclaim the metadata
                 vaddr_release(worker_node->data_);

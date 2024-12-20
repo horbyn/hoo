@@ -453,11 +453,12 @@ dir_change(const char *dir) {
             return -3;
         }
 
-        get_parent_child_filename(abs, 0);
         if (strcmp(dir, DIR_PRE) == false) {
             memmove(abs + strlen(abs), dir, strlen(dir));
             uint32_t len = strlen(abs);
             if (abs[len - 1] != DIR_SEPARATOR)    abs[len] = DIR_SEPARATOR;
+        } else {
+            get_parent_child_filename(abs, 0);
         }
     }
 

@@ -1,16 +1,9 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
-
     .text
     .code32
     .extern __stub
     .globl syscall
 
-# 0x80th interrupt handling routine
+# 系统调用 ISR，0x80 是中断向量号
 syscall:
     pushl %ebp
     movl %esp, %ebp
@@ -41,9 +34,9 @@ syscall:
     # │      ... ...     │                  #
     # #######################################
 
-    # fetch user ring3 stack frame
-    movl 0x20(%ebp), %eax                                   # eax is equal to ring3 ebp
-    movl 0x18(%ebp), %ebx                                   # ebx is equal to ring3 esp
+    # 取出用户 ring3 栈帧
+    movl 0x20(%ebp), %eax       # eax 是 ring3 栈底
+    movl 0x18(%ebp), %ebx       # ebx 是 ring3 栈顶
 
     # ss: ring3.esp --> ss: ring0.esp
     movl %eax,       %ecx
@@ -56,10 +49,10 @@ syscall:
     movl %esp,       %edi
     rep movsb
 
-    movl %edx,       %ebx                                   # %ebx is callee-saved so used to stash the counter
+    movl %edx,       %ebx       # %ebx 属于 callee-saved 所以需要缓存
 
-    movl 0x24(%ebp), %eax                                   # eax
-    call *__stub(, %eax, 4)                                 # addr = $isr + %eax * $4
+    movl 0x24(%ebp), %eax
+    call *__stub(, %eax, 4)     # 系统调用地址 = $isr + %eax * $4
 
     movl 0x1c(%ebp), %ecx
     cmpl $0,         %ecx

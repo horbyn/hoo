@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_FS_FS_STUFF_H__
 #define __KERN_FS_FS_STUFF_H__
@@ -25,13 +19,12 @@
 #define MAX_OPEN_FILES              ((MAX_FILES_PER_TASK) * (MAX_TASKS_AMOUNT))
 
 /**
- * @brief file descriptor
+ * @brief 文件描述符
  */
 typedef int fd_t;
 
 /**
- * @brief file struct corresponding to the opening file.
- * that is there will be multiple structures if we repeatly open a file
+ * @brief 用来表示打开的文件，如果重复打开一个文件，会有多个结构体
  */
 typedef struct files {
     int      inode_idx_;

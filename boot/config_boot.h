@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __BOOT_CONFIG_BOOT_H__
 #define __BOOT_CONFIG_BOOT_H__
@@ -20,25 +14,24 @@
  * **********************************************************************************
  */
 
-// kernel stack
-//     Althrough it looks like the stack is set to 0x70000,
-//     the sp(esp) is subtracted first you know.
-//     So if sp(esp) was 0 and then push stack, you will get
-//     ss:sp(esp) that 0x7000:0xfffe(0xfffc)
+// 内核栈
+//     上图栈布局是 0x80000，但为什么这个定义看起来栈顶是 0x70000？因为计算入栈时要
+//     先减去 sp(esp)，所以如果 sp(esp) 是 0，然后入栈，那 ss:sp(esp) 的结果才是
+//     0x7000:0xfffe(0xfffc)
 //
-//     This is why 0x7000 below
+//     这就是为什么定义栈顶为 0x7000
 #define SEG_KSTACK          0x7000
 
-// here sets the `jmp .` instruction
+// 这里设置一条 `jmp .` 指令
 #define SEG_DIED            0x77f0
 #define OFF_DIED            0xfc
 
-// here record the ARDS struct temporary
+// 记录 ARDS 结构体临时数据
 #define SEG_ARDS            0x7a20
 #define OFF_ARDS_CR         0
 #define OFF_ARDS            4
 
-// temporary page(page dir) table
+// 记录引导阶段临时的 paging-structure
 #define SEG_PDTABLE         0x7800
 #define SEG_PGTABLE         0x7900
 
@@ -46,7 +39,7 @@
 #define PDE_HIGH_OFF        (KERN_HIGH_MAPPING >> 20)
 #define PDE_LAST_OFF        (0xffc - PDE_HIGH_OFF)
 
-// memory base
+// 内存起始
 #define MM_BASE             0x100000
 
 #endif

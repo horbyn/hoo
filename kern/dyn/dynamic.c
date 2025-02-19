@@ -1,19 +1,13 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "dynamic.h"
 #include "kern/mem/pm.h"
 #include "kern/mem/vm.h"
 #include "user/lib.h"
 
 /**
- * @brief heap memory allocation
+ * @brief 堆内存分配
  * 
- * @param size size to allocated
- * @return memory
+ * @param size 要分配的大小
+ * @return 可用的虚拟地址
  */
 void *
 dyn_alloc(uint32_t size) {
@@ -50,9 +44,9 @@ dyn_alloc(uint32_t size) {
 }
 
 /**
- * @brief heap memory releasing
+ * @brief 堆内存释放
  * 
- * @param ptr memory address (virtual address)
+ * @param ptr 内存虚拟地址
  */
 void
 dyn_free(void *ptr) {

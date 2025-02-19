@@ -1,13 +1,7 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "page.h"
 
 /**
- * @brief paging
+ * @brief 开启分页
  */
 void
 paging() {
@@ -22,7 +16,7 @@ paging() {
     for (uint32_t i = 0; i < (MM_BASE / PGSIZE); ++i)
         pg[i] = ((pgelem_t)(i * PGSIZE) | flags);
 
-    // Paging and Write-Protect (COW pre-requisite)
+    // Paging and Write-Protect (使用 C.O.W 要提前开启)
     __asm__ ("movl %0, %%cr3\r\n"
         "movl %%cr0,       %%eax\r\n"
         "orl $0x80010000,  %%eax\r\n"

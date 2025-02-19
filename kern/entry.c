@@ -1,17 +1,9 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "kern.h"
 
 void
 entry(void) {
     /**********************************************************************
-     * ignore the boot environment, because we reset all registers here   *
-     *                                                                    *
-     * the address is same as the setting in `boot/config_boot.h`         *
+     *       下面设置的所有寄存器和 `boot/config_boot.h` 的定义保持一致         *
      **********************************************************************/
     __asm__ ("movw $0x10,    %ax\r\n"
              "movw %ax,      %ds\r\n"
@@ -20,13 +12,13 @@ entry(void) {
              "movw %ax,      %gs\r\n"
              "movw %ax,      %ss\r\n"
              "movl $0x80000, %esp\r\n"
-             // setup DIED INSTRUCTION
+             // 设置 DIED 指令
              "pushl $0x77ffc\r\n"
-             // setup calling convention
+             // 设置调用约定
              "pushl $0\r\n"
              "movl %esp,     %ebp\r\n"
              "pushl $go\r\n"
-             // goto the high address
+             // 跳去高地址
              "ret\r\n"
              "go:\r\n");
 
@@ -34,8 +26,6 @@ entry(void) {
     kern_exec();
 
     /**********************************************************************
-     * NEED NOT TO RETURN NORMALLY                                        *
-     *                                                                    *
-     * But return is no problem because it will return to DIED instruction*
+     *       不需要返回，但返回也没问题因为 DIED 指令会作为返回地址出栈            *
      **********************************************************************/
 }

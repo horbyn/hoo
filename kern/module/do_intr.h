@@ -1,18 +1,12 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_MODULE_DO_INTR_H__
 #define __KERN_MODULE_DO_INTR_H__
 
 #include "kern/intr/intr.h"
 
-// the entrance of isr
+// ISR 入口
 extern uint32_t isr_part1[IDT_ENTRIES_NUM];
-// the isr routines
+// ISR 数组
 extern isr_t __isr[];
 extern void syscall(void);
 

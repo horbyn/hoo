@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_HOO_THREAD_CURDIR_H__
 #define __KERN_HOO_THREAD_CURDIR_H__

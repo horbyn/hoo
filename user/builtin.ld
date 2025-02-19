@@ -1,4 +1,4 @@
 SECTIONS {
-    /* make the builtin binaries VMA beginning with 0 */
+    /* 使内置命令 VMA 开始于 0 */
     . = 0;
 }

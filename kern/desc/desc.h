@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_DESC_DESC_H__
 #define __KERN_DESC_DESC_H__
@@ -16,8 +10,7 @@
 #define DS_SELECTOR_USER    0x23
 
 /**
- * @brief definition of access byte field of those
- * descriptor not system segment
+ * @brief Access Byte 定义
  */
 typedef struct AccessByteNotsys {
     /*
@@ -28,30 +21,29 @@ typedef struct AccessByteNotsys {
      * └─┴────┴─┴─┴──┴──┴─┘
      */
 
-    // Access: best left clear(0)
+    // Access：最好保持为 0
     uint8_t a_   :1;
-    // readable or writable
+    // 可读或可写
     uint8_t rw_  :1;
     // direction or conforming
     uint8_t dc_  :1;
-    // executable
+    // 可执行
     uint8_t e_   :1;
-    // sys segment: clear if it is
+    // 系统段标识
     uint8_t sys_ :1;
-    // privilege
+    // 优先级
     uint8_t dpl_ :2;
-    // present: set if in memory
+    // 存在位标识
     uint8_t ps_  :1;
     
 } __attribute__((packed)) AcsNotsys_t;
 
 /**
- * @brief definition of access byte field in tss
- * which is belong to system segment
+ * @brief TSS 的 Access byte 定义
  */
 typedef struct AccessByteTss {
     /*
-     * used for TSS        
+     * TSS  使用
      * ┌─┬──┬─┬─┬─┬─┬─┬─┐
      * │7│ 6│5│4│3│2│1│0│
      * ├─┼──┴─┼─┼─┼─┼─┼─┤
@@ -59,25 +51,25 @@ typedef struct AccessByteTss {
      * └─┴────┴─┴─┴─┴─┴─┘
      */
 
-    // fixed with 1
+    // 总是为 1
     uint8_t type1_ :1;
-    // busy: set if the task is executing
+    // 如果是 1，则表示任务正在执行
     uint8_t type2_ :1;
-    // fixed with 0
+    // 总是为 0
     uint8_t type3_ :1;
-    // fixed with 1
+    // 总是为 1
     uint8_t type4_ :1;
-    // sys segment: clear if it is
+    // 如果是系统段则为 0
     uint8_t sys_   :1;
-    // privilege
+    // 特权级
     uint8_t dpl_   :2;
-    // present: set if in memory
+    // 存在位标识
     uint8_t ps_    :1;
     
 } __attribute__ ((packed)) AcsTss_t;
 
 /**
- * @brief gdt definition
+ * @brief gdt 定义
  */
 typedef struct Descriptor {
     uint16_t  limit_15_0_;
@@ -104,46 +96,46 @@ typedef struct Descriptor {
      * └─┴──┴─┴────────┘
      */
 
-    // avilable for use by os(here is not so always clear)
+    // 内核使用
     uint8_t   avl_  : 1;
-    // long mode if set
+    // LONG 模式设置为 1
     uint8_t   long_ : 1;
-    // protected mode
+    // 保护模式设置为 1
     uint8_t   db_   : 1;
-    // granularity
+    // 粒度
     uint8_t   g_    : 1;
     uint8_t   base_31_24_;
 } __attribute__ ((packed)) Desc_t;
 
 /**
- * @brief definition of GDTR
+ * @brief GDTR 定义
  */
 typedef struct GdtRegister {
-    // gdt size
+    // gdt 大小
     uint16_t size_;
-    // gdt linear base
+    // gdt 虚拟地址起始
     Desc_t *linear_;
 } __attribute__ ((packed)) Gdtr_t;
 
 /**
- * @brief 32-bit TSS format
+ * @brief 32 位 TSS 格式
  */
 typedef struct Tss {
-    // previous task
+    // 前一个任务
     uint32_t prev_tss_;
-    // ring0 stack
+    // ring0 栈顶
     uint32_t esp0_;
-    // ring0 stack segment
+    // ring0 栈的段寄存器
     uint32_t ss0_;
-    // ring1 stack
+    // ring1 栈顶
     uint32_t esp1_;
-    // ring1 stack segment
+    // ring1 栈的段寄存器
     uint32_t ss1_;
-    // ring2 stack
+    // ring2 栈顶
     uint32_t esp2_;
-    // ring2 stack segment
+    // ring2 栈的段寄存器
     uint32_t ss2_;
-    // page dir table base
+    // 页目录表虚拟地址
     uint32_t cr3_;
     uint32_t eip_;
     uint32_t eflags_;
@@ -161,9 +153,9 @@ typedef struct Tss {
     uint32_t ds_;
     uint32_t fs_;
     uint32_t gs_;
-    // ldt segment selector
+    // ldt 段选择子
     uint32_t ldt_sel_;
-    // io map base
+    // io 映射虚拟地址
     uint32_t iomap_;
 } __attribute__ ((packed)) tss_t;
 

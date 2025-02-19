@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "pm.h"
 #include "kern/panic.h"
 #include "user/lib.h"
@@ -13,7 +7,7 @@ static uint8_t __bmbuff_phymm[SIZE_BITMAP_PHYMM4G] __attribute__((aligned(16)));
 static bitmap_t __bm_phymm;
 
 /**
- * @brief get physical memory spinlock
+ * @brief 获取物理内存管理模块的 spinlock
  * 
  * @return spinlock 
  */
@@ -24,9 +18,9 @@ pm_get_spinlock(void) {
 }
 
 /**
- * @brief initialize physical memory system
+ * @brief 初始化物理内存管理模块
  * 
- * @param mem_size memory size in bytes
+ * @param mem_size 物理内存大小，以字节为单位
  */
 void
 init_phymm_system(uint32_t mem_size) {
@@ -35,11 +29,12 @@ init_phymm_system(uint32_t mem_size) {
 }
 
 /**
- * @brief allocate a physical page
+ * @brief 分配一个物理页
  * 
- * @return a physical address
+ * @return 物理地址
  */
-void *phy_alloc_page() {
+void *
+phy_alloc_page() {
     int i = 0;
     wait(pm_get_spinlock());
     i = bitmap_scan_empty(&__bm_phymm);
@@ -49,9 +44,9 @@ void *phy_alloc_page() {
 }
 
 /**
- * @brief release a physical page
+ * @brief 释放一个物理页
  * 
- * @param phy_addr a physical address
+ * @param phy_addr 待释放的物理地址
  */
 void
 phy_release_page(void *phy_addr) {
@@ -66,9 +61,9 @@ phy_release_page(void *phy_addr) {
 }
 
 /**
- * @brief release a physical page
+ * @brief 释放一个物理页
  * 
- * @param vir_addr the corresponding virtual address
+ * @param vir_addr 对应的虚拟地址
  */
 void
 phy_release_vpage(void *vir_addr) {
@@ -78,11 +73,11 @@ phy_release_vpage(void *vir_addr) {
 }
 
 /**
- * @brief create page table mappings
+ * @brief 创建一个页表映射
  * 
- * @param va    virtual address
- * @param pa    physical address
- * @param flags flags
+ * @param va    虚拟地址
+ * @param pa    物理地址
+ * @param flags 标识
  */
 void
 set_mapping(void *va, void *pa, pgelem_t flags) {
@@ -93,7 +88,7 @@ set_mapping(void *va, void *pa, pgelem_t flags) {
         FLAGS_PF = PGFLAG_US | PGFLAG_PS;
     pgelem_t pde_flags = (*pgdir_va & ~PG_MASK) & FLAGS;
     if (pde_flags != FLAGS && pde_flags != FLAGS_PF) {
-        // lack of page table
+        // 缺乏物理页
         void *pgtbl = phy_alloc_page();
         *pgdir_va = (pgelem_t)pgtbl | FLAGS;
     }

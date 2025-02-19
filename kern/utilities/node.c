@@ -1,18 +1,12 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "node.h"
 #include "kern/panic.h"
 
 /**
- * @brief setup the node object
+ * @brief 填充 node 对象
  * 
- * @param node the node object
- * @param data the data wrapped by the node
- * @param next next node
+ * @param node node 对象
+ * @param data 被 node 封装的对象
+ * @param next 下一个 node
  */
 void
 node_set(node_t *node, void *data, node_t *next) {

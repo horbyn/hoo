@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_DRIVER_ATA_ATA_H__
 #define __KERN_DRIVER_ATA_ATA_H__
@@ -11,7 +5,7 @@
 #include "ata_cmd.h"
 
 /**
- * @brief ata method like IRQs or polling
+ * @brief ATA 方式（POLLING 或 IRQ）
  */
 typedef uint32_t atamth_t;
 

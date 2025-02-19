@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_UNITS_CIRCULAR_BUFFER_H__
 #define __KERN_UNITS_CIRCULAR_BUFFER_H__
@@ -11,8 +5,7 @@
 #include "spinlock.h"
 
 /**
- * @brief buffer for caching characters
- * (MUST BE used after "tasks system" initialization)
+ * @brief 环形缓冲区（必须在调度模块初始化完成后使用）
  */
 typedef struct circular_buffer {
     uint32_t    capacity_;

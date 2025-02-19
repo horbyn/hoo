@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_UTILITIES_SPINLOCK_H__
 #define __KERN_UTILITIES_SPINLOCK_H__
@@ -11,19 +5,19 @@
 #include "user/types.h"
 
 /**
- * @brief binary somaphore -- spinlock definition
+ * @brief spinlock 定义
  */
 typedef struct spinlock {
-    // true if someone holds the lock
+    // 如果有人持有锁则非零
     uint32_t islock_;
 } spinlock_t;
 
 /**
- * @brief test whether the lock is used
+ * @brief 测试是否有人占用着锁
  * 
- * @param spin lock
- * @retval 1: used
- * @retval 0: free
+ * @param spin spinlock
+ * @retval 1: 被人占用
+ * @retval 0: 没人占用
  */
 static inline int
 test(spinlock_t *spin) {

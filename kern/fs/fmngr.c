@@ -1,17 +1,11 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "fmngr.h"
 #include "kern/panic.h"
 #include "user/lib.h"
 
 /**
- * @brief file manager initialization
+ * @brief 文件管理器初始化
  * 
- * @param fmngr file manager
+ * @param fmngr 文件管理器
  */
 void
 fmngr_init(fmngr_t *fmngr) {
@@ -21,10 +15,10 @@ fmngr_init(fmngr_t *fmngr) {
 }
 
 /**
- * @brief allocate the file descriptor
+ * @brief 让文件管理器中分配一个可用的文件描述符
  *
- * @param fmngr file manager
- * @return file descriptor
+ * @param fmngr 文件管理器
+ * @return 文件描述符
  */
 fd_t
 fmngr_alloc(fmngr_t *fmngr) {
@@ -33,10 +27,10 @@ fmngr_alloc(fmngr_t *fmngr) {
 }
 
 /**
- * @brief release the files array index of file manager
+ * @brief 文件管理器回收文件描述符
  * 
- * @param fmngr file manager
- * @param fd    file descriptor
+ * @param fmngr 文件管理器
+ * @param fd    文件描述符
  */
 void
 fmngr_free(fmngr_t *fmngr, fd_t fd) {
@@ -45,11 +39,11 @@ fmngr_free(fmngr_t *fmngr, fd_t fd) {
 }
 
 /**
- * @brief setup the file descriptor array of the file manager
+ * @brief 向文件管理器中特定的索引设置元素
  * 
- * @param fmngr file manager
- * @param fd    file descriptor
- * @param val   value
+ * @param fmngr 文件管理器
+ * @param fd    索引（文件描述符）
+ * @param val   要设置的元素
  */
 void
 fmngr_files_set(fmngr_t *fmngr, fd_t fd, fd_t val) {
@@ -61,11 +55,11 @@ fmngr_files_set(fmngr_t *fmngr, fd_t fd, fd_t val) {
 }
 
 /**
- * @brief get the files array element for specific index of file manager
+ * @brief 从文件管理器的特定索引中获取元素
  * 
- * @param fmngr file manager
- * @param fd    file descriptor
- * @return file array element
+ * @param fmngr 文件管理器
+ * @param fd    索引（文件描述符）
+ * @return 文件数组元素
  */
 fd_t
 fmngr_files_get(fmngr_t *fmngr, fd_t fd) {

@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "conf.h"
 #include "kern/module/log.h"
 
@@ -11,7 +5,7 @@ static Desc_t __gdt[SIZE_GDT];
 static Gdtr_t __gdtr;
 
 /**
- * @brief setup gdt
+ * @brief 设置 GDT
  */
 static void
 config_gdt(void) {
@@ -30,7 +24,7 @@ config_gdt(void) {
 }
 
 /**
- * @brief setup tss
+ * @brief 设置 TSS
  */
 static void
 config_tss(void) {
@@ -38,9 +32,7 @@ config_tss(void) {
     set_gdt(&__gdt[5], sizeof(tss_t), (uint32_t)get_hoo_tss(),
         1, 0, 0, 1, 0, 3, 1, 0, 1, 0);
 
-    // load tr with seletor #5
-    // note that the busy field of tss descriptor will always be set once
-    // `ltr` its corresponding selector whatever this field set or clear
+    // 用段选择子 #5 来加载 TR
     void *tr_value = null;
     __asm__ ("movw $((5 * 8) | 3), %%ax\n\t"
         "ltr %%ax\n\t"
@@ -49,7 +41,7 @@ config_tss(void) {
 }
 
 /**
- * @brief kernel configuration
+ * @brief 配置内核
  */
 void
 kinit_config(void) {

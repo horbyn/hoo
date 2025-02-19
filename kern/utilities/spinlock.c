@@ -1,27 +1,21 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "spinlock.h"
 #include "kern/panic.h"
 #include "kern/x86.h"
 
 /**
- * @brief spinlock initialization
+ * @brief spinlock 初始化
  * 
  * @param spin spinlock
  */
 void
 spinlock_init(spinlock_t *spin) {
     if (spin == null)    panic("spinlock_init(): null pointer");
-    // nobody holds the lock
+    // 没人持有锁
     spin->islock_ = 0;
 }
 
 /**
- * @brief hold the spinlock
+ * @brief 申请 spinlock
  * 
  * @param spin spinlock
  */
@@ -29,7 +23,7 @@ void
 wait(spinlock_t *spin) {
     __asm__ ("1:");
 
-    // return 1 if the spin was occupied
+    // 如果出现 spin 则返回 1
     while (test(spin));
 
     __asm__ ("\n\t"
@@ -39,7 +33,7 @@ wait(spinlock_t *spin) {
 }
 
 /**
- * @brief release the lock
+ * @brief 释放锁
  * 
  * @param spin spinlock
  */

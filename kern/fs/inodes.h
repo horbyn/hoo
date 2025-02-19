@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_FS_INODES_H__
 #define __KERN_FS_INODES_H__
@@ -12,7 +6,7 @@
 #include "kern/driver/ata/ata_cmd.h"
 
 /**
- * @brief inode type
+ * @brief inode 类型
  */
 typedef uint32_t inode_type_t;
 
@@ -21,11 +15,11 @@ typedef uint32_t inode_type_t;
 #define INODE_TYPE_DIR      2
 
 /**
- * @brief definition of inode
+ * @brief inode
  */
 typedef struct inode {
     uint32_t    size_;
-    // index table: [0-5] directly; [6] single indirect; [7] double indirect
+    // index 索引表: [0-5] 直接索引; [6] 一级索引; [7] 两级索引
     uint32_t iblocks_[MAX_INODE_BLOCKS];
 } inode_t;
 extern inode_t __fs_inodes[MAX_INODES];

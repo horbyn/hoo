@@ -1,29 +1,23 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "gdt.h"
 #include "kern/panic.h"
 #include "kern/module/log.h"
 
 /**
- * @brief Set the gdt descriptor
+ * @brief 设置 gdt 段描述符
  * 
- * @param d     the gdt entry
- * @param limit the maximun of addressing, which units are either 1B or 4KB
- * @param base  segment base linear address
- * @param a     best left clear
- * @param rw    readable or writable
+ * @param d     gdt 对象
+ * @param limit 寻址最大值，单位要么 1B 要么 4KB
+ * @param base  对应段的虚拟地址起始
+ * @param a     一个属性位，最好设置为 0
+ * @param rw    读写标识
  * @param dc    direction or conforming
- * @param exe   executable
- * @param sys   if system segment?
- * @param dpl   privilege
- * @param ps    if present in memory?
- * @param l     if the long mode?
- * @param db    if the protected mode?
- * @param g     granularity
+ * @param exe   执行标识
+ * @param sys   是否系统段
+ * @param dpl   优先级
+ * @param ps    存在标识
+ * @param l     是否 LONG 模式
+ * @param db    是否保护模式
+ * @param g     粒度
  */
 void
 set_gdt(Desc_t *d, uint32_t limit, uint32_t base, uint8_t a,
@@ -37,7 +31,7 @@ uint8_t ps, uint8_t l, uint8_t db, uint8_t g) {
     d->base_23_16_                          = (uint8_t)(base >> 16);
     d->base_31_24_                          = (uint8_t)(base >> 24);
     if (sys != 0) {
-        // not system segment
+        // 非系统段
         d->access_bytes_.code_or_data_.a_   = a;
         d->access_bytes_.code_or_data_.rw_  = rw;
         d->access_bytes_.code_or_data_.dc_  = dc;
@@ -46,7 +40,7 @@ uint8_t ps, uint8_t l, uint8_t db, uint8_t g) {
         d->access_bytes_.code_or_data_.dpl_ = dpl;
         d->access_bytes_.code_or_data_.ps_  = ps;
     } else {
-        // system segment
+        // 系统段
         d->access_bytes_.tss_.type1_        = 1;
         d->access_bytes_.tss_.type2_        = rw;
         d->access_bytes_.tss_.type3_        = 0;
@@ -62,11 +56,11 @@ uint8_t ps, uint8_t l, uint8_t db, uint8_t g) {
 }
 
 /**
- * @brief Set the gdtr object
+ * @brief 设置 gdtr
  * 
- * @param gdtr     the gdtr object
- * @param gdt      the gdt
- * @param gdt_size the gdt length
+ * @param gdtr     gdtr 对象
+ * @param gdt      gdt 对象
+ * @param gdt_size gdt 大小
  */
 void set_gdtr(Gdtr_t *gdtr, Desc_t *gdt, uint32_t gdt_size) {
     if (gdtr == null)    panic("set_gdtr(): null pointer");

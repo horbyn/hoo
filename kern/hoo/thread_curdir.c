@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "thread_curdir.h"
 #include "kern/panic.h"
 #include "kern/mem/pm.h"
@@ -13,9 +7,9 @@ static char *__mdata_dir = 0;
 static curdir_t *__mdata_cd = 0;
 
 /**
- * @brief initialize the curdir object of all threads
+ * @brief 初始化所有线程的 curdir 对象
  * 
- * @param pcb the pcb needed to allocate current directory
+ * @param pcb 需要分配 curdir 对象的 PCB
  */
 void
 init_thread_curdir(pcb_t *pcb) {
@@ -48,10 +42,10 @@ init_thread_curdir(pcb_t *pcb) {
 }
 
 /**
- * @brief get the curdir object metadata
+ * @brief 获取 curdir
  * 
- * @param tid thread id
- * @return curdir object metadata
+ * @param tid 线程 id
+ * @return curdir 对象
  */
 curdir_t *
 thread_curdir_get(tid_t tid) {
@@ -61,9 +55,9 @@ thread_curdir_get(tid_t tid) {
 }
 
 /**
- * @brief clear the current directory
+ * @brief 清空 curdir
  * 
- * @param tid thread id
+ * @param tid 线程 id
  */
 void
 thread_curdir_clear(tid_t tid) {

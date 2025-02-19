@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_MEM_VADDR_H__
 #define __KERN_MEM_VADDR_H__
@@ -11,16 +5,16 @@
 #include "kern/utilities/list.h"
 
 /**
- * @brief virtual address
+ * @brief 虚拟地址定义
  */
 typedef struct vaddr {
     uint32_t va_;
-    // the page amounts after the va
+    // 在 va 后面的页框数量
     uint32_t length_;
 } vaddr_t;
 
 /**
- * @brief virtual address list
+ * @brief 虚拟地址空间
  */
 typedef struct vaddr_space {
     list_t             list_;
@@ -31,6 +25,5 @@ typedef struct vaddr_space {
 
 void vaddr_set(vaddr_t *vaddr, uint32_t addr, uint32_t length);
 void vspace_set(vspace_t *vs, list_t *ls, uint32_t begin, uint32_t end, vspace_t *next);
-void debug_print_vsmngr(vspace_t *vs);
 
 #endif

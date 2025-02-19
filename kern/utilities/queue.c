@@ -1,15 +1,9 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "queue.h"
 #include "kern/panic.h"
 
 /**
- * @brief initialize the queue
- * @param q the queue needed to operate
+ * @brief 初始化队列
+ * @param q 队列
  */
 void
 queue_init(queue_t *q) {
@@ -22,11 +16,11 @@ queue_init(queue_t *q) {
 }
 
 /**
- * @brief check if queue is empty
+ * @brief 判断队列空
  * 
- * @param q the queue needed to operate
- * @retval true the queue is empty
- * @retval false the queue is not empty
+ * @param q 队列
+ * @retval true  队列空
+ * @retval false 队列非空
  */
 bool
 queue_isempty(queue_t *q) {
@@ -36,12 +30,11 @@ queue_isempty(queue_t *q) {
 }
 
 /**
- * @brief enqueuing
+ * @brief 入队
  * 
- * @param q the queue needed to operate
- * @param n the enqueuing node
- * @param mth the method of enqueuing (supported
- * tail-enqueuing and head-enqueuing)
+ * @param q 队列
+ * @param n 入队结点
+ * @param mth 入队方式（头插入和尾插入）
  */
 void
 queue_push(queue_t *q, node_t *n, enq_mth_t mth) {
@@ -51,8 +44,7 @@ queue_push(queue_t *q, node_t *n, enq_mth_t mth) {
     n->next_ = null;
 
     if (mth == HEAD && !queue_isempty(q)) {
-        // if use head-enqueuing and the queue is empty
-        // then same as tail-enqueuing
+        // 头插入且队列空时，和尾插入一样
         n->next_ = q->head_->next_->next_;
         q->head_->next_->next_ = n;
     } else {
@@ -62,10 +54,10 @@ queue_push(queue_t *q, node_t *n, enq_mth_t mth) {
 }
 
 /**
- * @brief dequeuing
+ * @brief 出队
  * 
- * @param q the queue needed to operate
- * @retval null if the queue is empty
+ * @param q 队列
+ * @retval 返回 null 如果队列为空
  */
 node_t *
 queue_pop(queue_t *q) {
@@ -83,10 +75,10 @@ queue_pop(queue_t *q) {
 }
 
 /**
- * @brief check the front of the queue
+ * @brief 检查队头
  * 
- * @param q queue to be checked
- * @return the first node; null if the queue is empty
+ * @param q 队列
+ * @return 第一个结点；或者返回 null 如果队列空
  */
 node_t *
 queue_front(queue_t *q) {

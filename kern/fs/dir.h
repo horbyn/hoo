@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_FS_DIR_H__
 #define __KERN_FS_DIR_H__
@@ -11,25 +5,25 @@
 #include "inodes.h"
 #include "kern/utilities/curdir.h"
 
-// inode index where the root dir is
+// 根目录的 inode 索引
 #define INODE_INDEX_ROOT    0
 #define DIR_CUR             "."
 #define DIR_PRE             ".."
 
 /**
- * @brief directory item
+ * @brief 目录项
  */
 typedef struct dir_item {
     inode_type_t type_;
     int          inode_idx_;
-    // 13.3 format
+    // 13.3 格式
     char         name_[DIRITEM_NAME_LEN];
 } diritem_t;
 
 #define MAX_DIRITEM_PER_BLOCK   ((BYTES_SECTOR) / sizeof(diritem_t))
 
 /**
- * @brief directory items to be filled into the block
+ * @brief 目录块
  */
 typedef struct dir_block {
     diritem_t dir_[MAX_DIRITEM_PER_BLOCK];

@@ -1,10 +1,8 @@
 ENTRY(entry)
 SECTIONS {
-    /* VMA is the logic address;
-       while LMA is the real loading address */
+    /* VMA 是逻辑地址，LMA 是加载到内存上的地址 */
 
-    /* After paging
-     */
+    /* 启用分页之后 */
     . = 0x80000000;
     PROVIDE(__kern_base = . - 0x80000000);
     .text : AT(ADDR(.text) - 0x80000000) {

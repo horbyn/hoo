@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "do_intr.h"
 #include "kern/driver/8042/8042.h"
 #include "kern/driver/ata/ata_irq.h"
@@ -16,31 +10,29 @@ __attribute__((aligned(0x4))) isr_t __isr[IDT_ENTRIES_NUM];
 __attribute__((aligned(0x8))) static idt_t __idt[IDT_ENTRIES_NUM];
 
 /**
- * @brief initialize isr and idt by default
+ * @brief 初始化 ISR 和 IDT
  */
 void
 kinit_isr_idt(void) {
-    // set default __isr[]
+    // 设置默认的 ISR 数组
     for (uint32_t i = 0; i < IDT_ENTRIES_NUM; ++i)
         set_isr_entry(&__isr[i], (isr_t)isr_default);
 
-    // specific isr routines
+    // 设置特定的 ISR
     set_isr_entry(&__isr[ISR14_PAGEFAULT], (isr_t)page_fault);
     set_isr_entry(&__isr[ISR32_TIMER], (isr_t)timer);
     set_isr_entry(&__isr[ISR33_KEYBOARD], (isr_t)ps2_intr);
     set_isr_entry(&__isr[ISR46_HARD1], (isr_t)ata_irq_intr);
     set_isr_entry(&__isr[ISR128_SYSCALL], (isr_t)syscall);
 
-    // set __idt[]
-    // all the idts point to the default handling;
-    // after that, idt #128 that corresponding to isr #34 points to system call
-    // which need dpl 3
+    // 设置 IDT 数组
+    // 首先让所有 IDT 元素都指向默认的处理函数，然后 IDT #128 指向 DPL=3 的系统调用
     for (uint32_t i = 0; i < IDT_ENTRIES_NUM; ++i)
         set_idt_entry(&__idt[i], PL_KERN, INTER_GATE, (uint32_t)isr_part1[i]);
     set_idt_entry(&__idt[ISR128_SYSCALL], PL_USER, TRAP_GATE,
         (uint32_t)isr_part1[ISR128_SYSCALL]);
 
-    // load idtr
+    // 加载 IDTR
     __idtr.limit_ = sizeof(__idt) - 1;
     __idtr.base_ = (uint32_t)__idt;
     idtr_t idtr_value;

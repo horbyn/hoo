@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_SCHED_PCB_H__
 #define __KERN_SCHED_PCB_H__
@@ -13,35 +7,35 @@
 #include "kern/mem/bucket.h"
 #include "kern/page/page_stuff.h"
 #include "kern/utilities/curdir.h"
-#include "kern/utilities/sleeplock.h"
+#include "kern/utilities/spinlock.h"
 #include "user/types.h"
 
-// switch when the amount arrived
+// 当到达这个数量的时间片时发出 IRQ 信号
 #define TIMETICKS   16
 #define TID_HOO     0
 #define TID_IDLE    1
 
 /**
- * @brief definition of Process Control Block
+ * @brief Process Control Block
  */
 typedef struct pcb {
-    // current stack that either kernel stack or user stack
+    // ring0 栈栈顶
     uint32_t     *stack0_;
-    // user stack
+    // ring3 栈栈顶
     uint32_t     *stack3_;
-    // thread id
+    // 线程 id
     tid_t        tid_;
     pgelem_t     *pgdir_pa_;
-    // virtual space manager
+    // vspace 对象
     vspace_t     vmngr_;
-    // the rest ticks
+    // 剩余时间片
     uint32_t     ticks_;
-    // the task was slept if it is not null
+    // 如果非空则当前进程进入睡眠
     void         *sleep_;
-    // for heap memory allocation
+    // 堆内存管理器
     buckx_mngr_t *hmngr_;
     fmngr_t      *fmngr_;
-    // the end of all segments
+    // 二进制数据在这里截止
     uint32_t     break_;
     tid_t        parent_;
     curdir_t     *curdir_;

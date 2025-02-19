@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "panic.h"
 #include "x86.h"
 #include "kern/driver/cga/cga.h"
@@ -13,7 +7,7 @@
 #include "kern/intr/intr_stack.h"
 
 /**
- * @brief print the stack frame so far
+ * @brief 打印栈帧
  */
 static void
 trace() {
@@ -31,7 +25,7 @@ trace() {
         }
         kprintf("- 0x%x", ret);
 
-        // check whether it is interrupt stack
+        // 检查是否中断栈
         if (ret == (uint32_t)isr_part3) {
             kprintf(" *");
             istackcpu_t *istack = 
@@ -45,9 +39,9 @@ trace() {
 }
 
 /**
- * @brief display some messages in collapse
+ * @brief 在系统 panic 时打印信息
  * 
- * @param extra extra message
+ * @param extra 额外信息
  */
 void
 panic(const char *extra) {

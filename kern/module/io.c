@@ -1,15 +1,9 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "io.h"
 #include "kern/utilities/format.h"
 #include "kern/driver/cga/cga.h"
 
 /**
- * @brief i/o system initialization
+ * @brief IO 模块初始化
  */
 void
 kinit_io(void) {
@@ -19,10 +13,10 @@ kinit_io(void) {
 }
 
 /**
- * @brief formatting printing
+ * @brief 格式化输出
  * 
- * @param fmt formatting string
- * @param ... variadic parameters
+ * @param fmt 格式化字符串
+ * @param ... 可变参数
  */
 void
 kprintf(const char *fmt, ...) {

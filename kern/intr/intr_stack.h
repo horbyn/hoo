@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_INTR_INTR_STACK_H__
 #define __KERN_INTR_INTR_STACK_H__
@@ -11,8 +5,8 @@
 #include "user/types.h"
 
 /**
- * @brief definition of os interrupt stack corresponding
- * the order of storing context in `kern/inter/trampoline.s`
+ * @brief OS 中断栈定义的寄存器组顺序对应于
+ * `kern/intr/trampoline.S` 中存储环境上下文的顺序
  */
 typedef struct interrupt_stack_os {
     uint32_t edi_;
@@ -30,8 +24,8 @@ typedef struct interrupt_stack_os {
 } __attribute__ ((packed)) istackos_t;
 
 /**
- * @brief definition of cpu interrupt stack that builds
- * the env the cpu executes `iret` instruction
+ * @brief 处理器中断栈定义的寄存器组顺序对应于
+ * 处理器执行 `iret` 时储存环境上下文的顺序
  */
 typedef struct interrupt_stack_cpu {
     // unused when `iret`ing
@@ -45,7 +39,7 @@ typedef struct interrupt_stack_cpu {
 } __attribute__ ((packed)) istackcpu_t;
 
 /**
- * @brief thread stack
+ * @brief 线程栈
  */
 typedef struct thread_stack {
     void *retaddr_;

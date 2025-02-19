@@ -1,19 +1,13 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "8259a.h"
 
 /**
- * @brief Set the icw1 command
+ * @brief 设置 ICW1 命令
  * 
- * @param cmd icw1 command
+ * @param cmd ICW1 命令
  */
 void
 set_icw1(uint8_t cmd) {
-    // ICW1 need to set the following
+    // ICW1 需要设置为以下格式
     // 7  6 5 4  3   2  1    0
     // ┌─┼─┼─┼─┼────┼─┼────┼───┐
     // │0│0│0│1│LTIM│0│SNGL│IC4│
@@ -25,10 +19,10 @@ set_icw1(uint8_t cmd) {
 }
 
 /**
- * @brief Set the icw2 command
+ * @brief 设置 ICW2 命令
  * 
- * @param master vector offset for master, which become master..master+7
- * @param slave  same for slave, slave..slave+7
+ * @param master master 的矢量偏移
+ * @param slave  slave 的矢量偏移
  */
 void
 set_icw2(uint8_t master, uint8_t slave) {
@@ -45,9 +39,9 @@ set_icw2(uint8_t master, uint8_t slave) {
 }
 
 /**
- * @brief Set the icw3 command
+ * @brief 设置 ICW3 命令
  * 
- * @param irq_pin indicate the slave pin to connect to master
+ * @param irq_pin 指出从片连接到主片的引脚
  */
 void
 set_icw3(uint8_t irq_pin) {
@@ -68,9 +62,9 @@ set_icw3(uint8_t irq_pin) {
 }
 
 /**
- * @brief Set the icw4 command
+ * @brief 设置 ICW4 命令
  * 
- * @param cmd icw4 command
+ * @param cmd ICW4 命令
  */
 void
 set_icw4(uint8_t cmd) {
@@ -86,7 +80,7 @@ set_icw4(uint8_t cmd) {
 }
 
 /**
- * @brief Disable the ocw1 mask
+ * @brief 禁用 OCW1 掩码
  * 
  * @param irq_pin
  */
@@ -106,7 +100,7 @@ disable_mask_ocw1(uint8_t irq_pin) {
 }
 
 /**
- * @brief Enable the ocw1 mask
+ * @brief 启用 OCW1 掩码
  * 
  * @param irq_pin
  */

@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "ata.h"
 #include "ata_irq.h"
 #include "ata_polling.h"
@@ -16,7 +10,7 @@ static atabuff_t __mdata_atabuff[MAX_TASKS_AMOUNT];
 static atamth_t __ata_driver_method;
 
 /**
- * @brief ata device initialization
+ * @brief ATA 设备初始化
  */
 void
 init_ata(void) {
@@ -55,9 +49,9 @@ init_ata(void) {
 }
 
 /**
- * @brief initialize ata driver
+ * @brief 初始化 ATA 设置
  * 
- * @param method ata method like IRQs or polling
+ * @param method ATA 模式
  */
 void
 ata_driver_change_mode(atamth_t method) {
@@ -66,18 +60,18 @@ ata_driver_change_mode(atamth_t method) {
 
     switch (__ata_driver_method) {
     case ATA_METHOD_IRQ: ata_irq_init(); break;
-    // polling default
+    // 默认 POLLING
     default: ata_polling_init(); break;
     }
 }
 
 /**
- * @brief read sector from ata device
+ * @brief 从 ATA 设备中读写扇区
  * 
- * @param buff buff to read/write
- * @param bufflen buff length
- * @param lba lba buff read from/write to
- * @param cmd operation commands
+ * @param buff    要读写的数据 buffer
+ * @param bufflen buffer 大小
+ * @param lba     LBA 号
+ * @param cmd     读写命令
  */
 void
 ata_driver_rw(void *buff, uint32_t bufflen, int lba, atacmd_t cmd) {
@@ -91,7 +85,7 @@ ata_driver_rw(void *buff, uint32_t bufflen, int lba, atacmd_t cmd) {
 
     switch (__ata_driver_method) {
     case ATA_METHOD_IRQ: ata_irq_rw(atabuff); break;
-    // polling default
+    // 默认 POLLING
     default: ata_polling_rw(atabuff); break;
     }
 

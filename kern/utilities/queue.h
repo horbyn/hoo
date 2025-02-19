@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_UTILITIES_QUEUE_H__
 #define __KERN_UTILITIES_QUEUE_H__
@@ -11,16 +5,16 @@
 #include "node.h"
 
 /**
- * @brief definition of queue
+ * @brief 队列
  */
 typedef struct queue {
-    // the head node always in front
+    // 头结点
     node_t null_;
     node_t *head_, *tail_;
 } queue_t;
 
 /**
- * @brief the method to operate the queue
+ * @brief 入队方式
  */
 typedef enum enqueue_method {
     TAIL = 0,

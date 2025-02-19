@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_INTR_INTR_STUFF_H__
 #define __KERN_INTR_INTR_STUFF_H__
@@ -15,7 +9,7 @@
 typedef void (*isr_t)(void);
 
 /**
- * @brief idt descriptor definition
+ * @brief IDT 段描述符
  */
 typedef struct {
     /*
@@ -29,18 +23,18 @@ typedef struct {
      * └──────────────────┴──────────────────────────┘
      */
 
-    // will be loaded to EIP
+    // 中断发生时用来加载 EIP
     uint16_t    isr_low_;
-    // will be loaded to CS when interrupt happened
+    // 中断发生时用来加载 CS
     uint16_t    selector_;
     uint8_t     reserved_;
     uint8_t     attributes_;
-    // will be loaded to EIP
+    // 中断发生时用来加载 EIP
     uint16_t    isr_high_;
 } __attribute__((packed)) idt_t;
 
 /**
- * @brief idtr structure
+ * @brief IDTR 定义
  */
 typedef struct {
     uint16_t	limit_;
@@ -48,7 +42,7 @@ typedef struct {
 } __attribute__((packed)) idtr_t;
 
 /**
- * @brief enum of privilege level
+ * @brief 特权级枚举
  */
 typedef enum privilege_level {
     PL_KERN = 0,
@@ -56,7 +50,7 @@ typedef enum privilege_level {
 } privilege_t;
 
 /**
- * @brief enum of gate descriptor
+ * @brief 门描述符枚举
  */
 typedef enum gate_descriptor {
     INTER_GATE = 0x0e,

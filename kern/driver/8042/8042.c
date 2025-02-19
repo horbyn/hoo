@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "8042.h"
 #include "kern/x86.h"
 #include "kern/module/io.h"
@@ -36,9 +30,9 @@ static bool gflag_make_shift, gflag_make_caps;
 static cclbuff_t *kb_buff;
 
 /**
- * @brief get the keyboard data buffer
+ * @brief 获取键盘数据缓冲区
  * 
- * @return keyboard data buffer
+ * @return 键盘数据缓冲区
  */
 cclbuff_t *
 get_kb_buff(void) {
@@ -46,7 +40,7 @@ get_kb_buff(void) {
 }
 
 /**
- * @brief initialize the 8042 keyboard controller
+ * @brief 初始化 8042 键盘控制器
  */
 void
 init_8042(void) {
@@ -54,7 +48,7 @@ init_8042(void) {
 }
 
 /**
- * @brief PS/2 interrupt handler
+ * @brief PS/2 ISR
  */
 void
 ps2_intr(void) {
@@ -63,7 +57,7 @@ ps2_intr(void) {
         || (BREAK_LSHIFT < ch && ch < BREAK_RSHIFT) || (ch > BREAK_RSHIFT))
         return;
 
-    // control key
+    // 控制键
     if (ch == MAKE_LSHIFT || ch == MAKE_RSHIFT) {
         gflag_make_shift = true;
         return;

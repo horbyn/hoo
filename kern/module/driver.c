@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "driver.h"
 #include "kern/driver/8042/8042.h"
 #include "kern/driver/8259a/8259a.h"
@@ -11,7 +5,7 @@
 #include "kern/driver/ata/ata.h"
 
 /**
- * @brief pic initialization
+ * @brief 初始化 PIC
  */
 static void
 init_pic(void) {
@@ -57,17 +51,17 @@ init_pic(void) {
 }
 
 /**
- * @brief pit initialization
+ * @brief 初始化 PIT
  */
 static void
 init_pit(void) {
     set_command(SC_CHANNEL0, LOWHIGHBYTE, M3, BINARY);
-    // n singals per second
+    // 每秒 n 个信号
     set_counter(TICKS_PER_SEC);
 }
 
 /**
- * @brief driver initialization
+ * @brief 驱动初始化
  */
 void
 kinit_driver(void) {

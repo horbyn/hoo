@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "exec.h"
 #include "kern/panic.h"
 #include "kern/mem/pm.h"
@@ -14,9 +8,9 @@
 #include "user/lib.h"
 
 /**
- * @brief change the control flow to execute the specific program
- * @note would not return
- * @param filename the specific program filename
+ * @brief 将控制流切换至一个指定的二进制文件
+ * @note 不会返回原控制流
+ * @param filename 指定一个二进制文件
  */
 void
 exec(const char *filename) {
@@ -26,7 +20,7 @@ exec(const char *filename) {
     bzero(param, MAXSIZE_PATH);
     bzero(cmd, MAXSIZE_PATH);
     uint32_t flen = strlen(filename);
-    // whether there are parameters
+    // 判断参数
     int i = 0;
     for (; i < flen; ++i) {
         if (filename[i] == ' ') {
@@ -37,7 +31,7 @@ exec(const char *filename) {
     }
     if (i == flen)    memmove(cmd, filename, flen);
 
-    // formatting the filename
+    // 格式化文件名
     static char absolute_path[MAXSIZE_PATH * 2];
     bzero(absolute_path, MAXSIZE_PATH * 2);
     if (cmd[0] != '/') {
@@ -46,14 +40,14 @@ exec(const char *filename) {
         memmove(absolute_path + size, cmd, flen);
     } else    memmove(absolute_path, cmd, flen);
 
-    // handle argc, argv (TODO: more arguments in argv)
+    // 处理 argc, argv (TODO: argv 需要支持更多参数)
     static char *argv[MAX_ARGV];
     bzero(argv, MAX_ARGV * sizeof(char *));
-    argv[0] = cmd;
+    argv[0] = absolute_path;
     argv[1] = param;
     uint32_t argc = param[0] == 0 ? 1 : 2;
 
-    // open the binary command
+    // 打开二进制文件
     fd_t fd = files_open(absolute_path);
     if (fd == -1) {
         kprintf("Command: \"%s\" not found\n", absolute_path);
@@ -62,21 +56,21 @@ exec(const char *filename) {
     uint32_t file_size = files_get_size(fd);
     uint32_t file_pages = PGUP(file_size, PGSIZE);
     pcb_t *cur_pcb = get_current_pcb();
-    // dynamic allocation MUST be finished before here
+    // 要使用动态内存分配必须先赋值二进制边界
     cur_pcb->break_ = file_pages;
 
-    // setup page tables
+    // 设置页表
     uint32_t amount_pgdir = file_pages / MB4;
     if (file_pages % MB4)    ++amount_pgdir;
     uint32_t vaddr_program = 0;
     for (i = 0; i < amount_pgdir; ++i) {
-        // handle the page directory
+        // 处理页目录表的 PDE
         void *pgtbl_pa = phy_alloc_page();
         pgelem_t flag = PGFLAG_US | PGFLAG_RW | PGFLAG_PS;
         pgelem_t *pde = (pgelem_t *)GET_PDE(i * MB4);
         *pde = (pgelem_t)pgtbl_pa | flag;
 
-        // handle the page table
+        // 处理页表的 PTE
         for (int j = 0; vaddr_program < file_pages && j < MB4;) {
             void *program_pa = phy_alloc_page();
             set_mapping((void *)vaddr_program, program_pa, flag);
@@ -85,13 +79,13 @@ exec(const char *filename) {
         } // end for(j)
     } // end for(i)
 
-    // data reading from the file to memory
+    // 将文件的数据读取到内存
     builtin_t program = (builtin_t)0;
     files_read(fd, program, file_size);
 
-    // change the control flows
-    // NOTE: a wholly new ring3 stack would be used after jump into `mode_ring3()`
-    //   so we will setup something special stuff in it before jumping
+    // 切换控制流
+    // 注意：再跳转 `mode_ring3()` 后会使用一个全新的 ring3 栈，
+    //      所以在跳转之前 ring3 栈要先设置好
     __asm__ ("movl %0, %%eax\n\t"
         "movl %2, -0x4(%%eax)\n\t"
         "movl %3, -0x8(%%eax)\n\t"

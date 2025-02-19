@@ -1,10 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
-
 #include "config_boot.h"
 
     .text
@@ -16,10 +9,9 @@ _start:
     movw %ax,           %ss
     xorw %sp,           %sp
 
-    # ####            function 1.           ####
-    # #### MBR move to high then exec there ####
+    # 功能一：将 MBR 移动到高地址处并在高地址执行
     .set SEG_MBR,       0x7240
-    cld                     # direction increment
+    cld
     xorw %ax,           %ax
     movw %ax,           %ds
     movw $0x7c00,       %si
@@ -35,13 +27,12 @@ still:
 
 
 
-    # ####    function 2.   ####
-    # #### Memory detection ####
+    # 功能二：内存检测
     movw $SEG_ARDS,     %ax
     movw %ax,           %ds
     movw %ax,           %es
-    movl $0,            OFF_ARDS_CR  # init ards counts
-    movw $OFF_ARDS,     %di      # es:di the dest
+    movl $0,            OFF_ARDS_CR # 初始化 ARDS 计数
+    movw $OFF_ARDS,     %di         # es:di 表示目的地址
     movl $0,            %ebx
     movl $0x14,         %ecx
 detect_mem:
@@ -49,61 +40,60 @@ detect_mem:
     movl $0x534d4150,   %edx
     int  $0x15
 
-    jnb  cf0 # judge cf1? (1 i.e. error)
-    jmp  . # error happened
+    jnb  cf0 # 判断 CF=1？（1 表示出错）
+    jmp  .
 cf0:
     incl OFF_ARDS_CR
     addw $0x14,         %di
     cmp  $0,            %ebx
-    jne  detect_mem # judge zf1? (1 i.e. detect completed)
+    jne  detect_mem # 判断 ZF=1？（1 表示检测完成）
 
 
 
 
-    # ####              function 3.                ####
-    # #### kernel loading from disk to mm.(0x1000) ####
+    # 功能三：从硬盘将内核加载到内存 0x1000
     .set SEG_KERN,      0x100
-    .set SEC_144M,      18  # the specification for sector of 1.44M floppy
-    .set SEC_CR,        896 # the amount of sector to be loaded (≈448KB)
+    .set SEC_144M,      18  # 1.44M 软盘的扇区规格
+    .set SEC_CR,        896 # 将要加载的扇区数量（≈448KB）
     movw %cs,           %ax
     movw %ax,           %ds
     movw $SEG_KERN,     %ax
     movw %ax,           %es
-    xorw %bx,           %bx # load to 0x100:0
+    xorw %bx,           %bx # 加载到 0x100:0
 load_sect:
     movw lba_base,      %ax
     movb $SEC_144M,     %dl
     divb %dl
     addb $1,            %ah
-    movb %ah,           %cl # sector number (cl bit-0~5)
-    andb $1,            %al # judge odd/even
-    je   head0 # judge zf1? (odd & 1 yields 1, zf0; even & 1 yields 0, zf1)
+    movb %ah,           %cl # 扇区号（放在 cl bit0 至 bit5）
+    andb $1,            %al # 判断奇偶
+    je   head0 # 判断 ZF=1？（0 表示奇 & 1；1 表示偶 & 1）
 head1:
-    movb $1,            %dh # head number
+    movb $1,            %dh # 磁头号
     jmp  1f
 head0:
-    movb $0,            %dh # head number
+    movb $0,            %dh # 磁头号
 1:
     movw lba_base,      %ax
     movb $SEC_144M<<1,  %dl
     divb %dl
-    movb %al,           %ch # track number--ch bit-0~5
-    andb $0x3f,         %cl # track number--cl bit-6~7 (track number less than 80)
+    movb %al,           %ch # 磁道号（放在 ch bit0 至 bit5）
+    andb $0x3f,         %cl # 磁道号（放在 cl bit6 至 bit7）
 after_reset:
-    movb $0,            %dl # floppya driver number is 0
+    movb $0,            %dl # 软盘驱动号是 0
     movb $0x02,         %ah
-    movb $1,            %al # load 1 sector every time
+    movb $1,            %al # 每次加载一个扇区
     int  $0x13
 
-    jnb  2f # judge cf0 (No error happened)
+    jnb  2f # 判断 CF=0？（0 表示没出错）
     movb $0,            %dl
     movw $0,            %ax
-    int  $0x13 # reset floppy driver due to fail
+    int  $0x13 # 因出错而重置软盘驱动
     jmp  after_reset
 2:
     cmpw $SEC_CR,       lba_base
-    jb   3f # judge cf1 (i.e. $SEC_CR > lba_base)
-    jmp  load_sect_ok # othervise completed (lba_base >= $SEC_CR)
+    jb   3f             # 判断 CF=1？（1 表示 $SEC_CR > lba_base）
+    jmp  load_sect_ok   # 否则完成（lba_base >= $SEC_CR）
 3:
     addw $0x200,        %bx
     cmpw $0,            %bx
@@ -117,10 +107,7 @@ after_reset:
     jmp  load_sect
 
 load_sect_ok:
-    # move kernel to 0
-    # the magic value that act as address below
-    #    is corresponding to the memory layout
-    #    in `config_bot.h`
+    # 将内核移动到内存 0，下面出现的 magic number 对应于 `config_boot.h` 中的内存布局
     movw $SEG_KERN,     %ax
     movw %ax,           %ds
     xorw %ax,           %ax
@@ -132,10 +119,10 @@ move:
     xorw %di,           %di
     cmpw $0x7000,       %ax
     jz last
-    movw $0x4000,       %cx # move $0x1_0000 bytes
+    movw $0x4000,       %cx # 移动 0x1_0000 字节
     jmp move_cont
 last:
-    movw $0x1c00,       %cx # move $0x7000 bytes last
+    movw $0x1c00,       %cx # 移动最后的 0x7_000 字节
 move_cont:
     rep
     movsd
@@ -153,39 +140,36 @@ move_end:
 
 
 
-    # ####      function 4.      ####
-    # #### Move died instruction ####
+    # 功能四：移动 DIED 指令
     cld
     movw %cs,           %ax
     movw %ax,           %ds
     movw $died,         %si
     movw %ax,           %es
     movw calc_off_died, %di
-    movsw                   # move DIED INSTRUCTION to 0x77ffc
+    movsw                   # 将 DIED 指令移动到 0x77ffc
 
 
 
 
-    # #### function 5. ####
-    # #### enter p.m.  ####
+    # 功能五：进入保护模式
     cli
     movw %cs,           %ax
     movw %ax,           %ds
-    inb  $0x92,         %al     # open A20
+    inb  $0x92,         %al     # 打开 A20 地址线
     orb  $2,            %al
     outb %al,           $0x92
 
     lgdt gdt_48
 
-    movl %cr0,          %eax    # enable p.m.
+    movl %cr0,          %eax    # 进入保护模式
     orl  $1,            %eax
     movl %eax,          %cr0
 
 
 
 
-    # #### function 6. ####
-    # ####   paging    ####
+    # 功能六：开启分页
     movl $0x100,        %ecx
     movl $0,            %eax
     movl pgtable_addr,  %ebx
@@ -214,9 +198,9 @@ pgtable:
     orl  $0x80000000,   %eax
     movl %eax,          %cr0
 
-    # #### JUMP INTO KERNEL ####
+    # ####### 跳入内核 #######
     ljmp $0x08,         $0
-    # ###### BOOT ENDING #######
+    # ###### boot 结束 #######
 
 
 
@@ -225,16 +209,12 @@ died:
     jmp .
 
 lba_base:
-    .word 0x1   # loading from no.2 sector (i.e., LBA is no.1)
+    .word 0x1   # 从扇区号 2 开始加载（因为 LBA 从 1 开始）
 calc_off_died:
     .long SEG_DIED<<4 + OFF_DIED - SEG_MBR<<4
 pdtable_addr:
-    # place after $SEG_PDTABLE<<4, while %ds is $SEG_MBR<<4,
-    #   so the offset is their difference
     .long SEG_PDTABLE<<4 - SEG_MBR<<4
 pgtable_addr:
-    # place after $SEG_PGTABLE<<4, while %ds is $SEG_MBR<<4,
-    #   so the offset is their difference
     .long SEG_PGTABLE<<4 - SEG_MBR<<4
 boot_gdt:
 	.quad 0x0000000000000000

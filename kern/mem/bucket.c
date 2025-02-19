@@ -1,19 +1,13 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "bucket.h"
 #include "kern/panic.h"
 
 /**
- * @brief bucket manager initialization
+ * @brief bucket 管理器初始化
  * 
- * @param mngr bucket manager
- * @param size bucket size
- * @param chain bucket chain
- * @param next next bucket manager
+ * @param mngr  bucket 管理器
+ * @param size  bucket 大小
+ * @param chain bucket 链
+ * @param next  下一个 bucket 管理器
  */
 void
 buckmngr_init(buckx_mngr_t *mngr, uint32_t size, fmtlist_t *chain,

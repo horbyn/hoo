@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "thread_bucket.h"
 #include "kern/panic.h"
 #include "kern/mem/pm.h"
@@ -12,9 +6,9 @@
 static thread_buckmngr_t *__mdata_buckmngr;
 
 /**
- * @brief thread bucket manager initialization
+ * @brief 初始化线程的 bucket 管理器
  * 
- * @param buckx bucket manager
+ * @param buckx bucket 管理器
  */
 static void
 thread_buckmngr_init(buckx_mngr_t *buckx) {
@@ -25,9 +19,9 @@ thread_buckmngr_init(buckx_mngr_t *buckx) {
 }
 
 /**
- * @brief initialize the bucket manager of all threads
+ * @brief 初始化所有线程的 bucket 管理器
  * 
- * @param pcb the pcb needed to allocate buckets manager
+ * @param pcb 需要分配 bucket 管理器的 PCB
  */
 void
 init_thread_buckmngr(pcb_t *pcb) {
@@ -49,10 +43,10 @@ init_thread_buckmngr(pcb_t *pcb) {
 }
 
 /**
- * @brief get the bucket manager metadata
+ * @brief 获取 bucket 管理器
  * 
- * @param tid thread id
- * @return bucket manager metadata
+ * @param tid 线程 id
+ * @return bucket 管理器对象
  */
 buckx_mngr_t *
 thread_buckmngr_get(tid_t tid) {
@@ -62,9 +56,9 @@ thread_buckmngr_get(tid_t tid) {
 }
 
 /**
- * @brief clear the bucket manager
+ * @brief 清空 bucket 管理器
  * 
- * @param tid thread id
+ * @param tid 线程 id
  */
 void
 thread_buckmngr_clear(tid_t tid) {

@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "metadata.h"
 #include "format_list.h"
 #include "kern/utilities/spinlock.h"
@@ -14,7 +8,7 @@ static fmtlist_t *__vaddr = 0;
 static spinlock_t __slvs, __slata, __slva;
 
 /**
- * @brief initialize metadata
+ * @brief 初始化 metadata
  */
 void
 init_metadata() {
@@ -27,7 +21,7 @@ init_metadata() {
 }
 
 /**
- * @brief metadata vspace allocation
+ * @brief metadata vspace 分配
  */
 vspace_t *
 vspace_alloc() {
@@ -39,7 +33,7 @@ vspace_alloc() {
 }
 
 /**
- * @brief metadata node allocation
+ * @brief metadata node 分配
  */
 node_t *
 node_alloc() {
@@ -51,7 +45,7 @@ node_alloc() {
 }
 
 /**
- * @brief metadata vaddr allocation
+ * @brief metadata vaddr 分配
  */
 vaddr_t *
 vaddr_alloc() {
@@ -63,9 +57,9 @@ vaddr_alloc() {
 }
 
 /**
- * @brief metadata vspace releasing
+ * @brief metadata vspace 释放
  * 
- * @param vs metadata vspace object
+ * @param vs metadata vspace 对象
  */
 void
 vspace_release(vspace_t *vs) {
@@ -75,9 +69,9 @@ vspace_release(vspace_t *vs) {
 }
 
 /**
- * @brief metadata node releasing
+ * @brief metadata node 释放
  * 
- * @param vs metadata node object
+ * @param node metadata node 对象
  */
 void
 node_release(node_t *node) {
@@ -87,9 +81,9 @@ node_release(node_t *node) {
 }
 
 /**
- * @brief metadata vaddr releasing
+ * @brief metadata vaddr 释放
  * 
- * @param vs metadata vaddr object
+ * @param vs metadata vaddr 对象
  */
 void
 vaddr_release(vaddr_t *vaddr) {

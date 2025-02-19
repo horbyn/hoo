@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "builtins.h"
 #include "exec.h"
 #include "files.h"
@@ -12,11 +6,11 @@
 #include "kern/dyn/dynamic.h"
 
 /**
- * @brief the specific filename append to base filename
+ * @brief 将 filename 附加到 base_buff 后面
  * 
- * @param base_buff   base filename buffer
- * @param append_buff the result buffer
- * @param filename    the specific filename
+ * @param base_buff   base 文件名
+ * @param append_buff 结果
+ * @param filename    指定一个要追加的文件名
  */
 static void
 filename_append(const char *base_buff, char *append_buff, const char *filename) {
@@ -28,11 +22,11 @@ filename_append(const char *base_buff, char *append_buff, const char *filename) 
 }
 
 /**
- * @brief convert builtin commands to file
+ * @brief 将内置命令转换为文件
  * 
- * @param filename file name
- * @param addr builtin commands memory address
- * @param len  builtin commands length
+ * @param filename 文件名
+ * @param addr     内置命令的内存地址
+ * @param len      内置命令的二进制数据长度
  */
 static void
 builtin_to_file(const char *filename, void *addr, uint32_t len) {
@@ -52,7 +46,7 @@ builtin_to_file(const char *filename, void *addr, uint32_t len) {
 }
 
 /**
- * @brief load builtin commands
+ * @brief 加载内置命令
  */
 void
 load_builtins(void) {

@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_DRIVER_ATA_ATA_DEVICE_H__
 #define __KERN_DRIVER_ATA_ATA_DEVICE_H__
@@ -12,7 +6,7 @@
 #include "ata_identify.h"
 
 /**
- * @brief ata device definition
+ * @brief ATA 设备
 */
 typedef struct ata_device {
     bool     valid_;
@@ -28,7 +22,7 @@ typedef struct ata_device {
 } atadev_t;
 
 /**
- * @brief ata device space
+ * @brief ATA 设备空间
  */
 typedef struct ata_space {
     uint32_t device_amount_;
@@ -40,13 +34,13 @@ typedef struct ata_space {
  * @brief ata buffer
  */
 typedef struct ata_buff {
-    // buffer pointer
+    // buffer 指针
     void     *buff_;
-    // buffer size
+    // buffer 大小
     uint32_t len_;
-    // lba no.
+    // LBA 号
     uint32_t lba_;
-    // operation command
+    // 操作命令
     atacmd_t cmd_;
     bool     finish_;
 } atabuff_t;

@@ -2,12 +2,11 @@ BOOT_IMG := fd1_44M.img
 DISK     := hd.img
 SIZE_SEC := 512
 
-# SSRC: the `.S` set, which is used the `find` command to find out all the `.S`
-#       in current dir and all the recursive sub-dir
-# CSRC: the `.c` set
-# OBJS: combine `SSRC` and `CSRC` to be the `.o` set, then filters `bootsect.o`
-#       DETIALS IN https://seisman.github.io/how-to-write-makefile/functions.html
-#       https://stackoverflow.com/questions/33740270/makefile-patsubst-multiple-expressions
+# SSRC：    `.S` 文件集合，使用 `find` 命令查找当前目录及其所有子目录下的 `.S` 文件
+# CSRC：    `.c` 文件集合
+# OBJ{S,C}：将 `SSRC`（`CSRC`）转换为 `.o` 文件集合，然后过滤掉 `bootsect.o`，详见
+#           https://seisman.github.io/how-to-write-makefile/functions.html
+#           https://stackoverflow.com/questions/33740270/makefile-patsubst-multiple-expressions
 SSRC := $(shell find . -name "*.S")
 CSRC := $(shell find . -name "*.c")
 OBJS := $(filter-out ./boot/bootsect.o, $(SSRC:.S=.o))
@@ -18,26 +17,25 @@ CC := gcc
 
 INC := -I./
 
-# -c: compile
-# -Wall: display all the warnings
-# -Werror: regard the warnings to errors
-# -m32: generate 32 bit source can be executed in any i386 arch machine
-#       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html#x86-Options
-# -nostdinc: dont use standard functions unless specify some options(`-I`, `-iquote` etc.)
-#       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html#Directory-Options
-# -fno-builtin: dont allow the compiler to optimize our own function
-#       DETIALS IN https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-# -fno-pie: forbid to generate `__x86.get_pc_thunk.ax` subroutine
-#       DETIALS IN https://stackoverflow.com/questions/50105581/how-do-i-get-rid-of-call-x86-get-pc-thunk-ax
-# -fno-stack-protector: enable will generate some undefined symbols (e.g. __stack_chk_fail)
+# -c:      编译
+# -Wall：  输出所有警告
+# -Werror：将警告视为错误
+# -m32：   生成可以在任何 i386 架构机器上执行的 32 位源代码，详见：
+#          https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html#x86-Options
+# -nostdinc：不使用标准函数，除非指定某些选项（`-I`、`-iquote` 等），详见：
+#           https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html#Directory-Options
+# -fno-builtin：不允许编译器优化我们自己的函数，详见：
+#               https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
+# -fno-pie：禁止生成 `__x86.get_pc_thunk.ax` 子程序，详见：
+#           https://stackoverflow.com/questions/50105581/how-do-i-get-rid-of-call-x86-get-pc-thunk-ax
+# -fno-stack-protector：禁用可以避免生成一些未定义的符号（例如 `__stack_chk_fail`）
 CFLAGS := -c -Wall -Werror -m32 $(INC) \
 	-nostdinc -fno-builtin -fno-pie -fno-stack-protector -Wno-main
-# -m: specify the output format
-# -Map: output memory map
+# -m：  指定输出格式
+# -Map：输出内存映射文件
 LDFLAGS := -m elf_i386 -Map kernel.map
 
-# keep the depencement `.img` in the first command pleaze, that `make` will
-#    execute all the command by default
+# 保持 `.img` 依赖在第一个命令中，这样 `make` 将默认执行所有命令
 nop: boot_image $(OBJS) $(OBJC) $(BOOT_IMG)
 
 debug: CFLAGS += -g
@@ -54,19 +52,19 @@ qemu-debug:
 	qemu-system-i386 -smp 1 -m 32M -nographic -boot a -fda $(BOOT_IMG) \
 		-drive file=$(DISK),media=disk,index=0,format=raw -S -gdb tcp::12345
 
-# -f: dont generate the file if exists
+# -f：如果文件存在则不生成
 # 1.44M floppy: 80(C) * 2(H) * 18(S) * 512 =   1,474,560
 boot_image:
 	if [ ! -f "$(BOOT_IMG)" ]; then \
 		dd if=/dev/zero of=$(BOOT_IMG) bs=1474560 count=1; \
 	fi
 
-# hard disk:	             1057478 * 512 = 541,428,736
+# 硬盘: 1057478 * 512 = 541,428,736
 format_disk:
 	-rm -r $(DISK)
 	dd if=/dev/zero of=$(DISK) bs=541428736 count=1
 
-SEG         := -j .text -j .rodata -j .data
+SEG                  := -j .text -j .rodata -j .data
 SIZE_KERNEL          := 499
 SIZE_BUILTIN         := 50
 BASE_SEC_BUILTIN_SH  := $(SIZE_KERNEL) + 1
@@ -91,9 +89,9 @@ END_BUILTIN_TOUCH    := $(shell echo $$((  (($(BASE_SEC_BUILTIN_TOU) + $(SIZE_BU
 BASE_BUILTIN_RM      := $(shell echo $$((  (($(BASE_SEC_BUILTIN_RM) - 2) * $(SIZE_SEC))  )))
 END_BUILTIN_RM       := $(shell echo $$((  (($(BASE_SEC_BUILTIN_RM) + $(SIZE_BUILTIN) - 2) * $(SIZE_SEC) - 1)  )))
 
-# objdump -S: disassemble the text segment in a source intermixed style
-#         -D: disassemble all the segments
-#         -j: specify segments to be generated
+# objdump -S：反汇编源代码中的 .text 段，并且输出源代码和反汇编代码
+#         -D：反汇编所有段
+#         -j：指定生成的段
 $(BOOT_IMG): bootsect kernel.elf sh.elf cd.elf ls.elf pwd.elf mkdir.elf touch.elf rm.elf
 	dd if=bootsect of=$(BOOT_IMG) bs=$(SIZE_SEC) count=1 conv=notrunc
 	objcopy -S -O binary kernel.elf kernel
@@ -128,11 +126,11 @@ $(BOOT_IMG): bootsect kernel.elf sh.elf cd.elf ls.elf pwd.elf mkdir.elf touch.el
 	objdump $(SEG) -SD -m i386 user/touch.elf >> kernel.elf.dis
 	objdump $(SEG) -SD -m i386 user/rm.elf >> kernel.elf.dis
 
-# --oformat: output the pure binary format
-# -e: entry is `_start` by default, but this option can specify other entrys
-# -Ttext: the linked address always add this value
-# -m: emulate a 32 bit compling environment when use 64 bit machine to compile 32 bit code
-#     DETAILS IN https://stackoverflow.com/questions/19200333/architecture-of-i386-input-file-is-incompatible-with-i386x86-64
+# --oformat：输出纯净的二进制格式
+# -e：       默认入口是_start，但这个选项可以指定其他入口
+# -Ttext：   链接地址总是加上这个值
+# -m：       当使用 64 位机器编译 32 位代码时，模拟 32 位编译环境，详见
+#            https://stackoverflow.com/questions/19200333/architecture-of-i386-input-file-is-incompatible-with-i386x86-64
 bootsect: ./boot/bootsect.o
 	$(LD) --oformat binary -e _start -Ttext 0x7c00 -m elf_i386 $< -o $@
 
@@ -184,9 +182,9 @@ $(OBJS): %.o: %.S
 $(OBJC): %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
-# -rm: some maybe not exist but we dont care
+# -rm：有些文件不能不存在，-rm 表示忽略这些文件
 clean:
-	-rm -r $(OBJS) $(OBJC) ./boot/bootsect.o bootsect \
-	./kernel ./kernel.elf ./*.dis ./kernel.map $(BOOT_IMG) \
-	user/*.elf user/sh user/cd user/ls user/pwd user/mkdir \
-	user/touch user/rm
+	-rm -r $(OBJS) $(OBJC) ./boot/bootsect.o user/null.o     \
+	bootsect  ./kernel ./kernel.elf ./*.dis ./kernel.map     \
+	$(BOOT_IMG)  user/*.elf user/sh user/cd user/ls user/pwd \
+	user/mkdir user/touch user/rm

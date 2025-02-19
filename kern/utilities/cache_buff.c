@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "cache_buff.h"
 #include "kern/panic.h"
 #include "kern/driver/cga/cga.h"
@@ -11,7 +5,7 @@
 #include "user/lib.h"
 
 /**
- * @brief the cache buffer writes to file
+ * @brief 要写入文件的 cache buffer
  * 
  * @param cbuff cache buffer
  */
@@ -25,11 +19,11 @@ cachebuff_flush(cachebuff_t *cbuff) {
 }
 
 /**
- * @brief setup cache buffer
+ * @brief 填充 cache buffer
  * 
  * @param cbuff    cache buffer
- * @param buff     buffer
- * @param capacity buffer capacity
+ * @param buff     缓冲区
+ * @param capacity 缓冲区容量
  */
 void
 cachebuff_set(cachebuff_t *cbuff, char *buff, uint32_t capacity) {
@@ -42,10 +36,10 @@ cachebuff_set(cachebuff_t *cbuff, char *buff, uint32_t capacity) {
 }
 
 /**
- * @brief setup redirection
+ * @brief 设置重定向
  * 
  * @param cbuff    cache buffer
- * @param redirect redirection file
+ * @param redirect 重定向的文件描述符
  */
 void
 cachebuff_redirect(cachebuff_t *cbuff, fd_t redirect) {
@@ -54,26 +48,24 @@ cachebuff_redirect(cachebuff_t *cbuff, fd_t redirect) {
 }
 
 /**
- * @brief write to cache buffer
+ * @brief 写入 cache buffer
  * 
  * @param cbuff  cache buffer
- * @param string the string
- * @param len    the length
+ * @param string 要写入的字符串
+ * @param len    字符串长度
  */
 void
 cachebuff_write(cachebuff_t *cbuff, const char *string, uint32_t len) {
     if (cbuff == null || (cbuff != null && string == 0))
         panic("cachebuff_write(): null pointer");
     if (cbuff->redirect_ == INVALID_INDEX) {
-        // DO NOT write to files before file system initialization finishing,
-        //   but detect whether the cache buffer is full. If so, discard part
-        //   of the beginning logs
+        // 如果缓存区满了则丢弃前面的日志
         if (cbuff->curlen_ + len > cbuff->capacity_) {
             memmove(cbuff->buff_, cbuff->buff_ + len, len);
             cbuff->curlen_ -= len;
         }
     } else {
-        // write to files once the cache buffer is 512 Bytes enough
+        // 每次当 cache buffer 到达 512B 就写入文件
         if (cbuff->curlen_ >= BYTES_SECTOR)    cachebuff_flush(cbuff);
     }
     while (len--)    cbuff->buff_[cbuff->curlen_++] = *string++;

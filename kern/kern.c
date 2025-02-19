@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "kern.h"
 #include "fs/builtins.h"
 #include "fs/exec.h"
@@ -20,7 +14,7 @@
 #include "user/user.h"
 
 /**
- * @brief initialize system log module
+ * @brief 初始化系统日志
  */
 static void
 kinit_log(void) {
@@ -28,12 +22,12 @@ kinit_log(void) {
 
     static char *SYS_LOG_NAME = "/sys/sys.log";
     files_create(SYS_LOG_NAME);
-    // DO NOT release the file descriptor
+    // 不释放这个文件描述符
     klog_set(files_open(SYS_LOG_NAME));
 }
 
 /**
- * @brief jump into the first ring3 thread
+ * @brief 跳入 ring3 进程
  */
 static void
 the_first_ring3(void) {
@@ -41,7 +35,7 @@ the_first_ring3(void) {
 }
 
 /**
- * @brief kernel initialization
+ * @brief 内核初始化
  */
 void
 kern_init() {
@@ -50,26 +44,25 @@ kern_init() {
     kinit_config();
     kinit_tasks_system();
 
-    // after that we could use dynamic memory allocation
+    // 在调度模块初始化完成后就可以使用动态内存分配了
     kinit_isr_idt();
     kinit_driver();
     kinit_fs();
 
-    // after that we could enable interrupt
+    // 在所有事情初始化完成后就可以开中断了
     enable_intr();
     load_builtins();
     kinit_log();
 }
 
 /**
- * @brief kernel run
+ * @brief 运行内核
  */
 void
 kern_exec(void) {
     tid_t result = fork(the_first_ring3);
     if (result != 0) {
-        // the only thing for the ring0 kernel to do is to inspect
-        //   whether there are the expired threads and kill them
+        // ring0 内核做的唯一一件事是检查是否有 expired 进程，有就杀掉
         while (1)    kill();
     }
 }

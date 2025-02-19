@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "inodes.h"
 #include "free.h"
 #include "kern/panic.h"
@@ -11,17 +5,16 @@
 #include "kern/utilities/bitmap.h"
 #include "user/lib.h"
 
-// inodes map in-memory cache (set means caching on disk;
-//     clear means caching in memory)
+// inodes 位图 in-memory 结构（置位表示已经缓存至磁盘，清位表示已经缓存至内存）
 static uint8_t __bmbuff_fs_inodes[BYTES_SECTOR];
-// inodes in-memory cache
+// inodes in-memory 结构
 inode_t __fs_inodes[MAX_INODES];
 static bitmap_t __bmfs;
 
 /**
- * @brief Set up inode metadata
+ * @brief 初始化 inode 区域
  *
- * @param is_new a new disk
+ * @param is_new 是否新的磁盘
  */
 void
 setup_inode(bool is_new) {
@@ -31,11 +24,11 @@ setup_inode(bool is_new) {
     bzero(__fs_inodes, sizeof(__fs_inodes));
     bzero(__bmbuff_fs_inodes, sizeof(__bmbuff_fs_inodes));
 
-    // inode map layout
+    // inode 位图区域
     ata_driver_rw(__bmbuff_fs_inodes, sizeof(__bmbuff_fs_inodes),
         FS_LAYOUT_BASE_MAP_INODES, cmd);
 
-    // stash all the inode objects
+    // 缓存所有的 inode
     if (is_new == false) {
         for (uint32_t i = 0; i < MAX_INODES; ++i) {
             // bitmap_test() will return non-zero
@@ -46,9 +39,9 @@ setup_inode(bool is_new) {
 }
 
 /**
- * @brief allocate inode
+ * @brief 分配 inode
  * 
- * @return index of inode array
+ * @return inode 数组下标
  */
 int
 inode_allocate() {
@@ -56,10 +49,10 @@ inode_allocate() {
 }
 
 /**
- * @brief setup inode bitmap (only for index, not involves disk rw)
+ * @brief 设置 inode 位图（只涉及 in-memory 结构，不涉及 on-disk）
  * 
- * @param inode_idx inode index
- * @param is_set    whether to set or clear
+ * @param inode_idx inode 索引
+ * @param is_set    是否置位
  */
 void
 inode_map_setup(int inode_idx, bool is_set) {
@@ -71,7 +64,7 @@ inode_map_setup(int inode_idx, bool is_set) {
 }
 
 /**
- * @brief update inode bitmap
+ * @brief 更新 inode 位图 on-disk 结构
  */
 void
 inode_map_update() {
@@ -80,11 +73,11 @@ inode_map_update() {
 }
 
 /**
- * @brief fill in inode structure
+ * @brief 填充 inode 结构体
  * 
- * @param inode_idx inode index
- * @param size blocks size
- * @param base_lba blocks where it begins
+ * @param inode_idx inode 数组索引
+ * @param size      inode 所表示文件的大小
+ * @param base_lba  inode 所表示文件从哪个 LBA 开始
  */
 void
 inode_set(int inode_idx, uint32_t size, uint32_t base_lba) {
@@ -98,10 +91,10 @@ inode_set(int inode_idx, uint32_t size, uint32_t base_lba) {
 }
 
 /**
- * @brief inode reads from / writes to disk
+ * @brief inode 读写
  * 
- * @param inode_idx inode index
- * @param cmd       ATA command
+ * @param inode_idx inode 数组索引
+ * @param cmd       ATA 命令
  */
 void
 inodes_rw_disk(int inode_idx, atacmd_t cmd) {
@@ -120,12 +113,12 @@ inodes_rw_disk(int inode_idx, atacmd_t cmd) {
 }
 
 /**
- * @brief handle the iblock, either write or read
+ * @brief inode 索引表处理函数，要么往里面写要么往里面读
  * 
- * @param inode_idx  inode index
- * @param iblock_idx the index of the array iblock
- * @param write      to write
- * @param read       to read
+ * @param inode_idx  inode 数组索引
+ * @param iblock_idx inode 索引数组索引
+ * @param write      要写入 inode 索引数组的元素
+ * @param read       要从 inode 索引数组中读取出来的元素
  */
 static void
 iblock_handle(int inode_idx, int iblock_idx, uint32_t write, uint32_t *read) {
@@ -205,11 +198,11 @@ iblock_handle(int inode_idx, int iblock_idx, uint32_t write, uint32_t *read) {
 }
 
 /**
- * @brief settup the element of array iblock according to specific inode
+ * @brief 将指定 inode 中的索引数组元素设置为指定的 lba
  * 
- * @param inode_idx  inode index
- * @param iblock_idx the index of the array iblock
- * @param lba        the lba to set for the iblock
+ * @param inode_idx  inode 数组索引
+ * @param iblock_idx inode 的索引数组索引
+ * @param lba        LBA
  */
 void
 iblock_set(int inode_idx, int iblock_idx, uint32_t lba) {
@@ -217,11 +210,11 @@ iblock_set(int inode_idx, int iblock_idx, uint32_t lba) {
 }
 
 /**
- * @brief get the element of array iblock according to specific inode
+ * @brief 从 inode 中的索引数组中读取 LBA
  * 
- * @param inode_idx  inode index
- * @param iblock_idx the index of the array iblock
- * @return lba
+ * @param inode_idx  inode 数组索引
+ * @param iblock_idx inode 的索引数组索引
+ * @return LBA
  */
 uint32_t
 iblock_get(int inode_idx, int iblock_idx) {

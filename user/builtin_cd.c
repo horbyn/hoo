@@ -1,16 +1,10 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "builtin_cd.h"
 
 /**
- * @brief cd command
+ * @brief cd 命令
  * 
- * @param argc parameter number
- * @param argv parameter(s)
+ * @param argc 参数个数
+ * @param argv 参数
  */
 void
 main_cd(int argc, char **argv) {

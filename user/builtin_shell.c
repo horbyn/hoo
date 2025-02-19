@@ -1,20 +1,14 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "builtin_shell.h"
 #include "types.h"
 
-static char TMP_PROMPT[] = "[root]";
+static char TMP_PROMPT[] = "[hoo]";
 static char command[MAX_CMD_LEN];
 
 /**
- * @brief shell command
+ * @brief shell 命令
  * 
- * @param argc parameter number
- * @param argv parameter(s)
+ * @param argc 参数个数
+ * @param argv 参数
  */
 void
 main_shell(int argc, char **argv) {
@@ -22,14 +16,14 @@ main_shell(int argc, char **argv) {
     int i = 0;
     int flong = 0;
 
-    // the story begins at the root directory
+    // 目录结构开始于根目录
     sys_cd("/");
 
     while (1) {
         sys_printf("%s ", TMP_PROMPT);
         i = 0;
 
-        // read commands
+        // 读取命令
         do {
             sys_read(FD_STDIN, &ch, 1);
 
@@ -55,14 +49,14 @@ main_shell(int argc, char **argv) {
             continue;
         }
 
-        // parse commands
+        // 解析命令
         command[i] = 0;
         int pid = sys_fork();
         if (pid != 0) {
-            // parent
+            // 父进程
             sys_wait();
         } else {
-            // child
+            // 子进程
             sys_exec(command);
         }
     } // end while()

@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "dir.h"
 #include "free.h"
 #include "kern/panic.h"
@@ -13,11 +7,11 @@
 #include "user/lib.h"
 
 /**
- * @brief get a new dirblock
+ * @brief 获取一个新的目录块
  * 
- * @param result new dirblock
- * @param self   inode index itself
- * @param parent parent inode index
+ * @param result 新目录块缓冲区
+ * @param self   新目录块的 inode 索引
+ * @param parent 新目录块的父目录 inode 索引
  */
 static void
 dirblock_get_new(dirblock_t *result, int self, int parent) {
@@ -36,11 +30,11 @@ dirblock_get_new(dirblock_t *result, int self, int parent) {
 }
 
 /**
- * @brief set diritem from the dirblock
+ * @brief 在目录块里面设置目录项
  * 
- * @param db          the specific dirblock
- * @param block_index the index of the dirblock array
- * @param item        the item to be set
+ * @param db          指定一个目录块
+ * @param block_index 目录块数组下标
+ * @param item        要设置的目录项
  */
 static void
 dirblock_set(dirblock_t *db, uint32_t block_index, const diritem_t *item) {
@@ -54,11 +48,11 @@ dirblock_set(dirblock_t *db, uint32_t block_index, const diritem_t *item) {
 }
 
 /**
- * @brief get diritem from the dirblock
+ * @brief 从目录块中获取目录项
  * 
- * @param db          the specific dirblock
- * @param block_index the index of the dirblock array
- * @param result      the result
+ * @param db          指定一个目录块
+ * @param block_index 目录块数组下标
+ * @param result      保存结果的缓冲区
  */
 static void
 dirblock_get(const dirblock_t *db, uint32_t block_index, diritem_t *result) {
@@ -67,12 +61,12 @@ dirblock_get(const dirblock_t *db, uint32_t block_index, diritem_t *result) {
 }
 
 /**
- * @brief find the specific diritem subroutine
+ * @brief 查找一个指定的目录项
  * 
- * @param di     diritem object
- * @param search the absolute path to be searched
- * @retval -1: not found
- * @retval the rests: the index of the dirblock array
+ * @param di     目录项对象
+ * @param search 要查找的目录名的绝对路径
+ * @retval -1: 找不到
+ * @retval 其他值: 目录项所在的目录块数组的下标
  */
 static int
 diritem_find_sub(const diritem_t *di, const char *search) {
@@ -126,9 +120,9 @@ diritem_find_sub(const diritem_t *di, const char *search) {
 }
 
 /**
- * @brief remove directory item recursively (only for index, not involves disk rw)
+ * @brief 递归移除目录项（仅涉及索引，不涉及磁盘读写）
  * 
- * @param di diritem object to be removed
+ * @param di 要移除的目录项
  */
 static void
 diritem_remove_sub(diritem_t *di) {
@@ -147,7 +141,7 @@ diritem_remove_sub(diritem_t *di) {
             if (dirblock_lba == 0)    break;
 
             free_rw_disk(db, dirblock_lba, ATA_CMD_IO_READ);
-            // skip . and ..
+            // 跳过 . 和 ..
             for (uint32_t j = 0; j < MAX_DIRITEM_PER_BLOCK; ++j) {
                 if ((i == 0 && j == 0 )|| (i == 0 && j == 1))    continue;
                 if (db->dir_[j].type_ == INODE_TYPE_INVALID)    break;
@@ -162,12 +156,12 @@ diritem_remove_sub(diritem_t *di) {
 }
 
 /**
- * @brief fill in the `diritem_t` structure
+ * @brief 填充目录项结构
  * 
- * @param dir   the dir structure to be filled in
- * @param type  inode type
- * @param inode_idx inode index
- * @param name  name corresponding to this dir
+ * @param dir       要填充的目录项
+ * @param type      inode 类型
+ * @param inode_idx inode 索引
+ * @param name      目录项对应目录名
  */
 void
 diritem_set(diritem_t *dir, inode_type_t type, int inode_idx, const char *name) {
@@ -179,11 +173,11 @@ diritem_set(diritem_t *dir, inode_type_t type, int inode_idx, const char *name) 
 }
 
 /**
- * @brief whether the dir is root dir
+ * @brief 判断目录名是否根目录
  * 
- * @param dir the specific directory
- * @retval true: is the root
- * @retval false: not the root
+ * @param dir 指定一个目录名
+ * @retval true: 根目录
+ * @retval false: 不是根目录
  */
 bool
 is_root_dir(const char *dir) {
@@ -200,13 +194,13 @@ is_root_dir(const char *dir) {
 }
 
 /**
- * @brief find the specific diritem
+ * @brief 查找给定的目录项
  * 
- * @param dir   the absolute path to be searched
- * @param found diritem object found
+ * @param dir   要查找的目录名的绝对路径
+ * @param found 保存结果的缓冲区
  * 
- * @retval true: found
- * @retval false: not found
+ * @retval true:  找到
+ * @retval false: 没找到
  */
 bool
 diritem_find(const char *dir, diritem_t *found) {
@@ -252,10 +246,10 @@ diritem_find(const char *dir, diritem_t *found) {
 }
 
 /**
- * @brief diritem traversal
+ * @brief 遍历目录项
  * 
- * @param dir diritem
- * @return memory by dynamic allocating (NEED TO RELEASE)
+ * @param dir 目录项
+ * @return 动态分配的目录项对象（由 caller 释放）
  */
 char *
 diritem_traversal(diritem_t *dir) {
@@ -290,13 +284,13 @@ diritem_traversal(diritem_t *dir) {
 }
 
 /**
- * @brief create current directory item
+ * @brief 为当前目录创建目录项
  * 
- * @param type         file type
- * @param item_name    item name
- * @param parent_inode parent inode index
+ * @param type         文件类型
+ * @param item_name    目录项的目录名
+ * @param parent_inode 父目录的 inode 索引
  * 
- * @return diritem object pointer, NEED to release
+ * @return 动态分配的目录项对象（由 caller 释放）
  */
 diritem_t *
 diritem_create(inode_type_t type, const char *item_name, int parent_inode) {
@@ -306,7 +300,7 @@ diritem_create(inode_type_t type, const char *item_name, int parent_inode) {
     inode_map_setup(inode_cur, true);
     diritem_set(di, type, inode_cur, item_name);
 
-    // use to initialize inode
+    // 用来初始化 inode
     int free = free_allocate();
     free_map_setup(free, true);
 
@@ -315,7 +309,7 @@ diritem_create(inode_type_t type, const char *item_name, int parent_inode) {
     } else if (type == INODE_TYPE_DIR) {
         inode_set(inode_cur, 2, free);
 
-        // new diritem push to disk
+        // 写入磁盘的目录块
         dirblock_t *db_new = dyn_alloc(sizeof(dirblock_t));
         bzero(db_new, sizeof(dirblock_t));
         dirblock_get_new(db_new, inode_cur, parent_inode);
@@ -330,16 +324,16 @@ diritem_create(inode_type_t type, const char *item_name, int parent_inode) {
 }
 
 /**
- * @brief current diritem push to parent's
+ * @brief 将当前目录的 diritem 写入父目录的 diritem
  * 
- * @param parent parent diritem
- * @param cur    current diritem
+ * @param parent 父目录的 diritem
+ * @param cur    当前目录的 diritem
  */
 void
 diritem_push(diritem_t *parent, diritem_t *cur) {
     if (parent == null || cur == null)    panic("diritem_push(): null pointer");
 
-    // get parent dirblock
+    // 获取父目录的目录块
     uint32_t index_iblock =
         __fs_inodes[parent->inode_idx_].size_ / MAX_DIRITEM_PER_BLOCK;
     uint32_t block_lba = iblock_get(parent->inode_idx_, index_iblock);
@@ -356,7 +350,7 @@ diritem_push(diritem_t *parent, diritem_t *cur) {
         inodes_rw_disk(parent->inode_idx_, ATA_CMD_IO_WRITE);
     } else    panic("diritem_push(): bug");
 
-    // push to parent
+    // 写入父目录
     uint32_t db_index =
         __fs_inodes[parent->inode_idx_].size_ % MAX_DIRITEM_PER_BLOCK;
     memmove(&db->dir_[db_index], cur, sizeof(diritem_t));
@@ -368,13 +362,13 @@ diritem_push(diritem_t *parent, diritem_t *cur) {
 }
 
 /**
- * @brief remove current diritem from parent's
+ * @brief 将当前目录的 diritem 从父目录的 diritem 中移除
  * 
- * @param parent parent diritem
- * @param cur    current diritem
+ * @param parent 父目录的 diritem
+ * @param cur    当前目录的 diritem
  * 
- * @retval 0: succeed
- * @retval -1: failed, not such filename
+ * @retval 0: 成功
+ * @retval -1: 失败，没有这个目录
  */
 int
 diritem_remove(diritem_t *parent, diritem_t *cur) {
@@ -386,7 +380,7 @@ diritem_remove(diritem_t *parent, diritem_t *cur) {
     uint32_t lba = iblock_get(parent->inode_idx_, result / MAX_DIRITEM_PER_BLOCK);
     if (lba < __super_block.lba_free_)    panic("diritem_remove(): bug");
 
-    // remove from parent
+    // 从父目录中移除
     dirblock_t *db = dyn_alloc(sizeof(dirblock_t));
     free_rw_disk(db, lba, ATA_CMD_IO_READ);
     dirblock_set(db, result % MAX_DIRITEM_PER_BLOCK, null);
@@ -394,7 +388,7 @@ diritem_remove(diritem_t *parent, diritem_t *cur) {
     --__fs_inodes[parent->inode_idx_].size_;
     inodes_rw_disk(parent->inode_idx_, ATA_CMD_IO_WRITE);
 
-    // remove from child
+    // 移除自己里面的目录和文件
     diritem_remove_sub(cur);
     free_map_update();
     inode_map_update();
@@ -404,9 +398,9 @@ diritem_remove(diritem_t *parent, diritem_t *cur) {
 }
 
 /**
- * @brief get the root directory item object
+ * @brief 获取根目录的目录项
  * 
- * @return root directory
+ * @return 根目录 diritem
  */
 diritem_t **
 get_root_dir(void) {
@@ -415,39 +409,39 @@ get_root_dir(void) {
 }
 
 /**
- * @brief change the current directory
+ * @brief 切换当前目录
  * 
- * @param dir given a directory to change
+ * @param dir 要切换的目录名
  * 
- * @retval 0: change succeed
- * @retval -1: change failed, no such directory
- * @retval -2: change failed, the given path is a file
- * @retval -3: change failed, the directory tree is too long
+ * @retval 0: 切换成功
+ * @retval -1: 切换失败, 没有这个目录
+ * @retval -2: 切换失败, 给定名称是一个文件
+ * @retval -3: 切换失败, 目录名太长
  */
 int
 dir_change(const char *dir) {
     pcb_t *cur_pcb = get_current_pcb();
 
-    // get the absolute path
+    // 获取绝对路径
     char *abs = dyn_alloc(PGSIZE);
     bzero(abs, PGSIZE);
 
-    // some special cases
+    // 一些特例
     if (dir == 0) {
-        // change to root directory when the given dir is null
+        // 空的形参表示切换至根目录
         abs[0] = DIRNAME_ROOT_ASCII;
     } else if (strcmp(dir, DIR_CUR) == true) {
         // cd .
         dyn_free(abs);
         return 0;
     } else if (dir[0] == DIRNAME_ROOT_ASCII) {
-        // cd <an absolute dir>
+        // cd <绝对路径>
         memmove(abs, dir, strlen(dir));
         uint32_t len = strlen(abs);
         if (abs[len - 1] != DIR_SEPARATOR)    abs[len] = DIR_SEPARATOR;
     } else {
         // cd ..
-        // cd <a relative dir>
+        // cd <相对路径>
         if (curdir_get(cur_pcb->curdir_, abs, PGSIZE) == -1) {
             dyn_free(abs);
             return -3;
@@ -462,7 +456,7 @@ dir_change(const char *dir) {
         }
     }
 
-    // search the corresponding directory item
+    // 查找对应的目录项
     diritem_t *cur_diritem = dyn_alloc(sizeof(diritem_t));
     bzero(cur_diritem, sizeof(diritem_t));
     if (diritem_find(abs, cur_diritem) == false) {
@@ -479,20 +473,20 @@ dir_change(const char *dir) {
 
     dyn_free(cur_diritem);
     curdir_set(cur_pcb->curdir_, abs);
-    // also influence the parent directory
+    // 必须同时影响父目录的 curdir
     curdir_set(thread_curdir_get(cur_pcb->parent_), abs);
     dyn_free(abs);
     return 0;
 }
 
 /**
- * @brief get current directory
+ * @brief 获取 curdir 对象
  * 
- * @param buff    buffer of the current directory
- * @param bufflen size of the buffer
+ * @param buff    保存结构的缓冲区
+ * @param bufflen 缓冲区大小
  * 
- * @retval 0: succeed
- * @retval -1: failed, and the buffer will be fill in zero
+ * @retval 0: 成功
+ * @retval -1: 失败，并且缓冲区会填充空字符
  */
 int
 dir_get_current(char *buff, uint32_t bufflen) {

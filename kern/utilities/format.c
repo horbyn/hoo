@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "format.h"
 #include "user/types.h"
 #include "kern/fs/files.h"
@@ -15,9 +9,9 @@
 #include "user/lib.h"
 
 /**
- * @brief output a character
- * @param ch       character
- * @param redirect output direction
+ * @brief 输出一个字符
+ * @param ch       字符
+ * @param redirect 输出重定向
  */
 static void
 outputc(char ch, void *redirect) {
@@ -27,9 +21,9 @@ outputc(char ch, void *redirect) {
 }
 
 /**
- * @brief output a string
- * @param str      string
- * @param redirect output direction
+ * @brief 输出一个字符串
+ * @param str      字符串
+ * @param redirect 输出重定向
  */
 static void
 outputstr(const char *str, void *redirect) {
@@ -39,10 +33,10 @@ outputstr(const char *str, void *redirect) {
 }
 
 /**
- * @brief output digit
- * @param digit    digit
- * @param base     base
- * @param redirect output direction
+ * @brief 输出八进制
+ * @param digit    八进制数字
+ * @param base     基数
+ * @param redirect 输出重定向
  */
 static void
 outputdig(uint32_t digit, uint8_t base, void *redirect) {
@@ -62,11 +56,11 @@ outputdig(uint32_t digit, uint8_t base, void *redirect) {
 }
 
 /**
- * @brief formatting handler
+ * @brief 格式化处理
  * 
- * @param fmt      formatting string
- * @param args     variable arguments
- * @param redirect output direction
+ * @param fmt      格式化字符串
+ * @param args     可变参数
+ * @param redirect 输出重定向
  */
 void
 format(const char *fmt, va_list args, void *redirect) {
@@ -77,7 +71,7 @@ format(const char *fmt, va_list args, void *redirect) {
             continue;
         }
 
-        // ignore if the last is '%'
+        // 如果最后一个字符是 % 则忽略
         if (*(fmt + 1) == 0)    return;
         else    ++fmt;
 
@@ -98,7 +92,6 @@ format(const char *fmt, va_list args, void *redirect) {
             outputdig(*((uint32_t *)args), 16, redirect);
             break;
         default:
-            // something unsupported displays directly
             // TODO: %f
             VA_ARG(args, POINTER_SIZE);
             outputc('%', redirect);

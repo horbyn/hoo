@@ -1,29 +1,23 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "pcb.h"
 #include "kern/panic.h"
 #include "user/lib.h"
 
 /**
- * @brief setup pcb object
+ * @brief 填充 PCB
  * 
- * @param pcb           the pcb object
- * @param s0            ring0 stack
- * @param s3            ring3 stack
- * @param tid           thread id
- * @param pd_pa         page directory physical address
- * @param vmngr         virtual space manager
- * @param ticks         ticks amount
- * @param sleep_on_here sleep to wait for resources
- * @param bucket        bucket manager
- * @param fmngr         files manager
- * @param brk           the end
- * @param parent        the parent
- * @param curdir        the current directory
+ * @param pcb           PCB 对象
+ * @param s0            ring0 栈
+ * @param s3            ring3 栈
+ * @param tid           线程 id
+ * @param pd_pa         页目录表物理地址
+ * @param vmngr         vspace 对象
+ * @param ticks         时间片数量
+ * @param sleep_on_here 睡眠以等待资源
+ * @param bucket        bucket 管理器
+ * @param fmngr         文件管理器
+ * @param brk           二进制数据边界
+ * @param parent        父进程 id
+ * @param curdir        curdir 对象
  */
 void
 pcb_set(pcb_t *pcb, uint32_t *s0, uint32_t *s3, uint32_t tid, pgelem_t *pd_pa,

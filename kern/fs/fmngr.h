@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_FS_FMNGR_H__
 #define __KERN_FS_FMNGR_H__
@@ -12,7 +6,7 @@
 #include "kern/utilities/bitmap.h"
 
 /**
- * @brief files manager for each process
+ * @brief 文件管理器
  */
 typedef struct file_manager {
     bitmap_t fd_set_;

@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_DRIVER_8253_8253_STUFF_H__
 #define __KERN_DRIVER_8253_8253_STUFF_H__
@@ -13,33 +7,33 @@
 #define FREQUENCY_DEF   1193182
 
 /**
- * @brief Mode/Command register, Select channel field
+ * @brief Mode/Command 寄存器, Select channel 字段
  */
 typedef enum select_channel {
-    // channel 0
+    // 通道 0
     SC_CHANNEL0 = 0,
-    // channel 1
+    // 通道 1
     SC_CHANNEL1 = 64,
-    // channel 2
+    // 通道 2
     SC_CHANNEL2 = 128
 } sc_t;
 
 /**
- * @brief Mode/Command register, Access mode field
+ * @brief Mode/Command 寄存器, Access mode 字段
  */
 typedef enum access_mode {
-    // latch count value command
+    // 倒计时命令
     LATCH = 0,
-    // low byte only
+    // 只访问低字节
     LOWBYTE = 16,
-    // high byte only
+    // 只访问高字节
     HIGHBYTE = 32,
-    // low byte first, then high
+    // 先访问高字节再访问低字节
     LOWHIGHBYTE = 48
 } am_t;
 
 /**
- * @brief Mode/Command register, Operating mode field
+ * @brief Mode/Command 寄存器, Operating mode 字段
  */
 typedef enum operating_mode {
     // interrupt on terminal count
@@ -61,12 +55,12 @@ typedef enum operating_mode {
 } om_t;
 
 /**
- * @brief Mode/Command register, Bcd mode field
+ * @brief Mode/Command 寄存器, Bcd mode 字段
  */
 typedef enum bcd_mode {
-    // binary format
+    // 二进制格式
     BINARY = 0,
-    // BCD format
+    // BCD 码格式
     BCD
 } bm_t;
 

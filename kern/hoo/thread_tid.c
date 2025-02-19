@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "thread_tid.h"
 #include "kern/panic.h"
 #include "kern/mem/pm.h"
@@ -17,9 +11,9 @@ static bitmap_t __bm_tid;
 static spinlock_t __sl_tid;
 
 /**
- * @brief initialize the tid metadata of all threads
+ * @brief 初始化所有线程的线程 id
  * 
- * @param pcb the pcb needed
+ * @param pcb 对应的 PCB
  */
 void
 init_thread_tid(pcb_t *pcb) {
@@ -37,16 +31,16 @@ init_thread_tid(pcb_t *pcb) {
     bzero(__bm_buff, sizeof(__bm_buff));
     bitmap_init(&__bm_tid, MAX_TASKS_AMOUNT, __bm_buff);
 
-    // for hoo thread
+    // 用于 hoo
     bitmap_set(&__bm_tid, TID_HOO);
 
     spinlock_init(&__sl_tid);
 }
 
 /**
- * @brief allocate the thread id
+ * @brief 分配线程 id
  * 
- * @return thread id
+ * @return 线程 id
  */
 tid_t
 thread_tid_alloc(void) {
@@ -63,9 +57,9 @@ thread_tid_alloc(void) {
 }
 
 /**
- * @brief release the thread id
+ * @brief 释放线程 id
  * 
- * @param thread id
+ * @param tid 线程 id
  */
 void
 thread_tid_release(tid_t tid) {

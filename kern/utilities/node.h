@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_UTILITIES_NODE_H__
 #define __KERN_UTILITIES_NODE_H__
@@ -11,7 +5,7 @@
 #include "kern/x86.h"
 
 /**
- * @brief definition of node
+ * @brief node（用作链表、队列的结点）
  */
 typedef struct node {
     void        *data_;

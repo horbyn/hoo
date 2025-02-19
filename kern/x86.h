@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_X86_H__
 #define __KERN_X86_H__
@@ -13,10 +7,10 @@
 
 extern uint8_t __kern_end[];
 
-// the ARDS amount addr
+// ARDS 数量
 #define ADDR_ARDS_NUM   \
     (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS_CR))
-// the ARDS itself addr
+// ARDS 结构
 #define ADDR_ARDS_BASE  \
     (((uint32_t)(SEG_ARDS))*16 + (OFF_ARDS))
 #define ARDS_TYPE_OS        1
@@ -29,11 +23,11 @@ extern uint8_t __kern_end[];
 #define STACK_HOO_RING0     (0x80000 + KERN_HIGH_MAPPING)
 #define DIED_INSTRUCTION    (((uint32_t)(SEG_DIED))*16 + (OFF_DIED))
 
-// the task maxinum amount
+// 任务数量
 #define MAX_TASKS_AMOUNT    1024
 
 /**
- * @brief ards structure
+ * @brief ARDS 结构体
  */
 typedef struct {
     uint32_t base_low_;
@@ -44,7 +38,7 @@ typedef struct {
 } ards_t;
 
 /**
- * @brief enable intrrupt
+ * @brief 开中断
  */
 static inline void
 enable_intr() {
@@ -52,7 +46,7 @@ enable_intr() {
 }
 
 /**
- * @brief disenable intrrupt
+ * @brief 关中断
  */
 static inline void
 disable_intr() {
@@ -60,7 +54,7 @@ disable_intr() {
 }
 
 /**
- * @brief halt the machine
+ * @brief 停机
  */
 static inline void
 hlt() {
@@ -68,42 +62,41 @@ hlt() {
 }
 
 /**
- * @brief fetch data from the specified port
+ * @brief 从指定端口中读数据
  * 
- * @param port the specified port
- * @return data
+ * @param port 指定一个端口
+ * @return 数据
  */
 static inline uint8_t
 inb(uint16_t port) {
     uint8_t val;
     // %al --> val
     // port --> %dx
-    // is equal of `inb %dx, %al` that
-    // the data is from %dx to %al
+    // 相当于 `inb %dx, %al` 即数据从 %dx 到 %al
     __asm__ volatile ("inb %w1, %b0" : "=a"(val) : "d"(port));
     return val;
 }
 
 /**
- * @brief data write to the specified port
+ * @brief 数据写入指定端口
  * 
- * @param val 8-bit data to write
- * @param port the specified port
+ * @param val  要写入的 8 位数据
+ * @param port 指定一个端口
  */
 static inline void
 outb(uint8_t val, uint16_t port) {
     // val --> %al
     // port --> %dx
-    // data from %al is transported to port %dx pointed to
+    // 数据从 %al 传递到 %dx 指向的端口
     __asm__ volatile ("outb %b0, %w1" : : "a"(val), "d"(port));
 }
 
 /**
- * @brief data flow reads from the specified port
+ * @brief 从特定端口读取数据流
  * 
- * @param flow_ptr data flow to write
- * @param len      size
- * @param port     the specified port
+ * @param flow_ptr 数据流缓冲区
+ * @param len      缓冲区大小
+ * @param port     指定一个端口
  */
 static inline void
 insw(void *flow, uint32_t len, uint16_t port) {
@@ -112,11 +105,11 @@ insw(void *flow, uint32_t len, uint16_t port) {
 }
 
 /**
- * @brief data flow writes to the specified port
+ * @brief 将数据流写入特定端口
  * 
- * @param flow data flow to write
- * @param len  size
- * @param port the specified port
+ * @param flow 数据流缓冲区
+ * @param len  缓冲区大小
+ * @param port 指定一个端口
  */
 static inline void
 outsw(const void *flow, uint32_t len, uint16_t port) {

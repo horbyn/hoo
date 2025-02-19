@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_MEM_FORMAT_LIST_H__
 #define __KERN_MEM_FORMAT_LIST_H__
@@ -11,16 +5,16 @@
 #include "kern/utilities/list.h"
 
 /**
- * @brief formatting list definition
+ * @brief 格式化链表
  */
 typedef struct format_list {
-    // the size of the specific type
+    // 特定类型的大小
     uint32_t           type_size_;
-    // list
+    // 链表
     list_t             list_;
-    // first element offset
+    // 第一个元素的偏移
     uint32_t           first_off_;
-    // capacity
+    // 容量
     uint32_t           capacity_;
     struct format_list *next_;
 } fmtlist_t;

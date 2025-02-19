@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "fs.h"
 #include "kern/dyn/dynamic.h"
 #include "kern/fs/dir.h"
@@ -11,7 +5,7 @@
 #include "kern/driver/ata/ata.h"
 
 /**
- * @brief initialize the disk layout
+ * @brief 初始化磁盘布局
  */
 void
 kinit_fs(void) {
@@ -28,7 +22,7 @@ kinit_fs(void) {
      * NOTE : the first sector will, if necessary, use for Partition                *
      ********************************************************************************/
 
-    // we are in interrupt disabling now
+    // 现在是关中断的
     ata_driver_change_mode(ATA_METHOD_POLLING);
     bool is_new = setup_super_block();
     setup_inode(is_new);
@@ -45,7 +39,7 @@ kinit_fs(void) {
     }
     filesystem_init();
 
-    // take effect after interrupt enabling
+    // 在开中断之后生效
     ata_driver_change_mode(ATA_METHOD_IRQ);
 
 }

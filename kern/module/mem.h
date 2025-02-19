@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_MODULE_MEM_H__
 #define __KERN_MODULE_MEM_H__
@@ -11,7 +5,7 @@
 #include "user/types.h"
 
 /**
- * @brief physical memory information
+ * @brief 物理内存信息
  */
 typedef struct mem_info {
     uint32_t base_;

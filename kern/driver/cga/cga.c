@@ -1,15 +1,9 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "cga.h"
 #include "user/lib.h"
 #include "kern/utilities/spinlock.h"
 
 /**
- * @brief get cga spinlock
+ * @brief 获取 CGA spinlock
  * 
  * @return spinlock 
  */
@@ -20,9 +14,9 @@ cga_get_spinlock(void) {
 }
 
 /**
- * @brief get cga attribute
+ * @brief 获取 CGA 属性
  * 
- * @return cga attribute
+ * @return CGA 属性
  */
 static uint8_t *
 cga_get_attribute(void) {
@@ -31,7 +25,7 @@ cga_get_attribute(void) {
 }
 
 /**
- * @brief screen scroll back
+ * @brief 屏幕回滚
  */
 static void
 cga_scroll_back(void) {
@@ -39,15 +33,15 @@ cga_scroll_back(void) {
     uint16_t *vm = (uint16_t *)VIDEO_MEM;
     memmove(vm, vm + beg, (LASTLINE_END - beg + 1) * sizeof(uint16_t));
 
-    // fill with space the last line
+    // 最后一行全部填充空格
     for (uint32_t i = LASTLINE_BEG; i <= LASTLINE_END; ++i)
         vm[i] = WHITH_CHAR;
 }
 
 /**
- * @brief get the cursor
+ * @brief 获取光标
  * 
- * @return pos the index about the memory that regard as a array
+ * @return CGA 坐标
  */
 static uint16_t
 cga_cursor_get(void) {
@@ -62,23 +56,23 @@ cga_cursor_get(void) {
 }
 
 /**
- * @brief set the cursor
+ * @brief 设置光标
  * 
- * @param pos video memory position
+ * @param pos CGA 坐标
  */
 static void
 cga_cursor_set(uint16_t pos) {
-    // set low 8-bit
+    // 低 8 位
     outb(CGA_CURSOR_LOW, CGA_REG_INDEX);
     outb((uint8_t)(pos & 0xff), CGA_REG_DATA);
 
-    // set high 8-bit
+    // 高 8 位
     outb(CGA_CURSOR_HIGH, CGA_REG_INDEX);
     outb((uint8_t)((pos & 0xff00) >> 8), CGA_REG_DATA);
 }
 
 /**
- * @brief initialize the cga
+ * @brief 初始化 CGA
  */
 void
 cga_init(void) {
@@ -86,7 +80,7 @@ cga_init(void) {
 }
 
 /**
- * @brief clear screen
+ * @brief 清屏
  */
 void
 cga_clear(void) {
@@ -99,32 +93,32 @@ cga_clear(void) {
 }
 
 /**
- * @brief setup cga attribute
+ * @brief 设置 CGA 属性
  * 
- * @param color  cga color
- * @param bright cga brightness
+ * @param color  CGA 颜色
+ * @param bright CGA 亮度
  */
 void
 cga_set_attribute(color_t color, bright_t bright) {
 
     /*
-     * The CGA specification as following, only setup the foreground here
+     * 下面是 CGA 规范，这里只设置前景色
      * 
      * Bit 76543210
      *     ||||||||
-     *     |||||^^^-fore colour
-     *     ||||^----fore colour bright bit
-     *     |^^^-----back colour
-     *     ^--------back colour bright bit OR enables blinking Text
+     *     |||||^^^-前景色
+     *     ||||^----前景色亮度
+     *     |^^^-----背景色
+     *     ^--------背景色亮度或者文字闪烁
      */
 
     *(cga_get_attribute()) = (uint8_t)0 | ((uint8_t)bright << 3) | (uint8_t)color;
 }
 
 /**
- * @brief print a character
- * @param ch   character to be printed
- * @param attr attribute
+ * @brief 输出一个字符
+ * @param ch   要输出的字符
+ * @param attr CGA 属性
  */
 static void
 cga_putc(char ch, uint8_t attr) {
@@ -132,7 +126,7 @@ cga_putc(char ch, uint8_t attr) {
     uint16_t ch_attr = (uint16_t)attr << 8;
     uint16_t pos = cga_cursor_get();
 
-    // special: `\b` `\t` `\n`
+    // 特例: `\b` `\t` `\n`
     if (ch == '\b') {
         if (!(TO_ROW(pos) == 0 && TO_COL(pos) == 0)) {
             *(vm + (--pos)) = (ch_attr | ' ');
@@ -143,10 +137,10 @@ cga_putc(char ch, uint8_t attr) {
         }
 
     } else if (ch == '\t') {
-        // mod 4
+        // 模除 4
         int spaces = SIZE_TAG - (pos % SIZE_TAG);
 
-        // fill with spaces
+        // 填充空格
         for (uint32_t i = 0; i < spaces; ++i, ++pos)
             *(vm + pos) = WHITH_CHAR;
 
@@ -169,9 +163,9 @@ cga_putc(char ch, uint8_t attr) {
 }
 
 /**
- * @brief print a string
- * @param str  string
- * @param len  string length
+ * @brief 输出一个字符串
+ * @param str 字符串
+ * @param len 字符串长度
  */
 void
 cga_putstr(const char *str, uint32_t len) {

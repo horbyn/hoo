@@ -1,16 +1,9 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
-
     .text
     .code32
     .globl switch_to
     .globl mode_ring3
 
-    # called as a function, `switch_to(node_t *cur_task, node_t *next_task)`
+    # 像函数一样调用，`switch_to(node_t *cur_task, node_t *next_task)`
 switch_to:
     pushl %ebp
     movl %esp,      %ebp
@@ -29,28 +22,27 @@ switch_to:
     # │      ... ...     │                  #
     # #######################################
 
-    movl 0x8(%ebp),  %eax       # fetch `node_t` pointer of cur.
+    movl 0x8(%ebp),  %eax       # 取出 cur 的 node
     cmpl $0,         %eax
     jz next
-    movl (%eax),     %eax       # fetch `pcb_t` pointer of cur. node
-    pushl $return               # push the return addr in order to the prev. task could return here
-    movl %esp,       (%eax)     # current `esp` assigns to the value the cur. pcb offset 0 pointed to
-    popl %eax                   # discard the prev. return addr
+    movl (%eax),     %eax       # 取出 cur 的 PCB
+    pushl $return               # 入栈返回地址以便前一个任务可以返回到这里
+    movl %esp,       (%eax)     # 将 cur 的值赋值给 ESP
+    popl %eax                   # 出栈返回地址
 
 next:
-    movl 0xc(%ebp),  %eax       # fetch `node_t` pointer of next
-    movl (%eax),     %eax       # fetch `pcb_t` pointer of next node
-    movl 0xc(%eax),  %ecx       # the physical address of page directory table
+    movl 0xc(%ebp),  %eax       # 取出 next 的 node
+    movl (%eax),     %eax       # 取出 next 的 PCB
+    movl 0xc(%eax),  %ecx       # 页目录表的物理地址
     movl %ecx,       %cr3
-    movl (%eax),     %esp       # fetch the value the next pcb offset 0 pointed to
+    movl (%eax),     %esp
 
     ret
 return:
     popl %ebp
     ret
 
-    # CANNOT consider as a function, because iret instruction
-    #   would also use to restore the %eip
+    # 不能视为一个函数，因为 iret 指令不能用来恢复 EIP
 mode_ring3:
     pushl %ebp
     movl %esp,           %ebp
@@ -61,22 +53,22 @@ mode_ring3:
     movl %eax,           %fs
     movl %eax,           %gs
 
-    movl 0x4(%ebp),      %eax   # fetch user stack
-    pushl $((4 * 8) | 3)        # push ss
-    pushl %eax                  # push user stack(esp)
-    pushf                       # push eflags as same as ring0's
+    movl 0x4(%ebp),      %eax   # 取出用户栈
+    pushl $((4 * 8) | 3)        # 入栈 SS
+    pushl %eax                  # 入栈 ESP
+    pushf                       # 入栈和 ring0 一致的 EFLAGS
     orl $0x200,          %ss:(%esp)
     pushl $((3 * 8) | 3)
-    movl 0x8(%ebp),      %eax   # fetch user entry
+    movl 0x8(%ebp),      %eax   # 取出用户入口
     pushl %eax
 
-    # reset the context except %esp
+    # 重置除了 ESP 外的寄存器
     xorl %eax,           %eax
     xorl %ebx,           %ebx
     xorl %ecx,           %ecx
     xorl %edx,           %edx
     xorl %esi,           %esi
     xorl %edi,           %edi
-    movl 0x4(%ebp),      %ebp   # user stack bottom
+    movl 0x4(%ebp),      %ebp   # 用户栈栈底
 
     iret

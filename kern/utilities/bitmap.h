@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_UTILITIES_BITMAP_H__
 #define __KERN_UTILITIES_BITMAP_H__
@@ -11,13 +5,13 @@
 #include "kern/x86.h"
 
 /**
- * @brief bitmap structure definition
+ * @brief 位图
  */
 typedef struct bitmap {
-    // bitmap buffer length in bits
+    // 位图 buffer 长度，以比特为单位
     uint32_t len_inbits_;
     uint8_t  *buff_;
-    // previous index for free bit
+    // 前面查找过程中记录的下一个空闲的比特位
     uint32_t prev_free_;
 } __attribute__((packed)) bitmap_t;
 

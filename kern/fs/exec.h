@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_FS_EXEC_H__
 #define __KERN_FS_EXEC_H__
@@ -19,9 +13,9 @@
 #define BUILT_TOUCH     "touch"
 #define BUILT_RM        "rm"
 #define MAXSIZE_PATH    128
-#define MAX_ARGV        16
+#define MAX_ARGV        2
 
-// prototype of all the builtin commands
+// 内置命令的函数原型
 typedef void (*builtin_t)(void);
 
 void exec(const char *filename);

@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_SCHED_TASKS_H__
 #define __KERN_SCHED_TASKS_H__
@@ -20,7 +14,7 @@ void  scheduler(void);
 void  sleep(void *resource, spinlock_t *resource_lock);
 void  wakeup(void *resource);
 tid_t fork(void *entry);
-void  wait_child(sleeplock_t *sl);
+void  wait_child(spinlock_t *sl);
 void  exit(void);
 void  kill(void);
 

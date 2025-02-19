@@ -1,25 +1,19 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "ata_polling.h"
 #include "kern/panic.h"
 
 /**
- * @brief ata initialization with polling method
+ * @brief POLLING 方式 ATA 初始化
  */
 void
 ata_polling_init(void) {
-    // nothing to do
+    // 什么都不用做
     return;
 }
 
 /**
- * @brief ata io with polling method
+ * @brief POLLING 方式 ATA 读写
  * 
- * @param buff   ata buffer
+ * @param buff ATA buffer
  */
 void
 ata_polling_rw(atabuff_t *buff){
@@ -30,7 +24,7 @@ ata_polling_rw(atabuff_t *buff){
     uint32_t sectors_to_rw = buff->len_ / BYTES_SECTOR;
     if (buff->len_ % BYTES_SECTOR != 0)    sectors_to_rw++;
 
-    // r/w sectors one by one
+    // 一个接一个地读写扇区
     ataspc_t *space = get_ataspace();
     for (uint32_t i = 0; i < sectors_to_rw && buff->len_ > 0; i++) {
         ata_set_cmd(space->current_select_, buff->lba_, 1, buff->cmd_);

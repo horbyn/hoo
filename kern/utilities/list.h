@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_UTILITIES_LIST_H__
 #define __KERN_UTILITIES_LIST_H__
@@ -12,14 +6,14 @@
 #include "user/types.h"
 
 /**
- * @brief linked list definition
+ * @brief 单链表
  */
 typedef struct list {
     node_t   null_;
     uint32_t size_;
 } list_t;
 
-// get the elem index after the tail of the list
+// 链表尾后元素（相当于 C++ STL end()）下标
 #define LSIDX_AFTAIL(list_ptr)  ((list_ptr)->size_ + 1)
 
 void   list_init(list_t *list, bool cycle);

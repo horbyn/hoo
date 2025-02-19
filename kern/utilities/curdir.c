@@ -1,19 +1,13 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "curdir.h"
 #include "kern/panic.h"
 #include "user/lib.h"
 
 /**
- * @brief the current directory initialization
+ * @brief 初始化当前目录结构
  * 
- * @param curdir the current directory
- * @param dir    the directory buffer
- * @param dirlen the buffer length
+ * @param curdir curdir 对象
+ * @param dir    目录结构缓冲区
+ * @param dirlen 缓冲区长度
  */
 void
 curdir_init(curdir_t *curdir, char *dir, uint32_t dirlen) {
@@ -27,14 +21,14 @@ curdir_init(curdir_t *curdir, char *dir, uint32_t dirlen) {
 }
 
 /**
- * @brief get the current directory
+ * @brief 获取当前目录的目录结构
  *
- * @param curdir  curdir object
- * @param path    the result
- * @param pathlen the path buffer size
+ * @param curdir  curdir 对象
+ * @param path    记录结果的缓冲区
+ * @param pathlen 缓冲区长度
  *
- * @retval 0: succeed
- * @retval -1: failed, and the buffer will be fill in zero
+ * @retval 0:  成功
+ * @retval -1: 出错，同时缓冲区全部填充 0
  */
 int
 curdir_get(const curdir_t *curdir, char *path, uint32_t pathlen) {
@@ -61,13 +55,13 @@ curdir_get(const curdir_t *curdir, char *path, uint32_t pathlen) {
 }
 
 /**
- * @brief setup the current directory
- * @note setup the current directory whatever the path is exists
- * @param curdir curdir object
- * @param path the path to be set
+ * @brief 填充 curdir 对象
+ * @note 不检测目录结构是否存在
+ * @param curdir curdir 对象
+ * @param path   要设置的路径
  * 
- * @retval 0: succeed
- * @retval -1: failed, and path is overflowed
+ * @retval 0:  成功
+ * @retval -1: 出错，因为路径太长了
  */
 int
 curdir_set(curdir_t *curdir, const char *path) {
@@ -96,10 +90,10 @@ curdir_set(curdir_t *curdir, const char *path) {
 }
 
 /**
- * @brief copy current directory
+ * @brief 拷贝 curdir 对象
  * 
- * @param dst destination
- * @param src source
+ * @param dst 目的对象
+ * @param src 源对象
  */
 void
 curdir_copy(curdir_t *dst, const curdir_t *src) {
@@ -112,17 +106,14 @@ curdir_copy(curdir_t *dst, const curdir_t *src) {
 }
 
 /**
- * @brief get the parent filename
+ * @brief 获取父目录名（与子目录名）
  * 
- * @note
- * for "/usr/bin/" would get parent "/usr/" and child "bin"
- * @note
- * for "/usr/bin" would also get parent "/usr/" and child "bin"
- * @note
- * for "/" would get parent "/" and child "" (null pointer)
+ * @note 对于 "/usr/bin/" 会得到父目录 "/usr/" 和子目录 "bin"
+ * @note 对于 "/usr/bin" 会得到父目录 "/usr/" 和子目录 "bin"
+ * @note 对于 "/" 会得到父目录 "/" 和子目录 "" (null pointer)
  * 
- * @param path_to_parent the specific filename (will change to parent at the end)
- * @param child          the child name buffer (if exists)
+ * @param path_to_parent 指定一个文件名（最终会变成父目录名）
+ * @param child          子目录名（如果给出）
  */
 void
 get_parent_child_filename(char *path_to_parent, char *cur) {
@@ -141,7 +132,7 @@ get_parent_child_filename(char *path_to_parent, char *cur) {
     }
 
     if (separator == -1) {
-        // corresponding to the case like "/"
+        // 对应像 "/" 这样的情况
         path_to_parent[0] = DIRNAME_ROOT_ASCII;
         path_to_parent[1] = 0;
         if (cur != 0) {

@@ -1,18 +1,12 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "list.h"
 #include "kern/panic.h"
 #include "kern/x86.h"
 
 /**
- * @brief list initialization
+ * @brief 链表初始化
  * 
- * @param list list
- * @param cycle true if you want to create a cycle linked-list
+ * @param list 链表
+ * @param cycle 想要一个循环链表则设为 true
  */
 void
 list_init(list_t *list, bool cycle) {
@@ -25,12 +19,11 @@ list_init(list_t *list, bool cycle) {
 }
 
 /**
- * @brief find the node of the list according to the index
- * (from 0 to size)
+ * @brief 链表按下标查找（从 0 到 size）
  * 
- * @param list list
- * @param idx index
- * @return the node to find
+ * @param list 链表
+ * @param idx  下标
+ * @return 找到的结点
  */
 node_t *
 list_find(list_t *list, int idx) {
@@ -44,12 +37,11 @@ list_find(list_t *list, int idx) {
 }
 
 /**
- * @brief insert the node of the list according to the index
- * (from 1 to size + 1)
+ * @brief 根据下标进行插入（从 1 到 size+1）
  * 
- * @param list list
- * @param node node
- * @param idx index
+ * @param list 链表
+ * @param node 插入的结点
+ * @param idx  插入下标
  */
 void
 list_insert(list_t *list, node_t *node, int idx) {
@@ -64,12 +56,11 @@ list_insert(list_t *list, node_t *node, int idx) {
 }
 
 /**
- * @brief remove the node of the list according to the index
- * (from 1 to size)
+ * @brief 根据链表下标进行删除（从 1 到 size）
  * 
- * @param list list
- * @param idx index
- * @return the removed node
+ * @param list 链表
+ * @param idx  下标
+ * @return 已经删除的结点
  */
 node_t *
 list_remove(list_t *list, int idx) {
@@ -86,11 +77,11 @@ list_remove(list_t *list, int idx) {
 }
 
 /**
- * @brief whether the specific list is empty
+ * @brief 判断链表空
  * 
- * @param list list
- * @retval true: empty
- * @retval false: not empty
+ * @param list 链表
+ * @retval true:  空
+ * @retval false: 非空
  */
 bool
 list_isempty(list_t *list) {

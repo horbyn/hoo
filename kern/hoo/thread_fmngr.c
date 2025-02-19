@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "thread_fmngr.h"
 #include "kern/panic.h"
 #include "kern/mem/pm.h"
@@ -14,9 +8,9 @@ static fd_t    *__files_array;
 static fmngr_t *__mdata_fmngr;
 
 /**
- * @brief initialize the files manager of all threads
+ * @brief 初始化所有线程的文件管理器
  * 
- * @param pcb the pcb needed to allocate files manager
+ * @param pcb 需要分配文件管理器的 PCB
  */
 void
 init_thread_fmngr(pcb_t *pcb) {
@@ -57,7 +51,7 @@ init_thread_fmngr(pcb_t *pcb) {
             __bitmap_buff + (i * (MAX_FILES_PER_TASK / BITS_PER_BYTE)));
         (__mdata_fmngr + i)->files_ = __files_array + (i * MAX_FILES_PER_TASK);
 
-        // for stdin, stdout, stderr
+        // 用于 stdin, stdout, stderr
         bitmap_set(&(__mdata_fmngr + i)->fd_set_, FD_STDIN);
         bitmap_set(&(__mdata_fmngr + i)->fd_set_, FD_STDOUT);
         bitmap_set(&(__mdata_fmngr + i)->fd_set_, FD_STDERR);
@@ -65,10 +59,10 @@ init_thread_fmngr(pcb_t *pcb) {
 }
 
 /**
- * @brief get the files manager metadata
+ * @brief 获取线程的文件管理器
  * 
- * @param tid thread id
- * @return files manager metadata
+ * @param tid 线程 id
+ * @return 文件管理器
  */
 fmngr_t *
 thread_fmngr_get(tid_t tid) {
@@ -78,9 +72,9 @@ thread_fmngr_get(tid_t tid) {
 }
 
 /**
- * @brief clear the file manager
+ * @brief 清空文件管理器
  * 
- * @param tid thread id
+ * @param tid 线程 id
  */
 void
 thread_fmngr_clear(tid_t tid) {

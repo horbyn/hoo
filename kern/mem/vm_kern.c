@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "vm_kern.h"
 #include "kern/panic.h"
 #include "kern/utilities/spinlock.h"
@@ -12,7 +6,7 @@ static uint8_t __bmbuff_virmm[SIZE_BITMAP_VIRMM] __attribute__((aligned(16)));
 static bitmap_t __bm_virmm;
 
 /**
- * @brief get kernel virtual memory spinlock
+ * @brief 获取虚拟内存管理模块的 spinlock
  * 
  * @return spinlock 
  */
@@ -23,7 +17,7 @@ vm_get_spinlock(void) {
 }
 
 /**
- * @brief initialize virtual memory system
+ * @brief 初始化虚拟内存管理模块
  */
 void
 init_kern_virmm_bitmap() {
@@ -32,9 +26,9 @@ init_kern_virmm_bitmap() {
 }
 
 /**
- * @brief get one metadata virtual page
+ * @brief 从内核 metadata 区域获取一个物理页
  * 
- * @return virtual address
+ * @return 物理页的虚拟地址
  */
 void *
 vir_alloc_kern(void) {
@@ -47,9 +41,9 @@ vir_alloc_kern(void) {
 }
 
 /**
- * @brief release one metadata virtual page
+ * @brief 将一个物理页释放回内核 metadata 区域
  * 
- * @param va: virtual address to be released
+ * @param va 要释放的物理页对应的虚拟地址
  */
 void
 vir_release_kern(void *va) {

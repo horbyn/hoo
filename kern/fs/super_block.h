@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_FS_SUPER_BLOCK_H__
 #define __KERN_FS_SUPER_BLOCK_H__
@@ -12,7 +6,7 @@
 #include "user/types.h"
 
 /**
- * @brief super block
+ * @brief 超级块
  */
 typedef struct super_block {
     uint32_t magic_;

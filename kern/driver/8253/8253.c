@@ -1,18 +1,12 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "8253.h"
 
 /**
- * @brief Set the 8253 chip command
+ * @brief 设置 8253 芯片
  * 
- * @param sc select_channel enum
- * @param am access_mode enum
- * @param om operating_mode enum
- * @param bm bcd_mode enum
+ * @param sc 枚举值 select channel
+ * @param am 枚举值 access mode
+ * @param om 枚举值 operating mode
+ * @param bm 枚举值 bcd mode
  */
 void
 set_command(sc_t sc, am_t am, om_t om, bm_t bm) {
@@ -21,9 +15,9 @@ set_command(sc_t sc, am_t am, om_t om, bm_t bm) {
 }
 
 /**
- * @brief Set the counter initializer
+ * @brief 初始化计数器
  * 
- * @param frequency signal amount per second
+ * @param frequency 每秒的信号数量
  */
 void
 set_counter(uint32_t frequency) {

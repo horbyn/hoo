@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "super_block.h"
 #include "kern/panic.h"
 #include "kern/driver/ata/ata.h"
@@ -13,8 +7,8 @@
 super_block_t __super_block;
 
 /**
- * @brief file system initialization
- * @param sb super block
+ * @brief 初始化文件系统
+ * @param sb 超级块
  */
 static void
 init_layout(super_block_t *sb) {
@@ -26,11 +20,10 @@ init_layout(super_block_t *sb) {
 #define FUNC_GET_FREE_BITMAP(free) \
     (((free) / BITS_PER_BYTE / BYTES_SECTOR) + 1)
 
-    // For double indirect, the previous 6 bytes are direct,
-    //   the following one is single indirect, the last one is
-    //   double indirect. So a file occupies "`MAX_DIRECT`(6) 
-    //   + `LBA_ITEMS_PER_SECTOR`(128) + `LBA_ITEMS_PER_SECTOR`^2 (128^2)"
-    //   sectors. Its bitmap as same as above
+    // 对于两级索引，前面 6 个元素是直接索引，后面一个元素是单级索引，最后一个元素是双级索引
+    //     所以一个文件占用
+    //     "`MAX_DIRECT`(6) + `LBA_ITEMS_PER_SECTOR`(128) + `LBA_ITEMS_PER_SECTOR`^2 (128^2)"
+    //     个扇区
     const uint32_t FREE_SEC_2 =
         MAX_INODES * (MAX_DIRECT + LBA_ITEMS_PER_SECTOR
         + LBA_ITEMS_PER_SECTOR * LBA_ITEMS_PER_SECTOR),
@@ -50,10 +43,10 @@ init_layout(super_block_t *sb) {
 }
 
 /**
- * @brief Set up the super block
+ * @brief 设置超级块
  * 
- * @retval true: a new disk
- * @retval false: an existed disk
+ * @retval true: 一个新的磁盘
+ * @retval false: 一个旧的磁盘
  */
 bool
 setup_super_block() {

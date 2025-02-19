@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_MEM_BUCKET_H__
 #define __KERN_MEM_BUCKET_H__
@@ -11,7 +5,7 @@
 #include "format_list.h"
 
 /**
- * @brief memory bucket manager
+ * @brief bucket 管理器
  */
 typedef struct buckX_manager {
     uint32_t             size_;

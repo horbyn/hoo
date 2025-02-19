@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "thread_pcb.h"
 #include "kern/panic.h"
 #include "kern/mem/pm.h"
@@ -14,9 +8,9 @@ static pcb_t *__mdata_pcb;
 static spinlock_t __sl_pcb;
 
 /**
- * @brief initialize the pcb object of all threads
+ * @brief 初始化所有线程的 PCB
  * 
- * @param pcb the pcb needed
+ * @param pcb 对应的 PCB
  */
 void
 init_thread_pcb(pcb_t *pcb) {
@@ -36,10 +30,10 @@ init_thread_pcb(pcb_t *pcb) {
 }
 
 /**
- * @brief get the pcb object metadata
+ * @brief 获取线程的 PCB
  * 
- * @param tid thread id
- * @return pcb object metadata
+ * @param tid 线程 id
+ * @return PCB 对象
  */
 pcb_t *
 thread_pcb_get(tid_t tid) {

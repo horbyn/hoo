@@ -1,17 +1,11 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "log.h"
 #include "kern/hoo/hoo.h"
 #include "kern/utilities/format.h"
 
 /**
- * @brief setup kernel log file
+ * @brief 设置内核日志文件
  * 
- * @param log_file log file descriptor
+ * @param log_file 日志文件描述符
  */
 void
 klog_set(fd_t log_file) {
@@ -19,12 +13,10 @@ klog_set(fd_t log_file) {
 }
 
 /**
- * @brief record system log
- * @note system log could be recorded before kernel initialization, which will
- *       be stashed in a cache buffer. The file redirection only work well after
- *       the kernel file system initialization
- * @param fmt formatting string
- * @param ... variadic parameters
+ * @brief 记录系统日志
+ * @note 系统日志在内核初始化之前记录，会被暂存在缓存中，内核文件系统初始化后才会被重定向到文件
+ * @param fmt 格式化字符串
+ * @param ... 可变参数
  */
 void
 klog_write(const char *fmt, ...) {

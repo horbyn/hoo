@@ -1,19 +1,13 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "bitmap.h"
 #include "kern/panic.h"
 #include "user/lib.h"
 
 /**
- * @brief bitmap structure initialization
+ * @brief 位图结构初始化
  * 
- * @param map    bitmap
- * @param len_inbits length in bits
- * @param buff   bitmap buffer (size is in BYTES)
+ * @param map        位图
+ * @param len_inbits 位图长度，以比特为单位
+ * @param buff       位图缓冲区，以字节为单位
  */
 void
 bitmap_init(bitmap_t *map, uint32_t len_inbits, void *buff) {
@@ -26,12 +20,12 @@ bitmap_init(bitmap_t *map, uint32_t len_inbits, void *buff) {
 }
 
 /**
- * @brief test the specific bit of a bitmap
+ * @brief 测试位图中指定位置的比特
  * 
- * @param map bitmap
- * @param idx bit index
- * @retval true:  this bit is set
- * @retval false: this bit is clear
+ * @param map 位图
+ * @param idx 位图数组索引
+ * @retval true:  置位
+ * @retval false: 清位
  */
 bool
 bitmap_test(bitmap_t *map, int idx) {
@@ -46,10 +40,10 @@ bitmap_test(bitmap_t *map, int idx) {
 }
 
 /**
- * @brief set the specific bit of a bitmap
+ * @brief 设置位图中指定比特位
  * 
- * @param map bitmap
- * @param idx bit index
+ * @param map 位图
+ * @param idx 位图数组索引
  */
 void
 bitmap_set(bitmap_t *map, int idx) {
@@ -64,10 +58,10 @@ bitmap_set(bitmap_t *map, int idx) {
 }
 
 /**
- * @brief clear the specific bit of a bitmap
+ * @brief 清位位图中的指定比特位
  * 
- * @param map bitmap
- * @param idx bit index
+ * @param map 位图
+ * @param idx 位图数组索引
  */
 void
 bitmap_clear(bitmap_t *map, int idx) {
@@ -82,11 +76,10 @@ bitmap_clear(bitmap_t *map, int idx) {
 }
 
 /**
- * @brief scan the bitmap to search an specific bit
- * (would not change the bitmap)
+ * @brief 查找位图以寻找一个特定的比特位（不会改变位图）
  * 
- * @param map bitmap
- * @return the first specified bit
+ * @param map 位图
+ * @return 第一个特定的比特位
  */
 int
 bitmap_scan_empty(bitmap_t *map) {

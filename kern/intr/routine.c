@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "routine.h"
 #include "kern/panic.h"
 #include "kern/sched/tasks.h"
@@ -12,7 +6,7 @@
 #include "user/lib.h"
 
 /**
- * @brief intel reserved exception names
+ * @brief Intel 保留的异常名称
  */
 static char *__exception_names[] = {
     "#DE, Division Error, Fault, No error-code",            // #0
@@ -51,15 +45,15 @@ static char *__exception_names[] = {
 };
 
 /**
- * @brief default isr routine
+ * @brief 默认的 ISR
  */
 void
 isr_default(void) {
     uint32_t vec = 0;
     __asm__ ("movl 56(%%ebp), %0": "=a"(vec) ::);
-    // not sure if it’s a problem with bochs that often throws exception 0x26
+    // FIXME：bochs 经常抛出 0x26 异常不确定是哪里有问题
     if (vec == 0x26)    return;
-    // spurious interrupt is not interrupt
+    // spurious interrupt 不是 IRQ 信号
     if (vec == 0x27 || vec == 0x2f)    return;
 
     uint32_t arr_idx = vec <= (NELEMS(__exception_names) - 2) ?
@@ -69,7 +63,7 @@ isr_default(void) {
 }
 
 /**
- * @brief page fault handler
+ * @brief 缺页异常 ISR
  */
 void
 page_fault(void) {
@@ -77,11 +71,11 @@ page_fault(void) {
     __asm__ ("movl %%cr2, %0": "=a"(linear_addr) ::);
 
     uint32_t err = 0;
-    // error code fetched at 60(%%ebp) is because
-    // +4: ebp + 4 reaches the return address
-    // +(4 * 12): cross the intrupt frame
-    // +4: vector code which the CPU automatically pushes
-    // +4: error code we want
+    // 错误码从 60(%%ebp) 处获取是因为
+    // +4: ebp + 4 到达返回地址
+    // +(4 * 12): 跨越中断栈
+    // +4: CPU 自动压入的中断向量码
+    // +4: 我们想要获取的错误码
     __asm__ ("movl 60(%%ebp), %0": "=a"(err) ::);
 
     // C.O.W
@@ -103,7 +97,7 @@ page_fault(void) {
 }
 
 /**
- * @brief handling system timer
+ * @brief 时间片 ISR
  */
 void
 timer(void) {

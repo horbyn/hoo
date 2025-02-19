@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_DRIVER_ATA_ATA_STUFF_H__
 #define __KERN_DRIVER_ATA_ATA_STUFF_H__
@@ -12,7 +6,7 @@
 
 #define BYTES_SECTOR    512
 
-/* ata bus type */
+/* ata 总线类型 */
 
 #define ATA_TYPE_BUS_PRIMARY        0
 #define ATA_TYPE_BUS_SECONDARY      1
@@ -22,7 +16,7 @@
      (m) == ATA_TYPE_BUS_SECONDARY ? "Secondary" :  \
      "Unknown")
 
-/* ata bus wire type */
+/* ata 总线的电平类型 */
 
 #define ATA_TYPE_BUS_WIRE_LOW       0
 #define ATA_TYPE_BUS_WIRE_HIGH      1
@@ -32,7 +26,7 @@
      (m) == ATA_TYPE_BUS_WIRE_HIGH ? "Slave" :      \
      "Unknown")
 
-/* ata device type definition */
+/* ATA 设备类型 */
 
 #define ATA_TYPE_DEVICE_UNKNOWN     0
 #define ATA_TYPE_DEVICE_ATA         1
@@ -41,11 +35,11 @@
      "ATA")
 
 /**
- * @brief ata stuff
+ * @brief ata 宏别名
  */
 typedef uint32_t ata_t;
 
-// two bus with two devices each
+// 最多支持的 ATA 设备数量（两个总线，每个总线两个电平）
 #define ATA_MAX_SUPPORTED_DEVICES   (ATA_TYPE_BUS_MAX * ATA_TYPE_BUS_WIRE_MAX)
 
 #endif

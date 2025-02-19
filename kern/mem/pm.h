@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_MEM_PM_H__
 #define __KERN_MEM_PM_H__
@@ -12,7 +6,7 @@
 #include "kern/page/page_stuff.h"
 #include "kern/utilities/bitmap.h"
 
-// how many bit to map 4GB if one bit maps one page
+// 如果一个比特位映射一个物理页，那么有多少个比特位可以映射完整的 4GB
 #define SIZE_BITMAP_PHYMM4G \
     ((0xffffffff / (PGSIZE) + 1) / BITS_PER_BYTE)
 

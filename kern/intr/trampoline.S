@@ -1,17 +1,10 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
-
     .text
     .code32
     .globl isr_part2
     .globl isr_part3
     .extern __isr
 
-# trampoline routine entry
+# trampoline 入口
 isr_part2:
     pushl %ds
     pushl %es
@@ -24,9 +17,9 @@ isr_part2:
     movl %eax,     %es
 
     movl 48(%esp), %eax
-    call *__isr(, %eax, 4)   # addr = $isr + %eax * $4
+    call *__isr(, %eax, 4)   # ISR 地址 = $isr + %eax * $4
 
-# trampoline routine exit
+# trampoline 出口
 isr_part3:
     popal
     popl %gs

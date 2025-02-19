@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "files.h"
 #include "dir.h"
 #include "free.h"
@@ -20,9 +14,9 @@ files_t *__fs_files;
 typedef fd_t global_fd_t;
 
 /**
- * @brief global file descriptor allocation
+ * @brief 全局文件描述符分配
  * 
- * @return file descriptor
+ * @return 全局文件描述符
  */
 static global_fd_t
 fd_global_alloc(void) {
@@ -38,9 +32,9 @@ fd_global_alloc(void) {
 }
 
 /**
- * @brief global file descriptor release
+ * @brief 全局文件描述符释放
  * 
- * @param fd global file descriptor
+ * @param fd 全局文件描述符
  */
 static void
 fd_global_free(global_fd_t fd) {
@@ -49,28 +43,28 @@ fd_global_free(global_fd_t fd) {
 }
 
 /**
- * @brief files system initialization
+ * @brief 文件系统初始化
  */
 void
 filesystem_init(void) {
-    // no need to release
+    // 不需要释放
     __fs_files = dyn_alloc(sizeof(files_t) * MAX_OPEN_FILES);
 }
 
 /**
- * @brief create a new file or directory (terminated with '/')
+ * @brief 创建一个新文件或目录（目录以 '/' 结尾）
  * 
- * @param name the name to be create
+ * @param name 文件或目录名
  * 
- * @retval 0: create successfully
- * @retval -1: failed, the file or directory was already existed
+ * @retval 0: 创建成功
+ * @retval -1: 创建失败, 文件或目录已经存在
  */
 int
 files_create(const char *name) {
     inode_type_t type = (name[strlen(name) - 1] == DIRNAME_ROOT_ASCII) ?
         INODE_TYPE_DIR : INODE_TYPE_FILE;
 
-    // cannot create repeatly
+    // 不要重复创建
     diritem_t *self = dyn_alloc(sizeof(diritem_t));
     if (diritem_find(name, self)) {
         dyn_free(self);
@@ -78,7 +72,7 @@ files_create(const char *name) {
     }
     dyn_free(self);
 
-    // get parent inode
+    // 获取父目录的 inode
     diritem_t *di_parent = dyn_alloc(sizeof(diritem_t));
     char parent[DIRITEM_NAME_LEN], cur[DIRITEM_NAME_LEN];
     bzero(parent, sizeof(parent));
@@ -88,25 +82,26 @@ files_create(const char *name) {
     if (!diritem_find(parent, di_parent))
         panic("files_create(): parent directory is not found");
 
-    // create current diritem
+    // 为指定文件或目录创建目录项
     diritem_t *di_cur = diritem_create(type, cur, di_parent->inode_idx_);
 
-    // current diritem pushes to parent's
+    // 上一步目录项写入父目录项
     diritem_push(di_parent, di_cur);
+    dyn_free(di_parent);
     dyn_free(di_cur);
 
     return 0;
 }
 
 /**
- * @brief delete the specific file or directory
+ * @brief 删除文件或目录
  * 
- * @param name filename or directory name
+ * @param name 指定一个名称
  * 
- * @retval 0: succeed
- * @retval -1: failed, parent directory is not found
- * @retval -2: failed, invalid format of parent directory
- * @retval -3: failed, file or directory is not found
+ * @retval 0: 删除成功
+ * @retval -1: 删除失败, 找不到父目录
+ * @retval -2: 删除失败, 父目录项类型无效
+ * @retval -3: 删除失败, 文件或目录不存在
  */
 int
 files_remove(const char *name) {
@@ -128,10 +123,10 @@ files_remove(const char *name) {
 }
 
 /**
- * @brief open the specific file
+ * @brief 打开指定文件
  * 
- * @param name file name
- * @return file descriptor, -1 if the file is not found
+ * @param name 文件名
+ * @return 文件描述符或 -1，表示打开失败
  */
 fd_t
 files_open(const char *name) {
@@ -155,9 +150,9 @@ files_open(const char *name) {
 }
 
 /**
- * @brief close the specific file
+ * @brief 关闭文件描述符
  * 
- * @param fd file descriptor
+ * @param fd 文件描述符
  */
 void
 files_close(fd_t fd) {
@@ -173,18 +168,18 @@ files_close(fd_t fd) {
 }
 
 /**
- * @brief data reads from the specific file
+ * @brief 从指定文件中读取数据
  * 
- * @param fd   file descriptor
- * @param buf  buffer
- * @param size buffer size
+ * @param fd   文件描述符
+ * @param buf  数据缓冲区
+ * @param size 缓冲区大小
  */
 void
 files_read(fd_t fd, void *buf, uint32_t size) {
     if (fd > MAX_FILES_PER_TASK)    panic("files_read(): invalid fd");
     if (buf == null)    panic("files_read(): null pointer");
 
-    if (fd == FD_STDIN || fd == FD_STDOUT || fd == FD_STDERR) {
+    if (fd == FD_STDIN) {
         cclbuff_t *cclbuff = get_kb_buff();
         for (uint32_t i = 0; i < size; ++i) {
             *((char *)buf + i) = cclbuff_get(cclbuff);
@@ -215,11 +210,11 @@ files_read(fd_t fd, void *buf, uint32_t size) {
 }
 
 /**
- * @brief data writes to the specific file
+ * @brief 向指定文件写入数据
  * 
- * @param fd   file descriptor
- * @param buf  buffer
- * @param size buffer size
+ * @param fd   文件描述符
+ * @param buf  数据缓冲区
+ * @param size 缓冲区大小
  */
 void
 files_write(fd_t fd, const char *buf, uint32_t size) {
@@ -242,7 +237,7 @@ files_write(fd_t fd, const char *buf, uint32_t size) {
     char *buf_tmp = dyn_alloc(BYTES_SECTOR);
     for (uint32_t i = 0; i <= size / BYTES_SECTOR; ++i) {
         if (i == size / BYTES_SECTOR && size % BYTES_SECTOR != 0) {
-            // the last one needs to be filled with 0
+            // 最后一个扇区不足 512B 部分填充 0
             memmove(buf_tmp, buf + i * BYTES_SECTOR, size % BYTES_SECTOR);
             memset(buf_tmp + size % BYTES_SECTOR, 0,
                 BYTES_SECTOR - size % BYTES_SECTOR);
@@ -257,7 +252,7 @@ files_write(fd_t fd, const char *buf, uint32_t size) {
         free_rw_disk(buf_tmp, lba, ATA_CMD_IO_WRITE);
     } // end for(i)
 
-    // update inode and free
+    // 更新 inode 和空闲块
     __fs_inodes[inode_idx].size_ = size;
     inodes_rw_disk(inode_idx, ATA_CMD_IO_WRITE);
     free_map_update();
@@ -266,10 +261,10 @@ files_write(fd_t fd, const char *buf, uint32_t size) {
 }
 
 /**
- * @brief get the size of the specific file
+ * @brief 获取指定文件的文件大小
  * 
- * @param fd file descriptor
- * @return the size of the file
+ * @param fd 文件描述符
+ * @return 文件大小
  */
 uint32_t
 files_get_size(fd_t fd) {
@@ -282,12 +277,11 @@ files_get_size(fd_t fd) {
 }
 
 /**
- * @brief show all the files of current directory or
- * the absolute name of current file
+ * @brief 输出当前目录下的所有文件
  * 
- * @param dir_or_file specify a directory or a file
- * @retval 0: normal
- * @retval -1: no such directory or file
+ * @param dir_or_file 指定一个目录或文件名
+ * @retval 0: 无异常
+ * @retval -1: 没有这个目录或文件
  */
 int
 files_list(const char *dir_or_file) {

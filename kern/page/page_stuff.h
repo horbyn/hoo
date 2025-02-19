@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_PAGE_PAGE_STUFF_H__
 #define __KERN_PAGE_PAGE_STUFF_H__
@@ -21,12 +15,12 @@
 #define PD_INDEX(x)         (((x)>>22) & 0x3ff)
 #define PT_INDEX(x)         ((((uint32_t)(x))>>12) & 0x3ff)
 
-// used to calculate pg entry size
+// 用来计算 paging-structure 的大小
 typedef uint32_t            pgelem_t;
 
 #define MB4                 0x400000
 #define PGSIZE              4096
-// pg dir entry(pg table entry) amount
+// 一个页目录表（页表）内有多少个 paging-structure
 #define PG_STRUCT_SIZE      ((PGSIZE) / sizeof(pgelem_t))
 #define PG_MASK             0xfffff000
 #define PG(x)               (((uint32_t)(x)) & (PG_MASK))

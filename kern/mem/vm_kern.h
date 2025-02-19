@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_MEM_VM_KERN_H__
 #define __KERN_MEM_VM_KERN_H__
@@ -13,8 +7,7 @@
 #include "kern/utilities/bitmap.h"
 
 #define KERN_METADATA       0xf0000000
-// the maximum value of hoo virtual space -- the cause that subtracted from
-// 4-MB is the last entry of its page directory table is not allowed to use
+// hoo 线性地址空间的最大寻址范围，需要减去 4MB，是因为最后一个页表不能被使用
 #define SIZE_BITMAP_VIRMM \
     ((PG_MASK - MB4 - KERN_METADATA) / PGSIZE / BITS_PER_BYTE)
 

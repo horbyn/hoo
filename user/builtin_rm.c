@@ -1,19 +1,13 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "builtin_rm.h"
 #include "lib.h"
 
 #define MAX_PATH_LEN    512
 
 /**
- * @brief rm command
+ * @brief rm 命令
  * 
- * @param argc parameter number
- * @param argv parameter(s)
+ * @param argc 参数个数
+ * @param argv 参数
  */
 void
 main_rm(int argc, char **argv) {
@@ -22,16 +16,23 @@ main_rm(int argc, char **argv) {
         return;
     }
 
-    // handle the absolute path
+    // 处理绝对路径
     char *abs = alloc(MAX_PATH_LEN);
     bzero(abs, MAX_PATH_LEN);
-    if (workingdir(abs, MAX_PATH_LEN) != 0) {
-        sys_printf("rm: failed to get the current working directory\n");
-        free(abs);
-        return;
+    if (argv[1][0] != '/') {
+        if (workingdir(abs, MAX_PATH_LEN) != 0) {
+            sys_printf("rm: failed to get the current working directory\n");
+            free(abs);
+            return;
+        }
+        memmove(abs + strlen(abs), argv[1], strlen(argv[1]));
+    } else {
+        memmove(abs, argv[1], strlen(argv[1]));
     }
-    memmove(abs + strlen(abs), argv[1], strlen(argv[1]));
 
-    sys_remove(abs);
+    int ret = sys_remove(abs);
+    if (ret == -1)    sys_printf("rm: no parent directory\n");
+    else if (ret == -2)    sys_printf("rm: invalid parent directory\n");
+    else if (ret == -3)    sys_printf("rm: no such file or directory\n");
     free(abs);
 }

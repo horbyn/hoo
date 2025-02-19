@@ -1,26 +1,20 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "intr.h"
 #include "kern/desc/desc.h"
 #include "kern/panic.h"
 
 /**
- * @brief setup the idt entry
+ * @brief 设置 IDT
  * 
- * @param idt  idt object
- * @param dpl  descriptor privilege level
- * @param gate gate descriptor
- * @param addr routine entry
+ * @param idt  IDT 对象
+ * @param dpl  描述符特权级
+ * @param gate 门描述符
+ * @param addr IDT 函数入口
  */
 void
 set_idt_entry(idt_t *idt, privilege_t dpl, gatedesc_t gate, uint32_t addr) {
     if (idt == null)    panic("set_idt_entry(): null pointer");
 
-    // the high 4 bytes are `P/DPL/0`
+    // 最高 4 字节是 `P/DPL/0`
     uint8_t attr = (1 << 7 | dpl << 5 | (uint8_t)gate);
 
     idt->isr_low_    = (uint16_t)addr;
@@ -31,10 +25,10 @@ set_idt_entry(idt_t *idt, privilege_t dpl, gatedesc_t gate, uint32_t addr) {
 }
 
 /**
- * @brief setup the isr entry
+ * @brief 设置 ISR
  * 
- * @param isr  isr object
- * @param addr routine entry
+ * @param isr  ISR
+ * @param addr ISR 函数入口
  */
 void
 set_isr_entry(isr_t *isr, isr_t addr) {

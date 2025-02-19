@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "free.h"
 #include "kern/panic.h"
 #include "kern/driver/ata/ata.h"
@@ -16,9 +10,9 @@ static uint32_t __bmbuff_fs_free_inbytes;
 static bitmap_t __bmfs_free;
 
 /**
- * @brief Set up the free blocks map
+ * @brief 初始化空闲块 map
  *
- * @param is_new a new disk
+ * @param is_new 是否新的磁盘
  */
 void
 setup_free_map(bool is_new) {
@@ -36,9 +30,9 @@ setup_free_map(bool is_new) {
 }
 
 /**
- * @brief get a free block
+ * @brief 获取一个空闲块
  * 
- * @return lba of a free block
+ * @return 空闲块对应的 LBA
  */
 uint32_t
 free_allocate() {
@@ -47,10 +41,10 @@ free_allocate() {
 }
 
 /**
- * @brief setup free bitmap (only for index, not involves disk rw)
+ * @brief 设置空闲块 map（只涉及 in-memory 结构，不涉及 on-disk 结构）
  * 
- * @param index  free index
- * @param is_set whether to set or clear
+ * @param index  map 索引
+ * @param is_set 是否置位
  */
 void
 free_map_setup(uint32_t index, bool is_set) {
@@ -63,7 +57,7 @@ free_map_setup(uint32_t index, bool is_set) {
 }
 
 /**
- * @brief update free bitmap to disk
+ * @brief 更新 map 的 on-disk 结构
  */
 void
 free_map_update() {
@@ -72,11 +66,11 @@ free_map_update() {
 }
 
 /**
- * @brief one free block read from / write to disk
+ * @brief （一个）空闲块读写
  * 
- * @param buff     buffer
- * @param base_lba lba
- * @param cmd      ata command
+ * @param buff     数据缓冲区
+ * @param base_lba 起始 LBA
+ * @param cmd      ATA 命令
  */
 void
 free_rw_disk(void *buff, uint32_t base_lba, atacmd_t cmd) {

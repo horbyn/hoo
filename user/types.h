@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __USER_TYPES_H__
 #define __USER_TYPES_H__
@@ -12,8 +6,7 @@
 typedef enum { false = 0, true } bool;
 #endif
 
-// the null pointer in kernel is not zero but a special address;
-//   while in user space is zero
+// null 指针在内核态不是 0 而是一个特殊的地址，而在用户态是 0
 extern void *null;
 
 typedef unsigned char  uint8_t;
@@ -21,7 +14,7 @@ typedef unsigned short uint16_t;
 typedef unsigned int   uint32_t;
 typedef uint32_t       tid_t;
 
-// calculate the array size
+// 计算数组长度
 #define NELEMS(x)       (sizeof(x) / sizeof((x)[0]))
 
 #define FD_STDIN    0

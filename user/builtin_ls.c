@@ -1,16 +1,10 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "builtin_ls.h"
 
 /**
- * @brief ls command
+ * @brief ls 命令
  * 
- * @param argc parameter number
- * @param argv parameter(s)
+ * @param argc 参数个数
+ * @param argv 参数
  */
 void
 main_ls(int argc, char **argv) {

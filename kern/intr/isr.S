@@ -1,10 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
-
     .text
     .code32
     .globl isr_part1
@@ -280,7 +273,7 @@ ISRNOERR 253
 ISRNOERR 254
 ISRNOERR 255
 
-# isr array (256)
+# IDT 数组（256 个）
 isr_part1:
     .long isr_part1_0,  isr_part1_1,  isr_part1_2
     .long isr_part1_3,  isr_part1_4,  isr_part1_5
@@ -293,15 +286,15 @@ isr_part1:
     .long isr_part1_24, isr_part1_25, isr_part1_26
     .long isr_part1_27, isr_part1_28, isr_part1_29
     .long isr_part1_30, isr_part1_31
-    .long isr_part1_32, isr_part1_33    # timer, keyboard
-    .long isr_part1_34, isr_part1_35    # cascade, com2
-    .long isr_part1_36, isr_part1_37    # com1, lpt2
-    .long isr_part1_38, isr_part1_38    # floppy, lpt1
+    .long isr_part1_32, isr_part1_33    # 计时器，键盘
+    .long isr_part1_34, isr_part1_35    # 级联, 串口 com2
+    .long isr_part1_36, isr_part1_37    # 窗口 com1, 行打印设备2
+    .long isr_part1_38, isr_part1_38    # 软盘, 行打印设备1
     .long isr_part1_40, isr_part1_41    # cmos, acpi
     .long isr_part1_42, isr_part1_43    # scsi nic1, scsi nic2
-    .long isr_part1_44, isr_part1_45    # mouse, math
+    .long isr_part1_44, isr_part1_45    # 鼠标, 数学协处理器
     .long isr_part1_46, isr_part1_47    # ata1, ata2
-    .long isr_part1_48                  # default
+    .long isr_part1_48                  # 默认
     .long isr_part1_49, isr_part1_50, isr_part1_51
     .long isr_part1_52, isr_part1_53, isr_part1_54
     .long isr_part1_55, isr_part1_56, isr_part1_57

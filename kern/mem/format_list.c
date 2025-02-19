@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "format_list.h"
 #include "pm.h"
 #include "vm_kern.h"
@@ -11,10 +5,10 @@
 #include "user/lib.h"
 
 /**
- * @brief convert a page into multiple specific elements
+ * @brief 将一个物理页转换为多个特定元素
  * 
- * @param page_va   the virtual address of a page
- * @param type_size specific type
+ * @param page_va   物理页的虚拟地址
+ * @param type_size 特定类型的大小
  */
 static void
 fmtlist_init(fmtlist_t *page_va, uint32_t type_size) {
@@ -31,7 +25,7 @@ fmtlist_init(fmtlist_t *page_va, uint32_t type_size) {
     fmtlist->next_ = null;
 
     /*
-     * transform to the following formatting
+     * 转换遵循以下格式
      * ┌───────────┬────────┬──────────┬─────────┬────────┬──────────┬────┐
      * │ fmtlist_t │ node_t │   xx_t   │         │ node_t │   xx_t   │    │
      * │           │                   │   ...   │                   │ .. │
@@ -52,11 +46,11 @@ fmtlist_init(fmtlist_t *page_va, uint32_t type_size) {
 }
 
 /**
- * @brief get a element from the formatting list
+ * @brief 从格式化链表中获取一个元素
  * 
- * @param fmtlist formatting list
- * @param size    element size
- * @return the free element
+ * @param fmtlist 格式化链表
+ * @param size    元素大小
+ * @return 一个空闲元素
  */
 void *
 fmtlist_alloc(fmtlist_t **fmtlist, uint32_t size) {
@@ -76,10 +70,10 @@ fmtlist_alloc(fmtlist_t **fmtlist, uint32_t size) {
     if (ret == null) {
         void *va = null;
         if (list != null && list->capacity_ == 0) {
-            // common processes
+            // 普通进程
             va = list;
         } else {
-            // kernel process
+            // 内核进程
             void *pa = phy_alloc_page();
             va = vir_alloc_kern();
             set_mapping(va, pa, PGFLAG_US | PGFLAG_RW | PGFLAG_PS);
@@ -96,12 +90,11 @@ fmtlist_alloc(fmtlist_t **fmtlist, uint32_t size) {
 }
 
 /**
- * @brief reclaim the list elements of specific type (DO NOT VERIFY whether
- * the element is belong to this list)
+ * @brief 释放特定类型的链表元素（不验证元素是否属于此链表）
  * 
- * @param fmtlist   the formatting list
- * @param elem      the free element
- * @param elem_size the length of the free element
+ * @param fmtlist   格式化链表
+ * @param elem      要释放的元素
+ * @param elem_size 要释放元素的大小
  */
 bool
 fmtlist_release(fmtlist_t **fmtlist, void *elem, uint32_t elem_size) {

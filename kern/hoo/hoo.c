@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "hoo.h"
 #include "thread_bucket.h"
 #include "thread_curdir.h"
@@ -14,9 +8,9 @@
 #include "kern/module/log.h"
 
 /**
- * @brief get the page directory table of hoo thread
+ * @brief 获取 hoo 的页目录表
  * 
- * @return the page directory
+ * @return 页目录表
  */
 pgelem_t *
 get_hoo_pgdir(void) {
@@ -24,9 +18,9 @@ get_hoo_pgdir(void) {
 }
 
 /**
- * @brief get the tss object of hoo thread
- * @note this tss object is only one
- * @return tss object
+ * @brief 获取 hoo 的 TSS
+ * @note TSS 整个系统唯一
+ * @return TSS 对象
  */
 tss_t *
 get_hoo_tss(void) {
@@ -35,22 +29,21 @@ get_hoo_tss(void) {
 }
 
 /**
- * @brief get the pcb of hoo thread
+ * @brief 获取 hoo 的 PCB
  * 
- * @return the pcb
+ * @return PCB 对象
  */
 pcb_t *
 get_hoo_pcb(void) {
-    // the hoo thread uses pcb by statically allocation
-    //   while the rest by dynamically allocation
+    // hoo 使用静态分配的 PCB 而其他进程则动态分配
     static pcb_t hoo_pcb;
     return &hoo_pcb;
 }
 
 /**
- * @brief get the cache buffer of hoo thread
+ * @brief 获取 hoo 的 cache buffer
  * 
- * @return cache buffer
+ * @return cache buffer 对象
  */
 cachebuff_t *
 get_hoo_cache_buff(void) {
@@ -64,7 +57,7 @@ get_hoo_cache_buff(void) {
 }
 
 /**
- * @brief initialize the hoo thread
+ * @brief 初始化 hoo 进程
  */
 void
 init_hoo(void) {
@@ -72,21 +65,20 @@ init_hoo(void) {
     pcb_t *hoo_pcb = get_hoo_pcb();
 
     /*
-     * The kernel linear space as following:
-     * kernel space: all common threads share
-     * kernel dynamic space: dynamically allocate memory by kernel itself
-     * kernel metadata space: kernel metadata
+     * 内核线性地址空间如下：
+     * kernel space：所有普通进程共享
+     * kernel dynamic spcae：内核自己使用的可动态分配的空间
+     * kernel metadata space：内核的管理数据
      *
      *                            kernel space    dynamic space
      * +----------+---------------+---------------+-------------------------+
      * |kernel elf|               |elf mapping    | dynamic   ..  metadata  |
      * +----------+---------------+---------------+-------------------------+
-     *            0x00xx_x000     0x8000_0000     0x80xx_x000     0xc000_0000
+     *            0x00xx_x000     0x8000_0000     0x80xx_x000     0xf000_0000
      */
 
-    // the dynamic space begins at 0x0040_0000 (as same as 0x8040_0000)
-    //   because our kernel is very small that smaller than 1 page
-    //   directory table
+    // 动态内存空间开始于 0x0040_0000（对于普通进程来说是 0x8040_0000），
+    //     因为内核非常小，小于一页（4MB），前面 0x40_0000 的空间够了
     hoo_pcb->break_ = KERN_HIGH_MAPPING + MB4;
     vspace_set(&hoo_pcb->vmngr_, null, 0, 0, null);
 
@@ -97,9 +89,8 @@ init_hoo(void) {
     init_thread_pcb(hoo_pcb);
     init_thread_tid(hoo_pcb);
 
-    // The executable flow as far from boot to there,
-    // uses the boot stack. Now we call this flow to
-    // hoo thread, and the stack it used is hoo stack
+    // 从引导阶段到现在，一直有个执行流，现在将这个控制流作为 hoo 进程，
+    //    将 boot 阶段使用着的栈作为 hoo 的 ring0 栈
     pcb_set(hoo_pcb, (uint32_t *)STACK_HOO_RING0, (uint32_t *)STACK_HOO_RING3,
         TID_HOO, (pgelem_t *)(V2P(get_hoo_pgdir())), &hoo_pcb->vmngr_, TIMETICKS,
         null, thread_buckmngr_get(TID_HOO), thread_fmngr_get(TID_HOO),

@@ -1,16 +1,10 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #include "user.h"
 
 /**
- * @brief syscall entry
+ * @brief 系统调用入口
  * 
- * @param syscall_number: syscall number
- * @param retval: return value
+ * @param syscall_number 系统调用号
+ * @param retval         返回值
  */
 static void
 syscall_entry(int syscall_number, void *retval) {
@@ -26,30 +20,40 @@ syscall_entry(int syscall_number, void *retval) {
 }
 
 /**
- * @brief create files or directories
+ * @brief 创建文件或目录
  * 
- * @param filename file or directory name
+ * @param filename 文件或目录名
+ * @retval 0: 创建成功
+ * @retval -1: 创建失败, 文件或目录已经存在
  */
-void
+int
 sys_create(const char *filename) {
-    syscall_entry(SYS_CREATE, 0);
+    int ret = -1;
+    syscall_entry(SYS_CREATE, &ret);
+    return ret;
 }
 
 /**
- * @brief delete files or directories
+ * @brief 删除文件或目录
  * 
- * @param filename file or directory name
+ * @param filename 文件或目录名
+ * @retval 0: 删除成功
+ * @retval -1: 删除失败, 找不到父目录
+ * @retval -2: 删除失败, 父目录项类型无效
+ * @retval -3: 删除失败, 文件或目录不存在
  */
-void
+int
 sys_remove(const char *filename) {
-    syscall_entry(SYS_REMOVE, 0);
+    int ret = -1;
+    syscall_entry(SYS_REMOVE, &ret);
+    return ret;
 }
 
 /**
- * @brief open the specific file
+ * @brief 打开文件
  * 
- * @param filename file name
- * @return file descriptor
+ * @param filename 文件名
+ * @return 文件描述符
  */
 int
 sys_open(const char *filename) {
@@ -59,9 +63,9 @@ sys_open(const char *filename) {
 }
 
 /**
- * @brief close the specific file
+ * @brief 关闭文件
  * 
- * @param fd file descriptor
+ * @param fd 文件描述符
  */
 void
 sys_close(int fd) {
@@ -69,11 +73,11 @@ sys_close(int fd) {
 }
 
 /**
- * @brief read data from the specific file
+ * @brief 读取文件
  * 
- * @param fd    file descriptor
- * @param buf   buffer to store data
- * @param count amount
+ * @param fd    文件描述符
+ * @param buf   保存数据的缓冲区
+ * @param count 要读取的字节数
  */
 void
 sys_read(int fd, void *buf, unsigned int count) {
@@ -81,11 +85,11 @@ sys_read(int fd, void *buf, unsigned int count) {
 }
 
 /**
- * @brief write data to the specific file
+ * @brief 写入文件
  * 
- * @param fd    file descriptor
- * @param buf   data to write
- * @param count amount
+ * @param fd    文件描述符
+ * @param buf   数据缓冲区
+ * @param count 要写入的字节数
  */
 void
 sys_write(int fd, const void *buf, unsigned int count) {
@@ -93,9 +97,9 @@ sys_write(int fd, const void *buf, unsigned int count) {
 }
 
 /**
- * @brief formatting print
+ * @brief 格式化输出
  * 
- * @param format formatting string
+ * @param format 格式化字符串
  */
 void
 sys_printf(const char *format, ...) {
@@ -103,9 +107,9 @@ sys_printf(const char *format, ...) {
 }
 
 /**
- * @brief fork children process
+ * @brief 创建子进程
  * 
- * @return child thread id
+ * @return 子进程 id
  */
 int
 sys_fork(void) {
@@ -122,26 +126,23 @@ sys_fork(void) {
 }
 
 /**
- * @brief parent wait for temination of child
+ * @brief 父进程等待子进程终止
  */
 void
 sys_wait() {
-    unsigned int bak_sleeplock = 0;
-    // the real sleeplock is also 8 bytes
-    unsigned int temp_sleeplock[2];
-    temp_sleeplock[0] = 0;
-    temp_sleeplock[1] = 0;
+    unsigned int bak_spinlock = 0;
+    unsigned int temp_spinlock = 0;
     __asm__ ("movl 0x8(%%ebp), %0\n\t"
         "movl %1, 0x8(%%ebp)"
-        : "=a"(bak_sleeplock)
-        : "c"(temp_sleeplock));
+        : "=a"(bak_spinlock)
+        : "c"(&temp_spinlock));
     syscall_entry(SYS_WAIT, 0);
     __asm__ ("movl %0, 0x8(%%ebp)"
-        : : "a"(bak_sleeplock));
+        : : "a"(bak_spinlock));
 }
 
 /**
- * @brief process exits
+ * @brief 退出进程
  */
 void
 sys_exit() {
@@ -149,14 +150,14 @@ sys_exit() {
 }
 
 /**
- * @brief change the current directory
+ * @brief 切换当前目录
  * 
- * @param dir the directory to change
+ * @param dir 要切换的目录
  * 
- * @retval 0: change succeed
- * @retval -1: change failed, no such directory
- * @retval -2: change failed, the given path is a file
- * @retval -3: change failed, the directory tree is too long
+ * @retval 0:  切换成功
+ * @retval -1: 切换出错, 没有这个目录
+ * @retval -2: 切换出错, 指定目录是一个文件
+ * @retval -3: 切换出错, 目录名太长
  */
 int
 sys_cd(const char *dir) {
@@ -166,9 +167,9 @@ sys_cd(const char *dir) {
 }
 
 /**
- * @brief change the control flow
+ * @brief 切换控制流
  * 
- * @param program the program to execute
+ * @param program 控制流入口
  */
 void
 sys_exec(const char *program) {
@@ -176,13 +177,12 @@ sys_exec(const char *program) {
 }
 
 /**
- * @brief list all the files of current directory (if it is directory)
- * or the absolute name of the file
+ * @brief 列出目录的所有文件，或者仅输出文件名
  * 
- * @param dir_or_file specify a directory or a file
+ * @param dir_or_file 指定一个目录名或文件名
  * 
- * @retval 0: normal
- * @retval -1: no such directory or file
+ * @retval 0:  无异常
+ * @retval -1: 没有这个目录或文件
  */
 int
 sys_ls(const char *dir_or_file) {
@@ -192,10 +192,10 @@ sys_ls(const char *dir_or_file) {
 }
 
 /**
- * @brief memory dynamic allocation
+ * @brief 内存动态分配
  * 
- * @param size the size to allocate
- * @return pointer pointed to the memory
+ * @param size 要分配的字节数
+ * @return 内存地址
  */
 void *
 sys_alloc(unsigned int size) {
@@ -205,9 +205,9 @@ sys_alloc(unsigned int size) {
 }
 
 /**
- * @brief release memory
+ * @brief 释放内存
  * 
- * @param ptr specify the memory
+ * @param ptr 要释放的内存地址
  */
 void
 sys_free(void *ptr) {
@@ -215,13 +215,13 @@ sys_free(void *ptr) {
 }
 
 /**
- * @brief get working directory
+ * @brief 获取工作目录
  * 
- * @param wd  buffer to store the working directory
- * @param len buffer length
+ * @param wd  保存结果的缓冲区
+ * @param len 缓冲区长度
  * 
- * @retval 0: succeed
- * @retval -1: failed, and the buffer will be fill in zero
+ * @retval 0:  成功
+ * @retval -1: 出错，同时缓冲区会被填充 0
  */
 int
 sys_workingdir(char *wd, unsigned int len) {

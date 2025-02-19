@@ -1,9 +1,3 @@
-/**************************************************************************
- *                                                                        *
- *                     Copyright (C)    horbyn, 2024                      *
- *                              (horbyn@outlook.com)                      *
- *                                                                        *
- **************************************************************************/
 #pragma once
 #ifndef __KERN_DRIVER_ATA_ATA_IRQ_H__
 #define __KERN_DRIVER_ATA_ATA_IRQ_H__

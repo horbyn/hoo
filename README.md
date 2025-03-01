@@ -1,3 +1,6 @@
+## hoo
+
+![](https://pic1.imgdb.cn/item/67c11732d0e0a243d4078e8f.gif)
 
 ## 开发环境
 
@@ -15,9 +18,7 @@
 执行
 
 ```shell
-# 为 docker build 设置一个代理
-export PROXY=http://xxx.xxx.xxx.xxx:yyyyy
-docker buildx build --platform linux/amd64 --load --build-arg PROXY=$PROXY -t kernx86:latest .
+docker buildx build --platform linux/amd64 --load -t kernx86:latest .
 
 # /path/to 改成要映射的目录
 docker run --platform linux/amd64 -it --privileged -v /path/to/:/path/to/ --name kern kernx86:latest /bin/bash
